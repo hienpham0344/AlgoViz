@@ -64,6 +64,53 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Bắt lỗi 400 khi truyền tham số sắp xếp không hợp lệ (PropertyReferenceException từ Spring Data)
+     */
+    @ExceptionHandler(org.springframework.data.core.PropertyReferenceException.class)
+    public ResponseEntity<ApiResponse<Void>> handlePropertyReferenceException(org.springframework.data.core.PropertyReferenceException ex) {
+        log.warn("Invalid sort property: {}", ex.getPropertyName());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(HttpStatus.BAD_REQUEST.value(), "Trường sắp xếp '" + ex.getPropertyName() + "' không hợp lệ."));
+    }
+
+
+    /**
+     * Bắt lỗi 400 khi tham số phương thức không hợp lệ (IllegalArgumentException)
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIllegalArgumentException(IllegalArgumentException ex) {
+        log.warn("Illegal argument: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(HttpStatus.BAD_REQUEST.value(), ex.getMessage()));
+    }
+
+    /**
+     * Bắt lỗi 400 khi JSON body gửi lên sai cú pháp hoặc sai định dạng kiểu dữ liệu
+     */
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleHttpMessageNotReadable(org.springframework.http.converter.HttpMessageNotReadableException ex) {
+        log.warn("Malformed JSON request: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(HttpStatus.BAD_REQUEST.value(), "Dữ liệu JSON gửi lên sai định dạng hoặc không thể đọc được."));
+    }
+
+    /**
+     * Bắt lỗi 400 khi kiểu dữ liệu tham số trên URL không đúng (vd: truyền chuỗi '{id}' hoặc 'abc' cho ID dạng số)
+     */
+    @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMethodArgumentTypeMismatch(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException ex) {
+        log.warn("Method argument type mismatch: {} = {}", ex.getName(), ex.getValue());
+        String message = String.format("Tham số '%s' nhận giá trị '%s' không đúng định dạng (%s).",
+                ex.getName(), ex.getValue(), ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "Long");
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(HttpStatus.BAD_REQUEST.value(), message));
+    }
+
+    /**
      * Bắt lỗi 500 (Internal Server Error) cho các lỗi không lường trước
      */
     @ExceptionHandler(Exception.class)
@@ -74,3 +121,6 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Lỗi hệ thống nội bộ, vui lòng thử lại sau."));
     }
 }
+
+
+
