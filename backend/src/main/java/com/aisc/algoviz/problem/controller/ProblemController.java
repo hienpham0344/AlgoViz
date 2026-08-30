@@ -4,18 +4,24 @@ import com.aisc.algoviz.common.dto.ApiResponse;
 import com.aisc.algoviz.common.dto.PageResponse;
 import com.aisc.algoviz.problem.dto.ProblemDetailDto;
 import com.aisc.algoviz.problem.dto.ProblemSummaryDto;
-import com.aisc.algoviz.problem.entity.Difficulty;
+import com.aisc.algoviz.problem.dto.SolutionResponseDto;
+import com.aisc.algoviz.problem.dto.request.CreateProblemRequestDto;
+import com.aisc.algoviz.problem.dto.request.CreateSolutionRequestDto;
+import com.aisc.algoviz.problem.dto.request.ProblemFilterRequest;
+import com.aisc.algoviz.problem.dto.request.UpdateProblemRequestDto;
 import com.aisc.algoviz.problem.service.ProblemService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * Controller tiếp nhận các yêu cầu HTTP liên quan đến danh mục bài toán (Problem Management).
- * Cung cấp các endpoint cho Frontend hiển thị danh sách bài toán (màn /problems) và chi tiết (màn /problems/:id).
+ * Controller tiếp nhận các yêu cầu HTTP liên quan đến bài toán (Problem Management).
+ * Cung cấp các endpoint cho Frontend hiển thị danh sách, chi tiết và quản lý dữ liệu bài toán.
  */
 @RestController
 @RequestMapping("/api/v1/problems")
@@ -26,7 +32,7 @@ public class ProblemController {
     private final ProblemService problemService;
 
     /**
-     * Lấy danh sách bài toán có hỗ trợ phân trang và tìm kiếm / lọc.
+     * Lấy danh sách bài toán có hỗ trợ phân trang, sắp xếp và lọc.
      * Ví dụ: GET /api/v1/problems?page=0&size=10&difficulty=EASY&search=two sum
      */
     @GetMapping
@@ -35,30 +41,9 @@ public class ProblemController {
             description = "Trả về danh sách tóm tắt các bài toán, hỗ trợ lọc theo độ khó, tag và từ khóa tìm kiếm."
     )
     public ResponseEntity<ApiResponse<PageResponse<ProblemSummaryDto>>> getProblems(
-            @Parameter(description = "Chỉ số trang bắt đầu từ 0 (mặc định: 0)")
-            @RequestParam(defaultValue = "0") int page,
-
-            @Parameter(description = "Số lượng bài toán trên một trang (mặc định: 10)")
-            @RequestParam(defaultValue = "10") int size,
-
-            @Parameter(description = "Lọc theo độ khó (EASY, MEDIUM, HARD)")
-            @RequestParam(required = false) Difficulty difficulty,
-
-            @Parameter(description = "Lọc theo Tag thuật toán (vd: Array, Hash Table, Dynamic Programming)")
-            @RequestParam(required = false) String tag,
-
-            @Parameter(description = "Tìm kiếm từ khóa trong tiêu đề bài toán")
-            @RequestParam(required = false) String search,
-
-            @Parameter(description = "Tên trường dùng để sắp xếp (mặc định: id)")
-            @RequestParam(defaultValue = "id") String sortBy,
-
-            @Parameter(description = "Chiều sắp xếp: 'asc' hoặc 'desc' (mặc định: asc)")
-            @RequestParam(defaultValue = "asc") String sortDirection
+            @Valid ProblemFilterRequest filterRequest
     ) {
-        PageResponse<ProblemSummaryDto> result = problemService.getProblems(
-                page, size, difficulty, tag, search, sortBy, sortDirection
-        );
+        PageResponse<ProblemSummaryDto> result = problemService.getProblems(filterRequest);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
@@ -94,5 +79,76 @@ public class ProblemController {
     ) {
         ProblemDetailDto problem = problemService.getProblemBySlug(slug);
         return ResponseEntity.ok(ApiResponse.success(problem));
+    }
+
+    /**
+     * Tạo mới một bài toán thuật toán.
+     * Ví dụ: POST /api/v1/problems
+     */
+    @PostMapping
+    @Operation(
+            summary = "Tạo mới bài toán thuật toán",
+            description = "Thêm một bài toán mới kèm mô tả và các giải pháp tham khảo vào hệ thống."
+    )
+    public ResponseEntity<ApiResponse<ProblemDetailDto>> createProblem(
+            @Valid @RequestBody CreateProblemRequestDto request
+    ) {
+        ProblemDetailDto createdProblem = problemService.createProblem(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Tạo bài toán mới thành công", createdProblem));
+    }
+
+    /**
+     * Cập nhật thông tin bài toán theo ID.
+     * Ví dụ: PUT /api/v1/problems/1
+     */
+    @PutMapping("/{id}")
+    @Operation(
+            summary = "Cập nhật bài toán theo ID",
+            description = "Chỉnh sửa các trường thông tin tiêu đề, độ khó, mô tả hoặc tags của bài toán."
+    )
+    public ResponseEntity<ApiResponse<ProblemDetailDto>> updateProblem(
+            @Parameter(description = "ID của bài toán cần cập nhật", example = "1")
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateProblemRequestDto request
+    ) {
+        ProblemDetailDto updatedProblem = problemService.updateProblem(id, request);
+        return ResponseEntity.ok(ApiResponse.success("Cập nhật bài toán thành công", updatedProblem));
+    }
+
+    /**
+     * Xóa bài toán theo ID.
+     * Ví dụ: DELETE /api/v1/problems/1
+     */
+    @DeleteMapping("/{id}")
+    @Operation(
+            summary = "Xóa bài toán theo ID",
+            description = "Xóa bài toán cùng toàn bộ lời giải thuộc bài toán khỏi hệ thống."
+    )
+    public ResponseEntity<ApiResponse<Void>> deleteProblem(
+            @Parameter(description = "ID của bài toán cần xóa", example = "1")
+            @PathVariable Long id
+    ) {
+        problemService.deleteProblem(id);
+        return ResponseEntity.ok(ApiResponse.success("Xóa bài toán thành công", null));
+    }
+
+    /**
+     * Thêm lời giải mẫu cho một bài toán đã tồn tại.
+     * Ví dụ: POST /api/v1/problems/1/solutions
+     */
+    @PostMapping("/{id}/solutions")
+    @Operation(
+            summary = "Thêm lời giải mẫu cho bài toán",
+            description = "Bổ sung một lời giải thuật toán tham khảo vào bài toán theo ID."
+    )
+    public ResponseEntity<ApiResponse<SolutionResponseDto>> addSolution(
+            @Parameter(description = "ID của bài toán", example = "1")
+            @PathVariable Long id,
+            @Valid @RequestBody CreateSolutionRequestDto request
+    ) {
+        SolutionResponseDto solution = problemService.addSolutionToProblem(id, request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Thêm lời giải mẫu thành công", solution));
     }
 }

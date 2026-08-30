@@ -1,17 +1,22 @@
 package com.aisc.algoviz.problem.service.impl;
 
 import com.aisc.algoviz.common.dto.PageResponse;
+import com.aisc.algoviz.common.exception.BadRequestException;
 import com.aisc.algoviz.common.exception.ResourceNotFoundException;
 import com.aisc.algoviz.problem.dto.ProblemDetailDto;
 import com.aisc.algoviz.problem.dto.ProblemSummaryDto;
 import com.aisc.algoviz.problem.dto.SolutionResponseDto;
-import com.aisc.algoviz.problem.entity.Difficulty;
+import com.aisc.algoviz.problem.dto.request.CreateProblemRequestDto;
+import com.aisc.algoviz.problem.dto.request.CreateSolutionRequestDto;
+import com.aisc.algoviz.problem.dto.request.ProblemFilterRequest;
+import com.aisc.algoviz.problem.dto.request.UpdateProblemRequestDto;
 import com.aisc.algoviz.problem.entity.Problem;
 import com.aisc.algoviz.problem.entity.Solution;
+import com.aisc.algoviz.problem.mapper.ProblemMapper;
 import com.aisc.algoviz.problem.repository.ProblemRepository;
 import com.aisc.algoviz.problem.repository.SolutionRepository;
+import com.aisc.algoviz.problem.repository.specification.ProblemSpecification;
 import com.aisc.algoviz.problem.service.ProblemService;
-import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -21,9 +26,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Tầng triển khai thực thi chi tiết logic nghiệp vụ bài toán.
@@ -35,53 +37,29 @@ public class ProblemServiceImpl implements ProblemService {
 
     private final ProblemRepository problemRepository;
     private final SolutionRepository solutionRepository;
+    private final ProblemMapper problemMapper;
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<ProblemSummaryDto> getProblems(
-            int page,
-            int size,
-            Difficulty difficulty,
-            String tag,
-            String search,
-            String sortBy,
-            String sortDirection
-    ) {
-        log.debug("Fetching problems: page={}, size={}, difficulty={}, tag={}, search={}", page, size, difficulty, tag, search);
+    public PageResponse<ProblemSummaryDto> getProblems(ProblemFilterRequest filterRequest) {
+        log.debug("Fetching problems: {}", filterRequest);
 
-        // 1. Xác định thứ tự sắp xếp (mặc định theo ID tăng dần)
-        Sort.Direction direction = "desc".equalsIgnoreCase(sortDirection) ? Sort.Direction.DESC : Sort.Direction.ASC;
-        String property = (sortBy != null && !sortBy.isBlank()) ? sortBy : "id";
-        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, property));
+        // 1. Xác định thứ tự sắp xếp an toàn từ Whitelist
+        Sort.Direction direction = "desc".equalsIgnoreCase(filterRequest.getSortDirection())
+                ? Sort.Direction.DESC
+                : Sort.Direction.ASC;
+        
+        String safeSortBy = filterRequest.getSanitizedSortBy();
+        Pageable pageable = PageRequest.of(filterRequest.getPage(), filterRequest.getSize(), Sort.by(direction, safeSortBy));
 
-        // 2. Xây dựng Specification truy vấn động theo các tham số truyền vào
-        Specification<Problem> spec = (root, query, criteriaBuilder) -> {
-            List<Predicate> predicates = new ArrayList<>();
+        // 2. Xây dựng Specification qua helper class
+        Specification<Problem> spec = ProblemSpecification.buildSpecification(filterRequest);
 
-            // Lọc theo độ khó nếu có
-            if (difficulty != null) {
-                predicates.add(criteriaBuilder.equal(root.get("difficulty"), difficulty));
-            }
-
-            // Tìm kiếm theo từ khóa trong tiêu đề (không phân biệt hoa/thường)
-            if (search != null && !search.trim().isEmpty()) {
-                String searchPattern = "%" + search.trim().toLowerCase() + "%";
-                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("title")), searchPattern));
-            }
-
-            // Lọc theo Tag thuật toán (Pattern Tag)
-            if (tag != null && !tag.trim().isEmpty()) {
-                predicates.add(criteriaBuilder.isMember(tag.trim(), root.get("patternTags")));
-            }
-
-            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
-        };
-
-        // 3. Thực thi truy vấn phân trang qua Database
+        // 3. Thực thi truy vấn phân trang
         Page<Problem> problemPage = problemRepository.findAll(spec, pageable);
 
-        // 4. Chuyển đổi từ Entity sang DTO tóm tắt
-        Page<ProblemSummaryDto> dtoPage = problemPage.map(this::mapToSummaryDto);
+        // 4. Chuyển đổi Entity -> DTO qua Mapper
+        Page<ProblemSummaryDto> dtoPage = problemPage.map(problemMapper::toSummaryDto);
 
         return PageResponse.from(dtoPage);
     }
@@ -94,7 +72,7 @@ public class ProblemServiceImpl implements ProblemService {
         Problem problem = problemRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bài toán với ID: " + id));
 
-        return buildProblemDetailDto(problem);
+        return problemMapper.toDetailDto(problem);
     }
 
     @Override
@@ -105,48 +83,75 @@ public class ProblemServiceImpl implements ProblemService {
         Problem problem = problemRepository.findBySlug(slug)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bài toán với slug: " + slug));
 
-        return buildProblemDetailDto(problem);
+        return problemMapper.toDetailDto(problem);
     }
 
-    private ProblemSummaryDto mapToSummaryDto(Problem problem) {
-        return ProblemSummaryDto.builder()
-                .id(problem.getId())
-                .leetcodeId(problem.getLeetcodeId())
-                .title(problem.getTitle())
-                .slug(problem.getSlug())
-                .difficulty(problem.getDifficulty())
-                .patternTags(problem.getPatternTags())
-                .build();
+    @Override
+    @Transactional
+    public ProblemDetailDto createProblem(CreateProblemRequestDto createDto) {
+        log.info("Creating new problem: {}", createDto.getTitle());
+
+        String slug = (createDto.getSlug() != null && !createDto.getSlug().isBlank())
+                ? createDto.getSlug().trim()
+                : problemMapper.generateSlug(createDto.getTitle());
+
+        if (problemRepository.findBySlug(slug).isPresent()) {
+            throw new BadRequestException("Bài toán với slug '" + slug + "' đã tồn tại trong hệ thống.");
+        }
+
+        Problem problem = problemMapper.toEntity(createDto);
+        Problem savedProblem = problemRepository.save(problem);
+
+        log.info("Successfully created problem ID: {}", savedProblem.getId());
+        return problemMapper.toDetailDto(savedProblem);
     }
 
-    private ProblemDetailDto buildProblemDetailDto(Problem problem) {
-        // Lấy danh sách Reference Solutions kèm theo bài toán
-        List<Solution> solutions = solutionRepository.findByProblemId(problem.getId());
-        List<SolutionResponseDto> solutionDtos = solutions.stream()
-                .map(this::mapToSolutionDto)
-                .toList();
+    @Override
+    @Transactional
+    public ProblemDetailDto updateProblem(Long id, UpdateProblemRequestDto updateDto) {
+        log.info("Updating problem ID: {}", id);
 
-        return ProblemDetailDto.builder()
-                .id(problem.getId())
-                .leetcodeId(problem.getLeetcodeId())
-                .title(problem.getTitle())
-                .slug(problem.getSlug())
-                .difficulty(problem.getDifficulty())
-                .description(problem.getDescription())
-                .patternTags(problem.getPatternTags())
-                .solutions(solutionDtos)
-                .build();
+        Problem problem = problemRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bài toán với ID: " + id));
+
+        if (updateDto.getSlug() != null && !updateDto.getSlug().isBlank()
+                && !updateDto.getSlug().equalsIgnoreCase(problem.getSlug())) {
+            if (problemRepository.findBySlug(updateDto.getSlug()).isPresent()) {
+                throw new BadRequestException("Bài toán với slug '" + updateDto.getSlug() + "' đã tồn tại.");
+            }
+        }
+
+        problemMapper.updateEntityFromDto(updateDto, problem);
+        Problem updatedProblem = problemRepository.save(problem);
+
+        log.info("Successfully updated problem ID: {}", updatedProblem.getId());
+        return problemMapper.toDetailDto(updatedProblem);
     }
 
-    private SolutionResponseDto mapToSolutionDto(Solution solution) {
-        return SolutionResponseDto.builder()
-                .id(solution.getId())
-                .patternId(solution.getPatternId())
-                .codeSnippet(solution.getCodeSnippet())
-                .explanation(solution.getExplanation())
-                .timeComplexity(solution.getTimeComplexity())
-                .spaceComplexity(solution.getSpaceComplexity())
-                .language(solution.getLanguage())
-                .build();
+    @Override
+    @Transactional
+    public void deleteProblem(Long id) {
+        log.info("Deleting problem ID: {}", id);
+
+        Problem problem = problemRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bài toán với ID: " + id));
+
+        problemRepository.delete(problem);
+        log.info("Successfully deleted problem ID: {}", id);
+    }
+
+    @Override
+    @Transactional
+    public SolutionResponseDto addSolutionToProblem(Long problemId, CreateSolutionRequestDto solutionDto) {
+        log.info("Adding solution to problem ID: {}", problemId);
+
+        Problem problem = problemRepository.findById(problemId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bài toán với ID: " + problemId));
+
+        Solution solution = problemMapper.toSolutionEntity(solutionDto, problem);
+        Solution savedSolution = solutionRepository.save(solution);
+
+        log.info("Successfully added solution ID: {} to problem ID: {}", savedSolution.getId(), problemId);
+        return problemMapper.toSolutionResponseDto(savedSolution);
     }
 }
