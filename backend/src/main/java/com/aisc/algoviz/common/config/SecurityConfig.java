@@ -24,18 +24,12 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                // Tắt CSRF vì kiến trúc REST API là stateless (sử dụng Token thay cho Cookie Session)
-                .csrf(AbstractHttpConfigurer::disable)
-                
-                // Kích hoạt cấu hình CORS đã định nghĩa bên dưới
+        // disable cookie session
+        http.csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                
-                // Thiết lập Session sang STATELESS (không lưu session trên RAM server)
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                
-                // Phân quyền cho từng đường dẫn URL
-                .authorizeHttpRequests(auth -> auth
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+        // Public endpoint
+        http.authorizeHttpRequests(auth -> auth
                         // Cho phép truy cập tự do Swagger UI & OpenAPI Docs
                         .requestMatchers(
                                 "/v3/api-docs/**",
@@ -48,26 +42,19 @@ public class SecurityConfig {
                         
                         // Cho phép truy cập tự do các API đăng ký / đăng nhập (Auth Module)
                         .requestMatchers("/api/v1/auth/**").permitAll()
-                        
-                        // Các API còn lại bắt buộc phải có Token xác thực
                         .anyRequest().authenticated()
                 );
 
         return http.build();
     }
 
-    /**
-     * Cấu hình CORS (Cross-Origin Resource Sharing).
-     * Cho phép Frontend từ http://localhost:5173 gửi request sang Backend (port 8080).
-     */
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
         // Cho phép origin từ frontend local
         configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
-        
-        // Cho phép các HTTP Methods thông dụng
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         
         // Cho phép các Header cần thiết (Content-Type, Authorization...)
