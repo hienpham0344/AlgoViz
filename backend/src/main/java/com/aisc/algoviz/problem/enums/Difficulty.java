@@ -1,14 +1,10 @@
-package com.aisc.algoviz.problem.entity;
+package com.aisc.algoviz.problem.enums;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
-/**
- * Enum biểu diễn 3 cấp độ khó của bài toán theo chuẩn hệ thống:
- * - EASY (Xanh lá - #10B981)
- * - MEDIUM (Vàng cam - #F59E0B)
- * - HARD (Đỏ / Tím đậm)
- */
+
+
 public enum Difficulty {
     EASY("Easy"),
     MEDIUM("Medium"),
@@ -35,6 +31,6 @@ public enum Difficulty {
                 return d;
             }
         }
-        throw new IllegalArgumentException("Unknown difficulty level: " + text);
+        throw new IllegalArgumentException(ProblemErrorCode.INVALID_DIFFICULTY);
     }
 }

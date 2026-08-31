@@ -1,8 +1,6 @@
 package com.aisc.algoviz.problem.service.impl;
 
 import com.aisc.algoviz.common.dto.PageResponse;
-import com.aisc.algoviz.common.exception.BadRequestException;
-import com.aisc.algoviz.common.exception.ResourceNotFoundException;
 import com.aisc.algoviz.problem.dto.ProblemDetailDto;
 import com.aisc.algoviz.problem.dto.ProblemSummaryDto;
 import com.aisc.algoviz.problem.dto.SolutionResponseDto;
