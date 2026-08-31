@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.http.HttpStatus;
 
 import java.time.LocalDateTime;
 
@@ -26,44 +27,11 @@ import java.time.LocalDateTime;
 public class ApiResponse<T> {
 
     private int status;
+    private int code;
     private String message;
     private T data;
 
     @Builder.Default
     private LocalDateTime timestamp = LocalDateTime.now();
 
-    /**
-     * Phương thức tiện ích tạo nhanh phản hồi thành công (HTTP 200 OK)
-     */
-    public static <T> ApiResponse<T> success(T data) {
-        return ApiResponse.<T>builder()
-                .status(200)
-                .message("Success")
-                .data(data)
-                .timestamp(LocalDateTime.now())
-                .build();
-    }
-
-    /**
-     * Phương thức tiện ích tạo nhanh phản hồi thành công kèm thông điệp tùy chỉnh
-     */
-    public static <T> ApiResponse<T> success(String message, T data) {
-        return ApiResponse.<T>builder()
-                .status(200)
-                .message(message)
-                .data(data)
-                .timestamp(LocalDateTime.now())
-                .build();
-    }
-
-    /**
-     * Phương thức tiện ích tạo nhanh phản hồi lỗi
-     */
-    public static <T> ApiResponse<T> error(int status, String message) {
-        return ApiResponse.<T>builder()
-                .status(status)
-                .message(message)
-                .timestamp(LocalDateTime.now())
-                .build();
-    }
 }
