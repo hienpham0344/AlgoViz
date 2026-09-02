@@ -1,9 +1,9 @@
 package com.aisc.algoviz.problem.enums;
 
+import com.aisc.algoviz.common.exception.AppException;
+import com.aisc.algoviz.problem.exception.ProblemErrorCode;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-
-
 
 public enum Difficulty {
     EASY("Easy"),
@@ -31,6 +31,6 @@ public enum Difficulty {
                 return d;
             }
         }
-        throw new IllegalArgumentException(ProblemErrorCode.INVALID_DIFFICULTY);
+        throw new AppException(ProblemErrorCode.INVALID_DIFFICULTY);
     }
 }
