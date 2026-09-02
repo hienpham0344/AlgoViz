@@ -1,6 +1,6 @@
 package com.aisc.algoviz.problem.dto.request;
 
-import com.aisc.algoviz.problem.entity.Difficulty;
+import com.aisc.algoviz.problem.enums.Difficulty;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;

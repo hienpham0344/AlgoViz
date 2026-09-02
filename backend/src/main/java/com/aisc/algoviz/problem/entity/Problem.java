@@ -1,5 +1,6 @@
 package com.aisc.algoviz.problem.entity;
 
+import com.aisc.algoviz.problem.enums.Difficulty;
 import jakarta.persistence.*;
 import lombok.*;
 

@@ -1,6 +1,6 @@
 package com.aisc.algoviz.problem.dto.request;
 
-import com.aisc.algoviz.problem.entity.Difficulty;
+import com.aisc.algoviz.problem.enums.Difficulty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
