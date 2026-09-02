@@ -1,31 +1,31 @@
 package com.aisc.algoviz.problem.service;
 
 import com.aisc.algoviz.common.dto.PageResponse;
-import com.aisc.algoviz.problem.dto.ProblemDetailDto;
-import com.aisc.algoviz.problem.dto.ProblemSummaryDto;
-import com.aisc.algoviz.problem.dto.SolutionResponseDto;
 import com.aisc.algoviz.problem.dto.request.CreateProblemRequestDto;
 import com.aisc.algoviz.problem.dto.request.CreateSolutionRequestDto;
 import com.aisc.algoviz.problem.dto.request.ProblemFilterRequest;
 import com.aisc.algoviz.problem.dto.request.UpdateProblemRequestDto;
+import com.aisc.algoviz.problem.dto.response.ProblemDetailDto;
+import com.aisc.algoviz.problem.dto.response.ProblemSummaryDto;
+import com.aisc.algoviz.problem.dto.response.SolutionResponseDto;
 
 /**
- * Interface định nghĩa các dịch vụ nghiệp vụ (Business Logic) liên quan đến bài toán AlgoViz.
+ * Interface định nghĩa các hợp đồng nghiệp vụ quản lý bài toán thuật toán.
  */
 public interface ProblemService {
 
     /**
-     * Lấy danh sách bài toán có phân trang và bộ lọc linh hoạt qua ProblemFilterRequest.
+     * Lấy danh sách bài toán có phân trang, sắp xếp và lọc.
      */
     PageResponse<ProblemSummaryDto> getProblems(ProblemFilterRequest filterRequest);
 
     /**
-     * Lấy thông tin chi tiết bài toán theo ID (bao gồm danh sách bài giải mẫu).
+     * Lấy chi tiết bài toán theo ID.
      */
     ProblemDetailDto getProblemById(Long id);
 
     /**
-     * Lấy thông tin chi tiết bài toán theo đường dẫn slug.
+     * Lấy chi tiết bài toán theo Slug URL.
      */
     ProblemDetailDto getProblemBySlug(String slug);
 
@@ -45,7 +45,7 @@ public interface ProblemService {
     void deleteProblem(Long id);
 
     /**
-     * Bổ sung một lời giải mẫu (Reference Solution) cho bài toán.
+     * Thêm lời giải mẫu cho một bài toán.
      */
     SolutionResponseDto addSolutionToProblem(Long problemId, CreateSolutionRequestDto solutionDto);
 }

@@ -1,20 +1,21 @@
-package com.aisc.algoviz.problem.service.impl;
+package com.aisc.algoviz.problem.service;
 
 import com.aisc.algoviz.common.dto.PageResponse;
-import com.aisc.algoviz.problem.dto.ProblemDetailDto;
-import com.aisc.algoviz.problem.dto.ProblemSummaryDto;
-import com.aisc.algoviz.problem.dto.SolutionResponseDto;
+import com.aisc.algoviz.common.exception.AppException;
 import com.aisc.algoviz.problem.dto.request.CreateProblemRequestDto;
 import com.aisc.algoviz.problem.dto.request.CreateSolutionRequestDto;
 import com.aisc.algoviz.problem.dto.request.ProblemFilterRequest;
 import com.aisc.algoviz.problem.dto.request.UpdateProblemRequestDto;
+import com.aisc.algoviz.problem.dto.response.ProblemDetailDto;
+import com.aisc.algoviz.problem.dto.response.ProblemSummaryDto;
+import com.aisc.algoviz.problem.dto.response.SolutionResponseDto;
 import com.aisc.algoviz.problem.entity.Problem;
 import com.aisc.algoviz.problem.entity.Solution;
+import com.aisc.algoviz.problem.exception.ProblemErrorCode;
 import com.aisc.algoviz.problem.mapper.ProblemMapper;
 import com.aisc.algoviz.problem.repository.ProblemRepository;
+import com.aisc.algoviz.problem.repository.ProblemSpecification;
 import com.aisc.algoviz.problem.repository.SolutionRepository;
-import com.aisc.algoviz.problem.repository.specification.ProblemSpecification;
-import com.aisc.algoviz.problem.service.ProblemService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -27,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Tầng triển khai thực thi chi tiết logic nghiệp vụ bài toán.
+ * Đặt trực tiếp trong package 'service' theo chuẩn Package-by-Feature gọn nhẹ.
  */
 @Slf4j
 @Service
@@ -42,21 +44,17 @@ public class ProblemServiceImpl implements ProblemService {
     public PageResponse<ProblemSummaryDto> getProblems(ProblemFilterRequest filterRequest) {
         log.debug("Fetching problems: {}", filterRequest);
 
-        // 1. Xác định thứ tự sắp xếp an toàn từ Whitelist
         Sort.Direction direction = "desc".equalsIgnoreCase(filterRequest.getSortDirection())
                 ? Sort.Direction.DESC
                 : Sort.Direction.ASC;
-        
+
         String safeSortBy = filterRequest.getSanitizedSortBy();
         Pageable pageable = PageRequest.of(filterRequest.getPage(), filterRequest.getSize(), Sort.by(direction, safeSortBy));
 
-        // 2. Xây dựng Specification qua helper class
         Specification<Problem> spec = ProblemSpecification.buildSpecification(filterRequest);
 
-        // 3. Thực thi truy vấn phân trang
         Page<Problem> problemPage = problemRepository.findAll(spec, pageable);
 
-        // 4. Chuyển đổi Entity -> DTO qua Mapper
         Page<ProblemSummaryDto> dtoPage = problemPage.map(problemMapper::toSummaryDto);
 
         return PageResponse.from(dtoPage);
@@ -68,7 +66,7 @@ public class ProblemServiceImpl implements ProblemService {
         log.debug("Fetching problem detail by ID: {}", id);
 
         Problem problem = problemRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bài toán với ID: " + id));
+                .orElseThrow(() -> new AppException(ProblemErrorCode.PROBLEM_NOT_FOUND));
 
         return problemMapper.toDetailDto(problem);
     }
@@ -79,7 +77,7 @@ public class ProblemServiceImpl implements ProblemService {
         log.debug("Fetching problem detail by slug: {}", slug);
 
         Problem problem = problemRepository.findBySlug(slug)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bài toán với slug: " + slug));
+                .orElseThrow(() -> new AppException(ProblemErrorCode.PROBLEM_NOT_FOUND));
 
         return problemMapper.toDetailDto(problem);
     }
@@ -89,15 +87,12 @@ public class ProblemServiceImpl implements ProblemService {
     public ProblemDetailDto createProblem(CreateProblemRequestDto createDto) {
         log.info("Creating new problem: {}", createDto.getTitle());
 
-        String slug = (createDto.getSlug() != null && !createDto.getSlug().isBlank())
-                ? createDto.getSlug().trim()
-                : problemMapper.generateSlug(createDto.getTitle());
+        Problem problem = problemMapper.toEntity(createDto);
 
-        if (problemRepository.findBySlug(slug).isPresent()) {
-            throw new BadRequestException("Bài toán với slug '" + slug + "' đã tồn tại trong hệ thống.");
+        if (problemRepository.findBySlug(problem.getSlug()).isPresent()) {
+            throw new AppException(ProblemErrorCode.SLUG_ALREADY_EXISTS);
         }
 
-        Problem problem = problemMapper.toEntity(createDto);
         Problem savedProblem = problemRepository.save(problem);
 
         log.info("Successfully created problem ID: {}", savedProblem.getId());
@@ -110,12 +105,12 @@ public class ProblemServiceImpl implements ProblemService {
         log.info("Updating problem ID: {}", id);
 
         Problem problem = problemRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bài toán với ID: " + id));
+                .orElseThrow(() -> new AppException(ProblemErrorCode.PROBLEM_NOT_FOUND));
 
         if (updateDto.getSlug() != null && !updateDto.getSlug().isBlank()
                 && !updateDto.getSlug().equalsIgnoreCase(problem.getSlug())) {
             if (problemRepository.findBySlug(updateDto.getSlug()).isPresent()) {
-                throw new BadRequestException("Bài toán với slug '" + updateDto.getSlug() + "' đã tồn tại.");
+                throw new AppException(ProblemErrorCode.SLUG_ALREADY_EXISTS);
             }
         }
 
@@ -132,7 +127,7 @@ public class ProblemServiceImpl implements ProblemService {
         log.info("Deleting problem ID: {}", id);
 
         Problem problem = problemRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bài toán với ID: " + id));
+                .orElseThrow(() -> new AppException(ProblemErrorCode.PROBLEM_NOT_FOUND));
 
         problemRepository.delete(problem);
         log.info("Successfully deleted problem ID: {}", id);
@@ -144,7 +139,7 @@ public class ProblemServiceImpl implements ProblemService {
         log.info("Adding solution to problem ID: {}", problemId);
 
         Problem problem = problemRepository.findById(problemId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bài toán với ID: " + problemId));
+                .orElseThrow(() -> new AppException(ProblemErrorCode.PROBLEM_NOT_FOUND));
 
         Solution solution = problemMapper.toSolutionEntity(solutionDto, problem);
         Solution savedSolution = solutionRepository.save(solution);

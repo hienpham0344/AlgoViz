@@ -2,13 +2,13 @@ package com.aisc.algoviz.problem.controller;
 
 import com.aisc.algoviz.common.dto.ApiResponse;
 import com.aisc.algoviz.common.dto.PageResponse;
-import com.aisc.algoviz.problem.dto.ProblemDetailDto;
-import com.aisc.algoviz.problem.dto.ProblemSummaryDto;
-import com.aisc.algoviz.problem.dto.SolutionResponseDto;
 import com.aisc.algoviz.problem.dto.request.CreateProblemRequestDto;
 import com.aisc.algoviz.problem.dto.request.CreateSolutionRequestDto;
 import com.aisc.algoviz.problem.dto.request.ProblemFilterRequest;
 import com.aisc.algoviz.problem.dto.request.UpdateProblemRequestDto;
+import com.aisc.algoviz.problem.dto.response.ProblemDetailDto;
+import com.aisc.algoviz.problem.dto.response.ProblemSummaryDto;
+import com.aisc.algoviz.problem.dto.response.SolutionResponseDto;
 import com.aisc.algoviz.problem.service.ProblemService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
