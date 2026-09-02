@@ -1,4 +1,4 @@
-package com.aisc.algoviz.problem.repository.specification;
+package com.aisc.algoviz.problem.repository;
 
 import com.aisc.algoviz.problem.dto.request.ProblemFilterRequest;
 import com.aisc.algoviz.problem.entity.Problem;

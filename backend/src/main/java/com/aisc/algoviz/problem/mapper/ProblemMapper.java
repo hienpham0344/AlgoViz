@@ -1,166 +1,91 @@
 package com.aisc.algoviz.problem.mapper;
 
-import com.aisc.algoviz.problem.dto.ProblemDetailDto;
-import com.aisc.algoviz.problem.dto.ProblemSummaryDto;
-import com.aisc.algoviz.problem.dto.SolutionResponseDto;
 import com.aisc.algoviz.problem.dto.request.CreateProblemRequestDto;
 import com.aisc.algoviz.problem.dto.request.CreateSolutionRequestDto;
 import com.aisc.algoviz.problem.dto.request.UpdateProblemRequestDto;
+import com.aisc.algoviz.problem.dto.response.ProblemDetailDto;
+import com.aisc.algoviz.problem.dto.response.ProblemSummaryDto;
+import com.aisc.algoviz.problem.dto.response.SolutionResponseDto;
 import com.aisc.algoviz.problem.entity.Problem;
 import com.aisc.algoviz.problem.entity.Solution;
-import org.springframework.stereotype.Component;
+import org.mapstruct.*;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 
 /**
- * Component chuyên trách chuyển đổi dữ liệu hai chiều giữa Entity (Database) và DTOs.
- * Đảm bảo nguyên lý Single Responsibility Principle (SRP).
+ * Interface Mapper chuyên trách chuyển đổi dữ liệu hai chiều giữa Entity (Database) và DTOs.
+ * Triển khai tự động bằng thư viện MapStruct.
  *
  * @author AlgoViz Development Team
  */
-@Component
-public class ProblemMapper {
+@Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+public interface ProblemMapper {
 
     /**
      * Chuyển đổi từ Problem Entity sang ProblemSummaryDto (Dành cho trang danh sách).
      */
-    public ProblemSummaryDto toSummaryDto(Problem problem) {
-        if (problem == null) return null;
-
-        return ProblemSummaryDto.builder()
-                .id(problem.getId())
-                .leetcodeId(problem.getLeetcodeId())
-                .title(problem.getTitle())
-                .slug(problem.getSlug())
-                .difficulty(problem.getDifficulty())
-                .patternTags(problem.getPatternTags() != null ? new ArrayList<>(problem.getPatternTags()) : new ArrayList<>())
-                .build();
-    }
+    ProblemSummaryDto toSummaryDto(Problem problem);
 
     /**
      * Chuyển đổi từ Problem Entity sang ProblemDetailDto (Dành cho màn chi tiết bài toán).
      */
-    public ProblemDetailDto toDetailDto(Problem problem) {
-        if (problem == null) return null;
-
-        List<SolutionResponseDto> solutionDtos = problem.getSolutions() != null
-                ? problem.getSolutions().stream().map(this::toSolutionResponseDto).toList()
-                : new ArrayList<>();
-
-        return ProblemDetailDto.builder()
-                .id(problem.getId())
-                .leetcodeId(problem.getLeetcodeId())
-                .title(problem.getTitle())
-                .slug(problem.getSlug())
-                .difficulty(problem.getDifficulty())
-                .description(problem.getDescription())
-                .patternTags(problem.getPatternTags() != null ? new ArrayList<>(problem.getPatternTags()) : new ArrayList<>())
-                .solutions(solutionDtos)
-                .build();
-    }
+    ProblemDetailDto toDetailDto(Problem problem);
 
     /**
      * Chuyển đổi từ Solution Entity sang SolutionResponseDto.
      */
-    public SolutionResponseDto toSolutionResponseDto(Solution solution) {
-        if (solution == null) return null;
-
-        return SolutionResponseDto.builder()
-                .id(solution.getId())
-                .patternId(solution.getPatternId())
-                .codeSnippet(solution.getCodeSnippet())
-                .explanation(solution.getExplanation())
-                .timeComplexity(solution.getTimeComplexity())
-                .spaceComplexity(solution.getSpaceComplexity())
-                .language(solution.getLanguage())
-                .build();
-    }
+    SolutionResponseDto toSolutionResponseDto(Solution solution);
 
     /**
      * Chuyển đổi từ CreateProblemRequestDto sang Problem Entity để lưu Database.
      */
-    public Problem toEntity(CreateProblemRequestDto dto) {
-        if (dto == null) return null;
-
-        String slug = (dto.getSlug() != null && !dto.getSlug().isBlank())
-                ? dto.getSlug().trim()
-                : generateSlug(dto.getTitle());
-
-        Problem problem = Problem.builder()
-                .leetcodeId(dto.getLeetcodeId())
-                .title(dto.getTitle().trim())
-                .slug(slug)
-                .difficulty(dto.getDifficulty())
-                .description(dto.getDescription())
-                .patternTags(dto.getPatternTags() != null ? new ArrayList<>(dto.getPatternTags()) : new ArrayList<>())
-                .build();
-
-        if (dto.getSolutions() != null && !dto.getSolutions().isEmpty()) {
-            List<Solution> solutions = dto.getSolutions().stream()
-                    .map(solDto -> toSolutionEntity(solDto, problem))
-                    .toList();
-            problem.setSolutions(new ArrayList<>(solutions));
-        }
-
-        return problem;
-    }
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "slug", expression = "java(mapSlug(dto.getSlug(), dto.getTitle()))")
+    @Mapping(target = "solutions", source = "solutions")
+    Problem toEntity(CreateProblemRequestDto dto);
 
     /**
-     * Chuyển đổi từ CreateSolutionRequestDto sang Solution Entity liên kết với Problem.
+     * Chuyển đổi từ CreateSolutionRequestDto sang Solution Entity.
      */
-    public Solution toSolutionEntity(CreateSolutionRequestDto dto, Problem problem) {
-        if (dto == null) return null;
-
-        return Solution.builder()
-                .problem(problem)
-                .patternId(dto.getPatternId())
-                .codeSnippet(dto.getCodeSnippet())
-                .explanation(dto.getExplanation())
-                .timeComplexity(dto.getTimeComplexity())
-                .spaceComplexity(dto.getSpaceComplexity())
-                .language(dto.getLanguage() != null && !dto.getLanguage().isBlank() ? dto.getLanguage() : "Java")
-                .build();
-    }
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "problem", source = "problem")
+    @Mapping(target = "language", expression = "java(dto.getLanguage() != null && !dto.getLanguage().isBlank() ? dto.getLanguage() : \"Java\")")
+    Solution toSolutionEntity(CreateSolutionRequestDto dto, Problem problem);
 
     /**
      * Cập nhật thông tin bài toán Entity có sẵn từ UpdateProblemRequestDto.
      */
-    public void updateEntityFromDto(UpdateProblemRequestDto dto, Problem problem) {
-        if (dto == null || problem == null) return;
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "solutions", ignore = true)
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    void updateEntityFromDto(UpdateProblemRequestDto dto, @MappingTarget Problem problem);
 
-        if (dto.getLeetcodeId() != null) {
-            problem.setLeetcodeId(dto.getLeetcodeId());
-        }
-        if (dto.getTitle() != null && !dto.getTitle().isBlank()) {
-            problem.setTitle(dto.getTitle().trim());
-            if (dto.getSlug() == null || dto.getSlug().isBlank()) {
-                problem.setSlug(generateSlug(dto.getTitle()));
-            }
-        }
-        if (dto.getSlug() != null && !dto.getSlug().isBlank()) {
-            problem.setSlug(dto.getSlug().trim());
-        }
-        if (dto.getDifficulty() != null) {
-            problem.setDifficulty(dto.getDifficulty());
-        }
-        if (dto.getDescription() != null) {
-            problem.setDescription(dto.getDescription());
-        }
-        if (dto.getPatternTags() != null) {
-            problem.setPatternTags(new ArrayList<>(dto.getPatternTags()));
+    /**
+     * Thiết lập liên kết hai chiều giữa Problem và Solution sau khi MapStruct chuyển đổi List Solutions.
+     */
+    @AfterMapping
+    default void linkSolutions(@MappingTarget Problem problem) {
+        if (problem.getSolutions() != null) {
+            problem.getSolutions().forEach(solution -> solution.setProblem(problem));
         }
     }
 
     /**
-     * Hàm tiện ích tự động sinh ra chuỗi Slug URL chuẩn SEO từ Tiêu đề bài toán (Title).
-     * Ví dụ: "Two Sum" -> "two-sum", "Add Two Numbers!" -> "add-two-numbers"
-     *
-     * @param title Tiêu đề bài toán
-     * @return Chuỗi Slug chuẩn
+     * Utility map slug: Nếu DTO cung cấp slug thì dùng, ngược lại tự động tạo từ title.
      */
-    public String generateSlug(String title) {
+    default String mapSlug(String slug, String title) {
+        if (slug != null && !slug.isBlank()) {
+            return slug.trim();
+        }
+        return generateSlug(title);
+    }
+
+    /**
+     * Hàm tiện ích tự động sinh ra chuỗi Slug URL chuẩn SEO từ Tiêu đề bài toán (Title).
+     */
+    default String generateSlug(String title) {
         if (title == null || title.isBlank()) return "";
         return title.toLowerCase(Locale.ROOT)
                 .replaceAll("[^a-z0-9\\s-]", "")
