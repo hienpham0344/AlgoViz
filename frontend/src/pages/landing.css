@@ -16,10 +16,22 @@
   --font-display: "Poppins", "Trebuchet MS", sans-serif;
   --font-body: "Nunito Sans", "Segoe UI", sans-serif;
   --font-mono: "Roboto Mono", Consolas, monospace;
-  --shadow-raised: 0 calc(32px * var(--scale)) calc(86px * var(--scale)) rgb(0 0 0 / 32%), 0 calc(3px * var(--scale)) calc(68px * var(--scale)) rgb(69 42 124 / 22%);
-  --shadow-raised-sm: 0 calc(17px * var(--scale)) calc(40px * var(--scale)) rgb(0 0 0 / 24%), 0 calc(2px * var(--scale)) calc(28px * var(--scale)) rgb(69 42 124 / 18%);
-  --shadow-recessed: inset calc(8px * var(--scale)) calc(8px * var(--scale)) calc(18px * var(--scale)) rgb(4 6 30 / 58%), inset calc(-8px * var(--scale)) calc(-8px * var(--scale)) calc(18px * var(--scale)) rgb(88 101 242 / 11%);
-  --shadow-recessed-sm: inset calc(5px * var(--scale)) calc(5px * var(--scale)) calc(11px * var(--scale)) rgb(4 6 30 / 50%), inset calc(-4px * var(--scale)) calc(-4px * var(--scale)) calc(10px * var(--scale)) rgb(88 101 242 / 12%);
+  --shadow-raised:
+    0 calc(32px * var(--scale)) calc(86px * var(--scale)) rgb(0 0 0 / 32%),
+    0 calc(3px * var(--scale)) calc(68px * var(--scale)) rgb(69 42 124 / 22%);
+  --shadow-raised-sm:
+    0 calc(17px * var(--scale)) calc(40px * var(--scale)) rgb(0 0 0 / 24%),
+    0 calc(2px * var(--scale)) calc(28px * var(--scale)) rgb(69 42 124 / 18%);
+  --shadow-recessed:
+    inset calc(8px * var(--scale)) calc(8px * var(--scale))
+      calc(18px * var(--scale)) rgb(4 6 30 / 58%),
+    inset calc(-8px * var(--scale)) calc(-8px * var(--scale))
+      calc(18px * var(--scale)) rgb(88 101 242 / 11%);
+  --shadow-recessed-sm:
+    inset calc(5px * var(--scale)) calc(5px * var(--scale))
+      calc(11px * var(--scale)) rgb(4 6 30 / 50%),
+    inset calc(-4px * var(--scale)) calc(-4px * var(--scale))
+      calc(10px * var(--scale)) rgb(88 101 242 / 12%);
   --radius-panel: calc(32px * var(--scale));
   --radius-nav: calc(40px * var(--scale));
   --radius-button: calc(16px * var(--scale));
@@ -72,7 +84,11 @@
 .dusk-intro,
 .dusk-course-card,
 .dusk-cta {
-  transition: transform 240ms cubic-bezier(.2, 0, 0, 1), box-shadow 240ms cubic-bezier(.2, 0, 0, 1), border-color 240ms cubic-bezier(.2, 0, 0, 1), background-color 240ms cubic-bezier(.2, 0, 0, 1);
+  transition:
+    transform 240ms cubic-bezier(0.2, 0, 0, 1),
+    box-shadow 240ms cubic-bezier(0.2, 0, 0, 1),
+    border-color 240ms cubic-bezier(0.2, 0, 0, 1),
+    background-color 240ms cubic-bezier(0.2, 0, 0, 1);
 }
 
 .dusk-parallax {
@@ -178,7 +194,15 @@
 
 .dusk-hero-vignette {
   z-index: -1;
-  background: linear-gradient(90deg, rgb(10 13 58 / 92%) 0%, rgb(10 13 58 / 70%) 42%, rgb(10 13 58 / 18%) 78%, rgb(10 13 58 / 42%) 100%), linear-gradient(180deg, rgb(10 13 58 / 10%) 55%, rgb(10 13 58 / 70%) 100%);
+  background:
+    linear-gradient(
+      90deg,
+      rgb(10 13 58 / 92%) 0%,
+      rgb(10 13 58 / 70%) 42%,
+      rgb(10 13 58 / 18%) 78%,
+      rgb(10 13 58 / 42%) 100%
+    ),
+    linear-gradient(180deg, rgb(10 13 58 / 10%) 55%, rgb(10 13 58 / 70%) 100%);
 }
 
 .dusk-hero-content {
@@ -191,7 +215,8 @@
   font-size: calc(64px * var(--scale));
   line-height: 1.06;
   letter-spacing: -0.045em;
-  text-shadow: 0 calc(6px * var(--scale)) calc(24px * var(--scale)) rgb(0 0 0 / 32%);
+  text-shadow: 0 calc(6px * var(--scale)) calc(24px * var(--scale))
+    rgb(0 0 0 / 32%);
 }
 
 .dusk-hero-subtitle {
@@ -243,7 +268,7 @@
 
 .dusk-intro {
   display: grid;
-  grid-template-columns: minmax(0, 1.06fr) minmax(0, .94fr);
+  grid-template-columns: minmax(0, 1.06fr) minmax(0, 0.94fr);
   align-items: center;
   gap: calc(64px * var(--scale));
   margin-top: calc(96px * var(--scale));
@@ -367,7 +392,9 @@
   color: var(--text);
   background: rgb(10 13 58 / 30%);
   opacity: 0;
-  transition: opacity 180ms ease, transform 180ms ease;
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
 }
 
 .dusk-course-card:hover .dusk-course-link,
@@ -393,7 +420,6 @@
 .dusk-dot.is-active {
   background: var(--amber);
 }
-
 
 @media (max-width: 760px) {
   .dusk-shell {
