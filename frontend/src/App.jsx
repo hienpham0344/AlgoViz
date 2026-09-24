@@ -1,122 +1,80 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useEffect, useState } from "react";
+import AnalyzePage from "./pages/analyze.jsx";
+import AuthPage from "./pages/auth.jsx";
+import HistoryPage from "./pages/history.jsx";
+import LearnPage from "./pages/learn.jsx";
+import LandingPage from "./pages/landing.jsx";
+import ProfilePage from "./pages/profile.jsx";
+import ProblemsPage from "./pages/problem/problems.jsx";
+import ProblemDetailsPage from "./pages/problem/problemDetails.jsx";
+
+const AUTH_STORAGE_KEY = "algoviz-auth";
+const USER_NAME_STORAGE_KEY = "algoviz-user-name";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [hash, setHash] = useState(() => window.location.hash);
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    () => localStorage.getItem(AUTH_STORAGE_KEY) === "true",
+  );
+  const [userName, setUserName] = useState(
+    () => localStorage.getItem(USER_NAME_STORAGE_KEY) || "Your name",
+  );
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+  useEffect(() => {
+    const handleHashChange = () => setHash(window.location.hash);
+    const handleLogout = () => {
+      setIsAuthenticated(false);
+      setUserName("Your name");
+    };
+    window.addEventListener("hashchange", handleHashChange);
+    window.addEventListener("algoviz:logout", handleLogout);
+    return () => {
+      window.removeEventListener("hashchange", handleHashChange);
+      window.removeEventListener("algoviz:logout", handleLogout);
+    };
+  }, []);
 
-      <div className="ticks"></div>
+  const handleAuthenticated = (name) => {
+    localStorage.setItem(AUTH_STORAGE_KEY, "true");
+    localStorage.setItem(USER_NAME_STORAGE_KEY, name);
+    setIsAuthenticated(true);
+    setUserName(name);
+    window.location.hash = "problems";
+  };
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+  if (!isAuthenticated) {
+    if (hash === "#login" || hash === "#register") {
+      return <AuthPage mode={hash.slice(1)} onAuthenticated={handleAuthenticated} />;
+    }
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+    return <LandingPage />;
+  }
+
+  if (hash === "#login" || hash === "#register" || hash === "" || hash === "#top") {
+    return <ProblemsPage userName={userName} onOpenProblem={() => { window.location.hash = "problem-details"; }} />;
+  }
+
+  if (hash === "#analyze") {
+    return <AnalyzePage userName={userName} />;
+  }
+
+  if (hash === "#problem-details") {
+    return <ProblemDetailsPage userName={userName} />;
+  }
+
+  if (hash === "#history") {
+    return <HistoryPage userName={userName} />;
+  }
+
+  if (hash === "#learn") {
+    return <LearnPage userName={userName} />;
+  }
+
+  if (hash === "#profile") {
+    return <ProfilePage userName={userName} />;
+  }
+
+  return <ProblemsPage userName={userName} onOpenProblem={() => { window.location.hash = "problem-details"; }} />;
 }
 
-export default App
+export default App;
