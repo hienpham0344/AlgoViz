@@ -45,13 +45,17 @@
 .av-navigation-bar .av-brand {
   flex: none;
   color: inherit;
-  font: 700 32px/1 Inter, sans-serif;
+  font:
+    700 32px/1 Inter,
+    sans-serif;
   text-decoration: none;
 }
 
 .av-landing-bar .av-brand {
   color: inherit;
-  font: 700 48px/1 Inter, sans-serif;
+  font:
+    700 48px/1 Inter,
+    sans-serif;
   text-decoration: none;
 }
 
@@ -68,7 +72,9 @@
   align-items: center;
   min-height: 44px;
   color: inherit;
-  font: 500 15px/1 Inter, sans-serif;
+  font:
+    500 15px/1 Inter,
+    sans-serif;
   text-decoration: none;
 }
 
@@ -88,7 +94,9 @@
 .av-user {
   position: relative;
   flex: none;
-  font: 500 15px/1 Inter, sans-serif;
+  font:
+    500 15px/1 Inter,
+    sans-serif;
 }
 
 .av-user-avatar-button {
@@ -139,7 +147,9 @@
   border-radius: 8px;
   color: #cac3d9;
   display: flex;
-  font: 500 13px/1 Inter, sans-serif;
+  font:
+    500 13px/1 Inter,
+    sans-serif;
   text-decoration: none;
 }
 
@@ -169,7 +179,9 @@
   margin: 2px 0;
   border-radius: 999px;
   background: currentColor;
-  transition: transform 180ms ease, opacity 180ms ease;
+  transition:
+    transform 180ms ease,
+    opacity 180ms ease;
 }
 
 .av-navigation-bar.is-menu-open .av-menu-toggle span:nth-child(1) {
