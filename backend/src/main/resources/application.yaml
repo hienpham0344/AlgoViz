@@ -2,13 +2,16 @@ server:
   port: 8080
 
 spring:
+  config:
+    import: optional:file:./.env[.properties]
+
   application:
     name: algoViz
 
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://db.hdkwlhukwmrifmagvxhi.supabase.co:5432/postgres}
-    username: ${SPRING_DATASOURCE_USERNAME:postgres}
-    password: ${SPRING_DATASOURCE_PASSWORD:Aigoviz2026}
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -28,4 +31,10 @@ springdoc:
     path: /swagger-ui.html
     operations-sorter: method
     tags-sorter: alpha
+
+# Import bộ dữ liệu phát triển. Bật tường minh bằng ALGOVIZ_SEED_ENABLED=true.
+algoviz:
+  seed:
+    enabled: ${ALGOVIZ_SEED_ENABLED:false}
+    data-directory: ${ALGOVIZ_DATA_DIRECTORY:}
 
