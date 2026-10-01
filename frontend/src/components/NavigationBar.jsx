@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { clearAuthData } from "../services/api.js";
 import "./components.css";
 
 const NAV_ITEMS = ["Problems", "Analyze", "History", "Learn"];
@@ -67,8 +68,7 @@ function NavigationBar({
           <a
             href="#top"
             onClick={() => {
-              localStorage.removeItem("algoviz-auth");
-              localStorage.removeItem("algoviz-user-name");
+              clearAuthData();
               window.dispatchEvent(new Event("algoviz:logout"));
               closeMenu();
             }}
