@@ -281,7 +281,7 @@ function DetailsIcon({ name, className = "" }) {
   );
 }
 
-function BreadcrumbBar() {
+function BreadcrumbBar({ problem }) {
   return (
     <div className="details-breadcrumb-bar">
       <nav className="details-breadcrumbs" aria-label="Problem breadcrumb">
@@ -289,9 +289,9 @@ function BreadcrumbBar() {
           <DetailsIcon name="arrow-left" /> Problems
         </a>
         <span>/</span>
-        <span>Sorting Algorithms</span>
+        <span>{problem?.category || "Algorithms"}</span>
         <span>/</span>
-        <strong>Bubble Sort</strong>
+        <strong>{problem?.title || "Bubble Sort"}</strong>
       </nav>
       <span className="details-ready-status">
         <DetailsIcon name="status-ready" /> Interactive Visualizer Ready
@@ -301,12 +301,19 @@ function BreadcrumbBar() {
 }
 
 function ProblemHeader({
+  problem,
   isBookmarked,
   onBookmark,
   onShare,
   onRunVisualizer,
   onSubmit,
 }) {
+  const title = problem?.title || "Bubble Sort";
+  const difficulty = problem?.difficulty || "Easy";
+  const idFormatted = problem?.id ? `#0${problem.id}` : "ID #042";
+  const category = problem?.category || "Array";
+  const diffClass = difficulty.toLowerCase() === "hard" ? "difficulty-hard" : difficulty.toLowerCase() === "medium" ? "difficulty-medium" : "difficulty-easy";
+
   return (
     <section
       className="details-problem-header"
@@ -322,18 +329,18 @@ function ProblemHeader({
       />
       <div className="details-problem-identity">
         <div className="details-title-row">
-          <h1 id="detail-problem-title">Bubble Sort</h1>
+          <h1 id="detail-problem-title">{title}</h1>
           <span className="details-difficulty">
-            <DetailsIcon name="difficulty-easy" /> Easy
+            <DetailsIcon name={diffClass} /> {difficulty}
           </span>
-          <span className="details-problem-id">ID #042</span>
+          <span className="details-problem-id">{idFormatted}</span>
         </div>
         <div className="details-meta-row">
           <span>Category:</span>
-          <span className="details-meta-tag">Array</span>
-          <span className="details-meta-tag">Comparison Sort</span>
-          <span className="details-meta-tag">In-Place</span>
-          <span className="details-meta-tag details-meta-tag--mono">O(N²)</span>
+          <span className="details-meta-tag">{category}</span>
+          <span className="details-meta-tag">Algorithm</span>
+          <span className="details-meta-tag">Optimized</span>
+          <span className="details-meta-tag details-meta-tag--mono">{difficulty === "Hard" ? "O(N log N)" : difficulty === "Medium" ? "O(N)" : "O(1)"}</span>
         </div>
       </div>
       <div className="details-header-actions" aria-label="Problem actions">
@@ -411,42 +418,62 @@ function ComplexityMetric({ icon, label, value, note, className = "" }) {
   );
 }
 
-function OverviewCard() {
+function OverviewCard({ problem }) {
+  const isLoaded = Boolean(problem);
+  const title = isLoaded ? problem.title : "Concept Brief";
+  const category = isLoaded ? problem.category : "Stable Sort";
+  const description = isLoaded
+    ? (problem.description || problem.shortDescription || "Solve this algorithmic challenge.")
+    : "Sort an array of elements by repeatedly swapping adjacent elements if they are in the wrong order until the entire array is sorted.";
+  const timeComplexity = isLoaded
+    ? (problem.difficulty === "Hard" ? "O(N log N)" : problem.difficulty === "Medium" ? "O(N)" : "O(1)")
+    : "O(N²)";
+  const spaceComplexity = "O(1)";
+
   return (
     <article className="details-card details-overview-card">
       <div className="details-card-heading">
-        <h2>Concept Brief</h2>
-        <span>Stable Sort</span>
+        <h2>{title}</h2>
+        <span>{category}</span>
       </div>
-      <p className="details-lead-copy">
-        Sort an array of elements by repeatedly swapping adjacent elements if
-        they are in the wrong order until the entire array is sorted.
-      </p>
-      <p className="details-support-copy">
-        In each iteration, the largest unsorted element &quot;bubbles up&quot;
-        to its correct position at the end of the array, similar to air bubbles
-        rising to the water&apos;s surface.
-      </p>
+      <p className="details-lead-copy">{description}</p>
+      {isLoaded && problem.inputFormat && (
+        <p className="details-support-copy">
+          <strong>Input Format:</strong> {problem.inputFormat}
+        </p>
+      )}
+      {isLoaded && problem.outputFormat && (
+        <p className="details-support-copy">
+          <strong>Output Format:</strong> {problem.outputFormat}
+        </p>
+      )}
+      {!isLoaded && (
+        <p className="details-support-copy">
+          In each iteration, the largest unsorted element &quot;bubbles up&quot;
+          to its correct position at the end of the array, similar to air bubbles
+          rising to the water&apos;s surface.
+        </p>
+      )}
       <div className="complexity-grid">
         <ComplexityMetric
           icon="time-complexity"
           label="Time Complexity"
-          value="O(N²)"
-          note="Best Case: O(N)"
+          value={timeComplexity}
+          note="Target runtime"
           className="complexity-metric--amber"
         />
         <ComplexityMetric
           icon="space-complexity"
           label="Space Complexity"
-          value="O(1)"
+          value={spaceComplexity}
           note="In-place auxiliary"
           className="complexity-metric--mint"
         />
         <ComplexityMetric
           icon="stability"
-          label="Stability"
-          value="Stable"
-          note="Preserves key order"
+          label="Difficulty"
+          value={problem?.difficulty || "Standard"}
+          note="Verified test suite"
           className="complexity-metric--soft"
         />
       </div>
@@ -454,27 +481,43 @@ function OverviewCard() {
   );
 }
 
-function ConstraintsCard() {
+function ConstraintsCard({ problem }) {
+  const constraintsText = problem?.constraints;
+  const constraintsList = constraintsText
+    ? constraintsText.split("\n").filter((item) => item.trim().length > 0)
+    : null;
+
   return (
     <article className="details-card details-constraints-card">
       <h2 className="details-section-heading">
         <DetailsIcon name="input-constraints" /> Input Constraints
       </h2>
       <ul className="constraints-list">
-        <li>
-          <strong>1 ≤ n ≤ 1000</strong>
-          <span>— array length. Suitable for quadratic time algorithms.</span>
-        </li>
-        <li>
-          <strong>-10⁴ ≤ arr[i] ≤ 10⁴</strong>
-          <span>— signed integer ranges fit within 32-bit registers.</span>
-        </li>
-        <li>
-          <span>
-            Elements may contain duplicates. The relative ordering of equal keys
-            must remain unaltered.
-          </span>
-        </li>
+        {constraintsList ? (
+          constraintsList.map((constraint, idx) => (
+            <li key={idx}>
+              <strong>Constraint #{idx + 1}:</strong>
+              <span> {constraint}</span>
+            </li>
+          ))
+        ) : (
+          <>
+            <li>
+              <strong>1 ≤ n ≤ 1000</strong>
+              <span>— array length. Suitable for quadratic time algorithms.</span>
+            </li>
+            <li>
+              <strong>-10⁴ ≤ arr[i] ≤ 10⁴</strong>
+              <span>— signed integer ranges fit within 32-bit registers.</span>
+            </li>
+            <li>
+              <span>
+                Elements may contain duplicates. The relative ordering of equal keys
+                must remain unaltered.
+              </span>
+            </li>
+          </>
+        )}
       </ul>
     </article>
   );
@@ -487,14 +530,14 @@ function ExampleCard({ example }) {
         <h3>{example.label}</h3>
         <span
           className={
-            example.badge.includes("Optimized") ? "is-amber" : "is-mint"
+            example.badge?.includes("Optimized") ? "is-amber" : "is-mint"
           }
         >
-          {example.badge}
+          {example.badge || "Sample Case"}
         </span>
       </div>
       <div className="details-io-block">
-        <code>Input: arr = {example.input}</code>
+        <code>Input: {example.input}</code>
         <code>
           Output: <em>{example.output}</em>
         </code>
@@ -510,14 +553,36 @@ function ExampleCard({ example }) {
         </div>
       ) : (
         <p className="details-explanation">
-          <strong>Explanation:</strong> {example.explanation}
+          <strong>Explanation:</strong> {example.explanation || "Correct output matches expected testcase result."}
         </p>
       )}
     </article>
   );
 }
 
-function ExamplesSection() {
+function ExamplesSection({ problem }) {
+  let examplesToRender = EXAMPLES;
+
+  if (problem?.sampleTestCases && problem.sampleTestCases.length > 0) {
+    examplesToRender = problem.sampleTestCases.map((tc, idx) => ({
+      label: `Example ${idx + 1}`,
+      badge: idx === 0 ? "Standard Test" : "Edge Case",
+      input: tc.input,
+      output: tc.expectedOutput,
+      explanation: `Test case verified against problem constraints.`,
+    }));
+  } else if (problem?.sampleInput) {
+    examplesToRender = [
+      {
+        label: "Example 1",
+        badge: "Sample Case",
+        input: problem.sampleInput,
+        output: problem.sampleOutput || "Valid output",
+        explanation: "Primary sample input provided in problem definition.",
+      },
+    ];
+  }
+
   return (
     <section
       className="details-examples-section"
@@ -526,19 +591,19 @@ function ExamplesSection() {
       <h2 id="examples-title" className="details-section-heading">
         <DetailsIcon name="walkthrough" /> Walkthrough Examples
       </h2>
-      {EXAMPLES.map((example) => (
+      {examplesToRender.map((example) => (
         <ExampleCard key={example.label} example={example} />
       ))}
     </section>
   );
 }
 
-function DescriptionColumn() {
+function DescriptionColumn({ problem }) {
   return (
     <div className="details-primary-column">
-      <OverviewCard />
-      <ConstraintsCard />
-      <ExamplesSection />
+      <OverviewCard problem={problem} />
+      <ConstraintsCard problem={problem} />
+      <ExamplesSection problem={problem} />
     </div>
   );
 }
@@ -1372,7 +1437,8 @@ function DetailsFooter() {
   );
 }
 
-function ProblemDetailsPage({ userName = "Your name" }) {
+function ProblemDetailsPage({ userName = "Your name", problemId = 1 }) {
+  const [currentProblem, setCurrentProblem] = useState(null);
   const [activeTab, setActiveTab] = useState("description");
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [language, setLanguage] = useState("Python 3");
@@ -1385,6 +1451,27 @@ function ProblemDetailsPage({ userName = "Your name" }) {
   const [primaryColumnShare, setPrimaryColumnShare] = useState(50);
   const workspaceRef = useRef(null);
   const runnerRef = useRef(null);
+
+  useEffect(() => {
+    async function loadProblem() {
+      try {
+        const data = await api.getProblemById(problemId);
+        if (data) {
+          setCurrentProblem(data);
+          setCodeByLanguage((prev) => ({
+            ...prev,
+            "Python 3": data.starterCodePython || prev["Python 3"],
+            "C++": data.starterCodeCpp || prev["C++"],
+            "JavaScript": data.starterCodeJs || prev["JavaScript"],
+            "Java": data.starterCodeJava || prev["Java"] || "",
+          }));
+        }
+      } catch (err) {
+        console.warn("Could not load problem from API, fallback to default:", err);
+      }
+    }
+    loadProblem();
+  }, [problemId]);
 
   const code = codeByLanguage[language];
 
@@ -1555,8 +1642,9 @@ function ProblemDetailsPage({ userName = "Your name" }) {
           userName={userName}
           className="details-navigation"
         />
-        <BreadcrumbBar />
+        <BreadcrumbBar problem={currentProblem} />
         <ProblemHeader
+          problem={currentProblem}
           isBookmarked={isBookmarked}
           onBookmark={() => {
             setIsBookmarked((current) => !current);
@@ -1584,7 +1672,7 @@ function ProblemDetailsPage({ userName = "Your name" }) {
                 "--details-secondary-share": `${100 - primaryColumnShare}fr`,
               }}
             >
-              <DescriptionColumn />
+              <DescriptionColumn problem={currentProblem} />
               <button
                 className="details-workspace-splitter"
                 type="button"

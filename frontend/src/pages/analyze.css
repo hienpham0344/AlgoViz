@@ -880,6 +880,132 @@
   line-height: 1.6;
 }
 
+/* AI Results & Feedback Panels */
+.analyze-results-panel,
+.analyze-feedback-panel,
+.analyze-review-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 437px;
+  padding: 24px;
+}
+
+.ai-card {
+  background: var(--analyze-surface);
+  border: 1px solid var(--analyze-border);
+  border-radius: var(--analyze-radius-card);
+  padding: 20px;
+}
+
+.ai-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.ai-card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--analyze-font-display);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--analyze-text);
+}
+
+.ai-badge-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ai-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--analyze-radius-pill);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ai-badge--mint {
+  color: var(--analyze-mint);
+  background: rgb(1 229 153 / 12%);
+  border: 1px solid rgb(1 229 153 / 30%);
+}
+
+.ai-badge--amber {
+  color: var(--analyze-amber);
+  background: rgb(255 176 32 / 12%);
+  border: 1px solid rgb(255 176 32 / 30%);
+}
+
+.ai-badge--purple {
+  color: var(--analyze-primary-bright);
+  background: rgb(112 59 247 / 15%);
+  border: 1px solid rgb(112 59 247 / 35%);
+}
+
+.ai-summary-text {
+  color: var(--analyze-dim);
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.ai-item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ai-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--analyze-radius-sm);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--analyze-border);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--analyze-text);
+}
+
+.ai-item--warning {
+  border-left: 3px solid var(--analyze-amber);
+}
+
+.ai-item--tip {
+  border-left: 3px solid var(--analyze-mint);
+}
+
+.ai-code-display {
+  background: #0f0a1c;
+  border: 1px solid var(--analyze-border);
+  border-radius: var(--analyze-radius-sm);
+  padding: 16px;
+  font-family: var(--analyze-font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+  color: #e2d9f3;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.ai-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .analyze-footer {
   margin-top: 220px;
   padding: 40px max(24px, calc((100% - 1232px) / 2)) 64px;

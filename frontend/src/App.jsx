@@ -50,16 +50,25 @@ function App() {
     return <LandingPage />;
   }
 
-  if (hash === "#login" || hash === "#register" || hash === "" || hash === "#top") {
-    return <ProblemsPage userName={userName} onOpenProblem={() => { window.location.hash = "problem-details"; }} />;
+  const getProblemIdFromHash = () => {
+    const match = hash.match(/[?&]id=(\d+)/);
+    return match ? Number(match[1]) : 1;
+  };
+
+  const handleOpenProblem = (problem) => {
+    window.location.hash = `problem-details?id=${problem?.id || 1}`;
+  };
+
+  if (hash === "#login" || hash === "#register" || hash === "" || hash === "#top" || hash === "#problems") {
+    return <ProblemsPage userName={userName} onOpenProblem={handleOpenProblem} />;
   }
 
   if (hash === "#analyze") {
     return <AnalyzePage userName={userName} />;
   }
 
-  if (hash === "#problem-details") {
-    return <ProblemDetailsPage userName={userName} />;
+  if (hash.startsWith("#problem-details")) {
+    return <ProblemDetailsPage userName={userName} problemId={getProblemIdFromHash()} />;
   }
 
   if (hash === "#history") {
@@ -74,7 +83,7 @@ function App() {
     return <ProfilePage userName={userName} />;
   }
 
-  return <ProblemsPage userName={userName} onOpenProblem={() => { window.location.hash = "problem-details"; }} />;
+  return <ProblemsPage userName={userName} onOpenProblem={handleOpenProblem} />;
 }
 
 export default App;

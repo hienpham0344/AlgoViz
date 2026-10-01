@@ -611,7 +611,9 @@ function ProblemsPage({ userName = "Your name", onOpenProblem }) {
   const pickRandomProblem = () => {
     const candidates = filteredProblems.length > 0 ? filteredProblems : PROBLEMS;
     const selected = candidates[Math.floor(Math.random() * candidates.length)];
-    setAnnouncement(`Random problem selected: ${selected.title}.`);
+    if (selected) {
+      handleProblemAction(selected);
+    }
   };
 
   const handleProblemAction = (problem) => {
@@ -619,7 +621,7 @@ function ProblemsPage({ userName = "Your name", onOpenProblem }) {
       onOpenProblem(problem);
       return;
     }
-    window.location.hash = "problem-details";
+    window.location.hash = `problem-details?id=${problem?.id || 1}`;
   };
 
   return (
