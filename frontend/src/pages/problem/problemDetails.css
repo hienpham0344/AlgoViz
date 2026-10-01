@@ -460,6 +460,16 @@
   font-size: 15px;
   line-height: 1.6;
 }
+.inline-code {
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-size: 0.88em;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(124, 93, 250, 0.15);
+  color: #a78bfa;
+  border: 1px solid rgba(124, 93, 250, 0.25);
+  white-space: nowrap;
+}
 .complexity-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NavigationBar } from "../../components/index.js";
-import { api } from "../../services/api.js";
+import { api, getToken } from "../../services/api.js";
 import "./problemDetails.css";
 
 const DETAIL_TABS = [
@@ -418,6 +418,21 @@ function ComplexityMetric({ icon, label, value, note, className = "" }) {
   );
 }
 
+/**
+ * Converts inline backtick spans (e.g. `true`) to <code> elements.
+ * Handles plain text safely — no dangerouslySetInnerHTML needed.
+ */
+function renderInlineMarkdown(text) {
+  if (!text) return null;
+  const parts = text.split(/(`[^`]+`)/);
+  return parts.map((part, i) => {
+    if (part.startsWith("`") && part.endsWith("`")) {
+      return <code key={i} className="inline-code">{part.slice(1, -1)}</code>;
+    }
+    return part;
+  });
+}
+
 function OverviewCard({ problem }) {
   const isLoaded = Boolean(problem);
   const title = isLoaded ? problem.title : "Concept Brief";
@@ -436,7 +451,7 @@ function OverviewCard({ problem }) {
         <h2>{title}</h2>
         <span>{category}</span>
       </div>
-      <p className="details-lead-copy">{description}</p>
+      <p className="details-lead-copy">{renderInlineMarkdown(description)}</p>
       {isLoaded && problem.inputFormat && (
         <p className="details-support-copy">
           <strong>Input Format:</strong> {problem.inputFormat}
@@ -1691,6 +1706,29 @@ function ProblemDetailsPage({ userName = "Your name", problemId = 1 }) {
 
   const handleSubmit = async () => {
     if (executionState === "running") return;
+
+    // Guard: require real JWT token before hitting the backend
+    const currentToken = getToken();
+    console.log("[AlgoViz] Submit: token present?", Boolean(currentToken), currentToken ? currentToken.substring(0, 20) + "..." : "NONE");
+    if (!currentToken) {
+      setExecutionState("failed");
+      setExecutionResult({
+        status: "Login Required",
+        actual: "No session token found. Please log out and log in again to submit.",
+        expected: "",
+        runtimeMs: 0,
+        memoryMb: 0,
+        matchPercent: 0,
+      });
+      setAnnouncement("Please log in to submit solutions.");
+      // Redirect to login after short delay
+      setTimeout(() => {
+        window.dispatchEvent(new Event("algoviz:logout"));
+        window.location.hash = "login";
+      }, 2000);
+      return;
+    }
+
     setExecutionState("running");
     setRunnerTab("console");
     setAnnouncement("Submitting solution to Spring Boot server...");
@@ -1727,9 +1765,9 @@ function ProblemDetailsPage({ userName = "Your name", problemId = 1 }) {
       }
     } catch (err) {
       console.warn("API Submit error:", err);
-      const isAuthErr = err.message && (err.message.includes("401") || err.message.includes("403") || err.message.includes("JWT") || err.message.includes("User not found"));
+      const isAuthErr = err.message && (err.message.includes("401") || err.message.includes("403") || err.message.includes("JWT") || err.message.includes("User not found") || err.message.includes("Forbidden") || err.message.includes("Unauthorized"));
       const errMsg = isAuthErr
-        ? "Please log in to submit solutions to leaderboard."
+        ? "Session expired. Please log out and log in again."
         : (err.message || "Failed to submit code.");
 
       setExecutionState("failed");
@@ -1743,6 +1781,7 @@ function ProblemDetailsPage({ userName = "Your name", problemId = 1 }) {
       });
       setAnnouncement(`Submission error: ${errMsg}`);
     }
+
   };
   const handleSequenceAnnouncement = (message) => setAnnouncement(message);
 
