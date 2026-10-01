@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NavigationBar } from "../../components/index.js";
+import { api } from "../../services/api.js";
 import "./problems.css";
 
 const TOTAL_PROBLEMS = 125;
@@ -533,7 +534,38 @@ function ProblemsPage({ userName = "Your name", onOpenProblem }) {
   });
   const [page, setPage] = useState(1);
   const [announcement, setAnnouncement] = useState("");
+  const [problemsList, setProblemsList] = useState(PROBLEMS);
+  const [loading, setLoading] = useState(false);
   const searchInputRef = useRef(null);
+
+  useEffect(() => {
+    async function loadProblems() {
+      setLoading(true);
+      try {
+        const diffParam = filters.difficulty === "All" ? "" : filters.difficulty;
+        const apiProblems = await api.getProblems(diffParam);
+        if (Array.isArray(apiProblems) && apiProblems.length > 0) {
+          const mapped = apiProblems.map((p) => ({
+            id: p.id,
+            title: p.title,
+            difficulty: p.difficulty || "Easy",
+            acceptance: 60.0,
+            topics: p.category ? [p.category] : ["Algorithm"],
+            status: "To Do",
+            action: "Solve",
+            popular: true,
+            shortDescription: p.shortDescription,
+          }));
+          setProblemsList(mapped);
+        }
+      } catch (err) {
+        console.warn("Could not fetch problems from backend, using defaults:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadProblems();
+  }, [filters.difficulty]);
 
   useEffect(() => {
     const handleShortcut = (event) => {
@@ -547,8 +579,8 @@ function ProblemsPage({ userName = "Your name", onOpenProblem }) {
   }, []);
 
   const filteredProblems = useMemo(() => {
-    return sortProblems(filterProblems(PROBLEMS, filters), filters.sort);
-  }, [filters]);
+    return sortProblems(filterProblems(problemsList, filters), filters.sort);
+  }, [filters, problemsList]);
 
   const visibleProblems = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE;

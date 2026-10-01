@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NavigationBar } from "../components/index.js";
+import { api } from "../services/api.js";
 import "./analyze.css";
 
 const ANALYSIS_TABS = [
@@ -667,10 +668,17 @@ function AnalyzePage({ userName = "Your name" }) {
     }, 650);
   };
 
-  const handleEvaluate = () => {
+  const handleEvaluate = async () => {
     setExecutionState("evaluating");
-    announce("Code evaluation started.");
-    finishExecution("Code evaluation complete. All assertions are ready.");
+    announce("AI Code Analysis started via Spring Boot API...");
+    try {
+      const res = await api.analyzeCode(code, language.toLowerCase(), "Sorting array");
+      setExecutionState("passed");
+      announce(res?.aiFeedback || "AI Evaluation complete. Suggestions & complexity ready.");
+    } catch (err) {
+      console.warn("AI Analysis API error, falling back to local simulation:", err);
+      finishExecution("Code evaluation complete. All assertions are ready.");
+    }
   };
 
   const handleRun = () => {

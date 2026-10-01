@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { NavigationBar } from "../components/index.js";
+import { api } from "../services/api.js";
 import "./history.css";
 
 const HISTORY_ROWS = [
@@ -116,10 +117,35 @@ function HistoryPage({ userName = "Your name" }) {
   const [newestFirst, setNewestFirst] = useState(true);
   const [selected, setSelected] = useState(new Set());
   const [announcement, setAnnouncement] = useState("");
+  const [historyList, setHistoryList] = useState(HISTORY_ROWS);
+
+  useEffect(() => {
+    async function loadHistory() {
+      try {
+        const historyData = await api.getSubmissionHistory();
+        if (Array.isArray(historyData) && historyData.length > 0) {
+          const mapped = historyData.map((item) => ({
+            id: item.id,
+            algorithm: item.problemTitle || "Problem #" + item.problemId,
+            topic: item.status || "Evaluated",
+            complexity: item.executionTimeMs ? `${item.executionTimeMs}ms` : "O(N)",
+            language: item.language ? item.language.toUpperCase() : "JAVA",
+            date: item.submittedAt ? new Date(item.submittedAt).toLocaleDateString() : "Today",
+            icon: "sort",
+          }));
+          setHistoryList(mapped);
+        }
+      } catch (err) {
+        console.warn("Could not load backend submission history:", err);
+      }
+    }
+    loadHistory();
+  }, []);
+
   const rows = useMemo(() => {
-    const filtered = HISTORY_ROWS.filter((row) => `${row.algorithm} ${row.topic} ${row.language}`.toLowerCase().includes(query.toLowerCase()) && (language === "All" || row.language === language));
+    const filtered = historyList.filter((row) => `${row.algorithm} ${row.topic} ${row.language}`.toLowerCase().includes(query.toLowerCase()) && (language === "All" || row.language === language));
     return newestFirst ? filtered : [...filtered].reverse();
-  }, [language, newestFirst, query]);
+  }, [historyList, language, newestFirst, query]);
   const toggleSelected = (id) => setSelected((current) => { const next = new Set(current); next.has(id) ? next.delete(id) : next.add(id); return next; });
   const removeRow = (id) => { setSelected((current) => new Set([...current].filter((item) => item !== id))); setAnnouncement("Analysis removed from the selected history."); };
   const clearSelected = () => { setSelected(new Set()); setAnnouncement("Selected analyses cleared."); };
