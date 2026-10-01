@@ -32,9 +32,16 @@ springdoc:
     operations-sorter: method
     tags-sorter: alpha
 
-# Import bộ dữ liệu phát triển. Bật tường minh bằng ALGOVIZ_SEED_ENABLED=true.
+# Import dữ liệu chỉ được bật rõ ràng bằng ALGOVIZ_IMPORT_ENABLED=true trong file .env.
 algoviz:
-  seed:
-    enabled: ${ALGOVIZ_SEED_ENABLED:false}
-    data-directory: ${ALGOVIZ_DATA_DIRECTORY:}
+  # Các giá trị được đọc từ backend/.env; fallback giữ import tắt khi thiếu cấu hình.
+  import:
+    enabled: ${ALGOVIZ_IMPORT_ENABLED}
+    source: ${ALGOVIZ_IMPORT_SOURCE}
+    data-directory: ${ALGOVIZ_DATA_DIRECTORY}
+    problems-file: ${ALGOVIZ_PROBLEMS_FILE}
+    solutions-file: ${ALGOVIZ_SOLUTIONS_FILE}
+    mock-data-directory: ${ALGOVIZ_MOCK_DATA_DIRECTORY}
+    mock-problems-file: ${ALGOVIZ_MOCK_PROBLEMS_FILE}
+    mock-solutions-file: ${ALGOVIZ_MOCK_SOLUTIONS_FILE}
 
