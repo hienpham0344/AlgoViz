@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { NavigationBar } from "../../components/index.js";
 import { api } from "../../services/api.js";
 import "./problemDetails.css";
