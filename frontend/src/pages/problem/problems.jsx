@@ -32,9 +32,13 @@ const QUICK_FILTERS = [
   { id: "editorial", label: "💡 Editorial Solutions" },
 ];
 const SORT_OPTIONS = [
-  { value: "difficulty", label: "Difficulty" },
-  { value: "acceptance", label: "Acceptance" },
-  { value: "id", label: "Problem ID" },
+  { value: "id-asc", label: "Problem ID (1 → N)" },
+  { value: "id-desc", label: "Problem ID (N → 1)" },
+  { value: "difficulty-asc", label: "Difficulty (Easy → Hard)" },
+  { value: "difficulty-desc", label: "Difficulty (Hard → Easy)" },
+  { value: "acceptance-desc", label: "Acceptance (High → Low)" },
+  { value: "acceptance-asc", label: "Acceptance (Low → High)" },
+  { value: "title-asc", label: "Title (A → Z)" },
 ];
 
 const PROBLEMS = [
@@ -162,9 +166,32 @@ function filterProblems(problems, filters) {
 
 function sortProblems(problems, sort) {
   return [...problems].sort((first, second) => {
-    if (sort === "acceptance") return second.acceptance - first.acceptance;
-    if (sort === "id") return first.id - second.id;
-    return getDifficultyOrder(first.difficulty) - getDifficultyOrder(second.difficulty);
+    switch (sort) {
+      case "id-desc":
+        return second.id - first.id;
+      case "id":
+      case "id-asc":
+        return first.id - second.id;
+      case "difficulty-desc": {
+        const diff = getDifficultyOrder(second.difficulty) - getDifficultyOrder(first.difficulty);
+        return diff !== 0 ? diff : first.id - second.id;
+      }
+      case "difficulty":
+      case "difficulty-asc": {
+        const diff = getDifficultyOrder(first.difficulty) - getDifficultyOrder(second.difficulty);
+        return diff !== 0 ? diff : first.id - second.id;
+      }
+      case "acceptance-asc":
+        return (first.acceptance ?? 0) - (second.acceptance ?? 0);
+      case "acceptance":
+      case "acceptance-desc":
+        return (second.acceptance ?? 0) - (first.acceptance ?? 0);
+      case "title":
+      case "title-asc":
+        return first.title.localeCompare(second.title);
+      default:
+        return first.id - second.id;
+    }
   });
 }
 
@@ -172,7 +199,9 @@ function Icon({ name, className = "" }) {
   return <span className={`problem-icon problem-icon--${name} ${className}`.trim()} aria-hidden="true" />;
 }
 
-function ProblemHero({ onPickRandom, announcement }) {
+function ProblemHero({ totalCount = 0, solvedCount = 0, onPickRandom, announcement }) {
+  const percent = totalCount > 0 ? Math.round((solvedCount / totalCount) * 100) : 0;
+
   return (
     <section className="problems-hero" aria-labelledby="problems-title">
       <div className="problems-hero__glow problems-hero__glow--violet" aria-hidden="true" />
@@ -180,7 +209,7 @@ function ProblemHero({ onPickRandom, announcement }) {
       <div className="problems-hero__inner">
         <div className="problems-hero__copy">
           <div className="problems-hero__badges">
-            <span className="problem-badge problem-badge--primary">125 Problems</span>
+            <span className="problem-badge problem-badge--primary">{totalCount} Problems</span>
             <span className="problem-badge problem-badge--mint">
               <span className="problem-badge__dot" aria-hidden="true" />
               Live Sandbox
@@ -195,20 +224,20 @@ function ProblemHero({ onPickRandom, announcement }) {
         </div>
 
         <div className="problems-hero__actions">
-          <div className="metric-pill metric-pill--progress" aria-label="42 of 125 problems solved">
+          <div className="metric-pill metric-pill--progress" aria-label={`${solvedCount} of ${totalCount} problems solved`}>
             <div>
               <span className="metric-pill__label">Solved</span>
-              <strong>42 <span>/ 125</span></strong>
+              <strong>{solvedCount} <span>/ {totalCount}</span></strong>
             </div>
             <span className="progress-ring" aria-hidden="true">
-              <span>34%</span>
+              <span>{percent}%</span>
             </span>
           </div>
           <div className="metric-pill metric-pill--challenge">
             <span className="metric-pill__icon"><Icon name="daily-challenge" /></span>
             <span>
               <strong>Daily Challenge</strong>
-              <small>Course Schedule</small>
+              <small>Two Sum</small>
             </span>
           </div>
           <button className="button button--primary" type="button" onClick={onPickRandom}>
@@ -222,8 +251,8 @@ function ProblemHero({ onPickRandom, announcement }) {
   );
 }
 
-function DifficultyFilters({ selectedDifficulty, onChange }) {
-  const counts = { All: 125, Easy: 45, Medium: 58, Hard: 22 };
+function DifficultyFilters({ selectedDifficulty, counts, onChange }) {
+  const safeCounts = counts || { All: 0, Easy: 0, Medium: 0, Hard: 0 };
 
   return (
     <fieldset className="filter-section filter-section--difficulty">
@@ -241,7 +270,7 @@ function DifficultyFilters({ selectedDifficulty, onChange }) {
             <span className={`radio-mark radio-mark--${difficulty.toLowerCase()}`} aria-hidden="true" />
             <span className="filter-option__label">{difficulty === "All" ? "All Difficulties" : difficulty}</span>
             <span className={`filter-option__count filter-option__count--${difficulty.toLowerCase()}`}>
-              {counts[difficulty]}
+              {safeCounts[difficulty] ?? 0}
             </span>
           </label>
         ))}
@@ -250,7 +279,15 @@ function DifficultyFilters({ selectedDifficulty, onChange }) {
   );
 }
 
-function FilterSidebar({ filters, onDifficultyChange, onStatusChange, onTopicToggle, onReset }) {
+function FilterSidebar({
+  filters,
+  difficultyCounts,
+  topicCounts,
+  onDifficultyChange,
+  onStatusChange,
+  onTopicToggle,
+  onReset,
+}) {
   return (
     <aside className="filter-sidebar" aria-label="Problem filters">
       <div className="filter-sidebar__header">
@@ -258,7 +295,11 @@ function FilterSidebar({ filters, onDifficultyChange, onStatusChange, onTopicTog
         <button type="button" className="text-button" onClick={onReset}>Reset All</button>
       </div>
 
-      <DifficultyFilters selectedDifficulty={filters.difficulty} onChange={onDifficultyChange} />
+      <DifficultyFilters
+        selectedDifficulty={filters.difficulty}
+        counts={difficultyCounts}
+        onChange={onDifficultyChange}
+      />
 
       <section className="filter-section filter-section--status" aria-labelledby="status-filter-title">
         <h3 id="status-filter-title">Status</h3>
@@ -283,7 +324,7 @@ function FilterSidebar({ filters, onDifficultyChange, onStatusChange, onTopicTog
           <small>Selected ({filters.topics.length})</small>
         </legend>
         <div className="topic-options">
-          {TOPICS.map(({ label, count }) => (
+          {(topicCounts || []).map(({ label, count }) => (
             <label className="topic-option" key={label}>
               <input
                 type="checkbox"
@@ -400,6 +441,8 @@ function ProblemRow({ problem, onAction }) {
 }
 
 function Pagination({ page, pageCount, onPageChange }) {
+  if (pageCount <= 1) return null;
+
   return (
     <nav className="pagination" aria-label="Problem pages">
       <button
@@ -435,9 +478,22 @@ function Pagination({ page, pageCount, onPageChange }) {
   );
 }
 
-function ProblemDirectory({ filters, rows, page, pageCount, inputRef, onQueryChange, onSortChange, onQuickFilterChange, onPageChange, onAction }) {
+function ProblemDirectory({
+  filters,
+  rows,
+  page,
+  pageCount,
+  totalFilteredCount,
+  inputRef,
+  onQueryChange,
+  onSortChange,
+  onQuickFilterChange,
+  onPageChange,
+  onAction,
+}) {
   const start = rows.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const end = rows.length === 0 ? 0 : start + rows.length - 1;
+  const displayTotal = totalFilteredCount !== undefined ? totalFilteredCount : rows.length;
 
   return (
     <section className="problem-directory" aria-labelledby="directory-title">
@@ -463,7 +519,7 @@ function ProblemDirectory({ filters, rows, page, pageCount, inputRef, onQueryCha
           </div>
         </div>
         <div className="problem-list-footer">
-          <p>Showing {start} - {end} of {TOTAL_PROBLEMS} algorithmic problems</p>
+          <p>Showing {start} - {end} of {displayTotal} algorithmic problems</p>
           <Pagination page={page} pageCount={pageCount} onPageChange={onPageChange} />
         </div>
       </div>
@@ -530,7 +586,7 @@ function ProblemsPage({ userName = "Your name", onOpenProblem }) {
     status: "All",
     topics: [],
     quickFilter: "all",
-    sort: "difficulty",
+    sort: "id-asc",
   });
   const [page, setPage] = useState(1);
   const [announcement, setAnnouncement] = useState("");
@@ -542,20 +598,40 @@ function ProblemsPage({ userName = "Your name", onOpenProblem }) {
     async function loadProblems() {
       setLoading(true);
       try {
-        const diffParam = filters.difficulty === "All" ? "" : filters.difficulty;
-        const apiProblems = await api.getProblems(diffParam);
+        let solvedProblemIds = new Set();
+        try {
+          const history = await api.getSubmissionHistory();
+          if (Array.isArray(history)) {
+            history.forEach((sub) => {
+              if (sub.status === "Accepted" || sub.status === "ACCEPTED") {
+                solvedProblemIds.add(sub.problemId);
+              }
+            });
+          }
+        } catch {
+          // ignore if unauthenticated
+        }
+
+        const apiProblems = await api.getProblems();
         if (Array.isArray(apiProblems) && apiProblems.length > 0) {
-          const mapped = apiProblems.map((p) => ({
-            id: p.id,
-            title: p.title,
-            difficulty: p.difficulty || "Easy",
-            acceptance: 60.0,
-            topics: p.category ? [p.category] : ["Algorithm"],
-            status: "To Do",
-            action: "Solve",
-            popular: true,
-            shortDescription: p.shortDescription,
-          }));
+          const mapped = apiProblems.map((p) => {
+            const isSolved = solvedProblemIds.has(p.id);
+            const rate = typeof p.acceptanceRate === "number"
+              ? p.acceptanceRate
+              : (p.difficulty === "Hard" ? 35.8 : p.difficulty === "Medium" ? 46.5 : (54.2 + (p.id % 5) * 3.1));
+
+            return {
+              id: p.id,
+              title: p.title,
+              difficulty: p.difficulty || "Easy",
+              acceptance: Math.round(rate * 10) / 10,
+              topics: p.category ? [p.category] : ["Algorithm"],
+              status: isSolved ? "Solved" : "To Do",
+              action: isSolved ? "Review" : "Solve",
+              popular: true,
+              shortDescription: p.shortDescription,
+            };
+          });
           setProblemsList(mapped);
         }
       } catch (err) {
@@ -565,7 +641,7 @@ function ProblemsPage({ userName = "Your name", onOpenProblem }) {
       }
     }
     loadProblems();
-  }, [filters.difficulty]);
+  }, []);
 
   useEffect(() => {
     const handleShortcut = (event) => {
@@ -578,9 +654,47 @@ function ProblemsPage({ userName = "Your name", onOpenProblem }) {
     return () => window.removeEventListener("keydown", handleShortcut);
   }, []);
 
+  const totalProblemsCount = problemsList.length;
+  const solvedCount = useMemo(() => {
+    return problemsList.filter((p) => p.status === "Solved").length;
+  }, [problemsList]);
+
+  const difficultyCounts = useMemo(() => {
+    return {
+      All: problemsList.length,
+      Easy: problemsList.filter((p) => p.difficulty === "Easy").length,
+      Medium: problemsList.filter((p) => p.difficulty === "Medium").length,
+      Hard: problemsList.filter((p) => p.difficulty === "Hard").length,
+    };
+  }, [problemsList]);
+
+  const topicCounts = useMemo(() => {
+    const predefined = [
+      "Arrays & Hashing",
+      "Strings",
+      "Searching",
+      "Sorting",
+      "Graph Algorithms",
+      "Tree & DFS / BFS",
+      "Dynamic Programming",
+    ];
+    const map = new Map();
+    predefined.forEach((t) => map.set(t, 0));
+
+    problemsList.forEach((p) => {
+      (p.topics || []).forEach((t) => {
+        map.set(t, (map.get(t) || 0) + 1);
+      });
+    });
+
+    return Array.from(map.entries()).map(([label, count]) => ({ label, count }));
+  }, [problemsList]);
+
   const filteredProblems = useMemo(() => {
     return sortProblems(filterProblems(problemsList, filters), filters.sort);
   }, [filters, problemsList]);
+
+  const pageCount = Math.max(1, Math.ceil(filteredProblems.length / PAGE_SIZE));
 
   const visibleProblems = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE;
@@ -604,12 +718,12 @@ function ProblemsPage({ userName = "Your name", onOpenProblem }) {
 
   const resetFilters = () => {
     setPage(1);
-    setFilters({ query: "", difficulty: "All", status: "All", topics: [], quickFilter: "all", sort: "difficulty" });
+    setFilters({ query: "", difficulty: "All", status: "All", topics: [], quickFilter: "all", sort: "id-asc" });
     setAnnouncement("Filters reset.");
   };
 
   const pickRandomProblem = () => {
-    const candidates = filteredProblems.length > 0 ? filteredProblems : PROBLEMS;
+    const candidates = filteredProblems.length > 0 ? filteredProblems : problemsList;
     const selected = candidates[Math.floor(Math.random() * candidates.length)];
     if (selected) {
       handleProblemAction(selected);
@@ -629,11 +743,18 @@ function ProblemsPage({ userName = "Your name", onOpenProblem }) {
       <div className="problems-shell">
         <NavigationBar active="Problems" userName={userName} className="problems-navigation" />
       </div>
-      <ProblemHero onPickRandom={pickRandomProblem} announcement={announcement} />
+      <ProblemHero
+        totalCount={totalProblemsCount}
+        solvedCount={solvedCount}
+        onPickRandom={pickRandomProblem}
+        announcement={announcement}
+      />
       <section className="problems-workspace" aria-label="Browse algorithm problems">
         <div className="problems-workspace__grid">
           <FilterSidebar
             filters={filters}
+            difficultyCounts={difficultyCounts}
+            topicCounts={topicCounts}
             onDifficultyChange={(difficulty) => updateFilter("difficulty", difficulty)}
             onStatusChange={(status) => updateFilter("status", status)}
             onTopicToggle={handleTopicToggle}
@@ -643,7 +764,8 @@ function ProblemsPage({ userName = "Your name", onOpenProblem }) {
             filters={filters}
             rows={visibleProblems}
             page={page}
-            pageCount={PAGE_COUNT}
+            pageCount={pageCount}
+            totalFilteredCount={filteredProblems.length}
             inputRef={searchInputRef}
             onQueryChange={(query) => updateFilter("query", query)}
             onSortChange={(sort) => updateFilter("sort", sort)}

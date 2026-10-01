@@ -15,4 +15,5 @@ public class ProblemDto {
     private String category;
     private String difficulty;
     private String shortDescription;
+    private Double acceptanceRate;
 }
