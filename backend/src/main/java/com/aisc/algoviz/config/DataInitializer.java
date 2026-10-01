@@ -62,8 +62,9 @@ public class DataInitializer implements CommandLineRunner {
                 .build();
 
         TestCase tc1_1 = TestCase.builder().problem(p1).input("9\n2 7 11 15").expectedOutput("0 1").isSample(true).build();
-        TestCase tc1_2 = TestCase.builder().problem(p1).input("6\n3 2 4").expectedOutput("1 2").isSample(false).build();
-        p1.setTestCases(List.of(tc1_1, tc1_2));
+        TestCase tc1_2 = TestCase.builder().problem(p1).input("6\n3 2 4").expectedOutput("1 2").isSample(true).build();
+        TestCase tc1_3 = TestCase.builder().problem(p1).input("6\n3 3").expectedOutput("0 1").isSample(true).build();
+        p1.setTestCases(List.of(tc1_1, tc1_2, tc1_3));
         list.add(p1);
 
         // Problem 2: Valid Anagram

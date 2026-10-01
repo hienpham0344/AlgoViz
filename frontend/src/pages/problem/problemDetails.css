@@ -889,9 +889,19 @@
   color: var(--details-mint);
   background: rgb(1 229 153 / 13%);
 }
+.runner-output-badge--failed,
+.runner-output-badge--error {
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.15);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+}
 .runner-output-badge--target {
   color: #cdbdff;
   background: rgb(112 59 247 / 16%);
+}
+.runner-output-badge--ready {
+  color: var(--details-dim);
+  background: rgba(255, 255, 255, 0.08);
 }
 .runner-output-card__value {
   display: block;
@@ -903,6 +913,9 @@
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.runner-output-card__value.is-error {
+  color: #ff6b6b;
 }
 .runner-output-card--expected .runner-output-card__value {
   color: #cdbdff;

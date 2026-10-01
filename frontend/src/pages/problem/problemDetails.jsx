@@ -66,31 +66,31 @@ const RUNNER_CODE = {
 };
 const RUNNER_CASES = [
   {
-    input: "[5, 2, 8, 1]",
-    actual: "[1, 2, 5, 8]",
-    expected: "[1, 2, 5, 8]",
-    status: "Passed",
-    runtimeMs: 0.2,
-    memoryMb: 14.8,
-    matchPercent: 100,
+    input: "9\n2 7 11 15",
+    actual: "(Click Run Code)",
+    expected: "[0, 1]",
+    status: "Ready",
+    runtimeMs: 0,
+    memoryMb: 0,
+    matchPercent: 0,
   },
   {
-    input: "[1, 2, 3, 4]",
-    actual: "[1, 2, 3, 4]",
-    expected: "[1, 2, 3, 4]",
-    status: "Passed",
-    runtimeMs: 0.1,
-    memoryMb: 14.7,
-    matchPercent: 100,
+    input: "6\n3 2 4",
+    actual: "(Click Run Code)",
+    expected: "[1, 2]",
+    status: "Ready",
+    runtimeMs: 0,
+    memoryMb: 0,
+    matchPercent: 0,
   },
   {
-    input: "[9, 4, 6, 2]",
-    actual: "[2, 4, 6, 9]",
-    expected: "[2, 4, 6, 9]",
-    status: "Passed",
-    runtimeMs: 0.2,
-    memoryMb: 14.8,
-    matchPercent: 100,
+    input: "6\n3 3",
+    actual: "(Click Run Code)",
+    expected: "[0, 1]",
+    status: "Ready",
+    runtimeMs: 0,
+    memoryMb: 0,
+    matchPercent: 0,
   },
 ];
 
@@ -686,8 +686,43 @@ function CodeEditor({ language, code, isExpanded, onChange }) {
   );
 }
 
-function OutputCard({ type, testCase }) {
+function OutputCard({ type, testCase, executionResult }) {
   const isActual = type === "actual";
+
+  let status = isActual ? (testCase?.status || "Ready") : "Target";
+  let displayValue = isActual ? (testCase?.actual || "(Click Run Code)") : (testCase?.expected || "");
+  let runtime = testCase?.runtimeMs ? `${testCase.runtimeMs.toFixed(1)}ms` : "--";
+  let memory = testCase?.memoryMb ? `${testCase.memoryMb.toFixed(1)} MB` : "--";
+  let matchPercent = testCase?.matchPercent ?? 0;
+  let isError = false;
+
+  if (executionResult) {
+    if (isActual) {
+      status = executionResult.status || (executionResult.passed ? "Passed" : "Wrong Answer");
+      displayValue = executionResult.actual !== undefined ? executionResult.actual : (executionResult.output || "(No output)");
+      if (executionResult.runtimeMs !== undefined && executionResult.runtimeMs > 0) {
+        runtime = `${executionResult.runtimeMs.toFixed(1)}ms`;
+      }
+      if (executionResult.memoryMb !== undefined && executionResult.memoryMb > 0) {
+        memory = `${executionResult.memoryMb.toFixed(1)} MB`;
+      }
+      if (status !== "Passed" && status !== "Accepted") {
+        isError = true;
+      }
+    } else {
+      if (executionResult.expected !== undefined && executionResult.expected !== "") {
+        displayValue = executionResult.expected;
+      }
+      const passed = executionResult.status === "Passed" || executionResult.status === "Accepted";
+      matchPercent = executionResult.matchPercent !== undefined ? executionResult.matchPercent : (passed ? 100 : 0);
+      if (!passed) isError = true;
+    }
+  }
+
+  const badgeClass = isActual
+    ? (isError ? "runner-output-badge--failed" : (status === "Ready" ? "runner-output-badge--ready" : "runner-output-badge--passed"))
+    : "runner-output-badge--target";
+
   return (
     <article className={`runner-output-card runner-output-card--${type}`}>
       <div className="runner-output-card__heading">
@@ -695,31 +730,29 @@ function OutputCard({ type, testCase }) {
           <DetailsIcon name="status-ready" />{" "}
           {isActual ? "Actual Output" : "Expected Output"}
         </h3>
-        <span
-          className={`runner-output-badge runner-output-badge--${isActual ? "passed" : "target"}`}
-        >
-          {isActual ? testCase.status : "Target"}
+        <span className={`runner-output-badge ${badgeClass}`}>
+          {status}
         </span>
       </div>
-      <code className="runner-output-card__value">
-        {isActual ? testCase.actual : testCase.expected}
+      <code className={`runner-output-card__value ${isError ? "is-error" : ""}`}>
+        {displayValue}
       </code>
       <div className="runner-output-card__meta">
         {isActual ? (
           <>
             <span>
               <DetailsIcon name="time-complexity" />{" "}
-              {testCase.runtimeMs.toFixed(1)}ms
+              {runtime}
             </span>
             <span>
               <DetailsIcon name="space-complexity" />{" "}
-              {testCase.memoryMb.toFixed(1)} MB
+              {memory}
             </span>
           </>
         ) : (
           <>
-            <span>Standard Match</span>
-            <strong>{testCase.matchPercent}% Match</strong>
+            <span>{isError ? "Mismatch" : "Standard Match"}</span>
+            <strong>{matchPercent}% Match</strong>
           </>
         )}
       </div>
@@ -727,7 +760,17 @@ function OutputCard({ type, testCase }) {
   );
 }
 
-function RunnerOutput({ activeTab, activeCaseIndex, testCase, onTabChange }) {
+function RunnerOutput({
+  activeTab,
+  activeCaseIndex,
+  testCase,
+  testCasesList,
+  executionResult,
+  onTabChange,
+}) {
+  const cases = testCasesList && testCasesList.length > 0 ? testCasesList : RUNNER_CASES;
+  const currentCase = cases[activeCaseIndex] || cases[0];
+
   return (
     <section className="runner-output" aria-label="Code execution output">
       <div className="runner-output__header">
@@ -751,7 +794,7 @@ function RunnerOutput({ activeTab, activeCaseIndex, testCase, onTabChange }) {
           ))}
         </div>
         <span className="runner-case-label">
-          Case {activeCaseIndex + 1} of {RUNNER_CASES.length}
+          Case {activeCaseIndex + 1} of {cases.length}
         </span>
       </div>
       {activeTab === "console" ? (
@@ -760,8 +803,8 @@ function RunnerOutput({ activeTab, activeCaseIndex, testCase, onTabChange }) {
           id="runner-panel-console"
           role="tabpanel"
         >
-          <OutputCard type="actual" testCase={testCase} />
-          <OutputCard type="expected" testCase={testCase} />
+          <OutputCard type="actual" testCase={currentCase} executionResult={executionResult} />
+          <OutputCard type="expected" testCase={currentCase} executionResult={executionResult} />
         </div>
       ) : (
         <div
@@ -769,11 +812,11 @@ function RunnerOutput({ activeTab, activeCaseIndex, testCase, onTabChange }) {
           id="runner-panel-tests"
           role="tabpanel"
         >
-          {RUNNER_CASES.map((item, index) => (
+          {cases.map((item, index) => (
             <button
               className={index === activeCaseIndex ? "is-active" : ""}
               type="button"
-              key={item.input}
+              key={item.input || index}
               onClick={() => onTabChange(`case:${index}`)}
             >
               <span>Case {index + 1}</span>
@@ -817,6 +860,8 @@ function CodeRunnerPanel({
   activeTab,
   activeCaseIndex,
   executionState,
+  executionResult,
+  testCasesList,
   isExpanded,
   onLanguageChange,
   onCodeChange,
@@ -828,7 +873,8 @@ function CodeRunnerPanel({
   onRun,
   onSubmit,
 }) {
-  const testCase = RUNNER_CASES[activeCaseIndex];
+  const cases = testCasesList && testCasesList.length > 0 ? testCasesList : RUNNER_CASES;
+  const testCase = cases[activeCaseIndex] || cases[0];
   const handleOutputTabChange = (value) => {
     if (value.startsWith("case:")) {
       onCaseChange(Number(value.slice(5)));
@@ -863,6 +909,8 @@ function CodeRunnerPanel({
         activeTab={activeTab}
         activeCaseIndex={activeCaseIndex}
         testCase={testCase}
+        testCasesList={testCasesList}
+        executionResult={executionResult}
         onTabChange={handleOutputTabChange}
       />
       <RunnerFooter
@@ -1446,11 +1494,38 @@ function ProblemDetailsPage({ userName = "Your name", problemId = 1 }) {
   const [runnerTab, setRunnerTab] = useState("console");
   const [activeCaseIndex, setActiveCaseIndex] = useState(0);
   const [executionState, setExecutionState] = useState("ready");
+  const [executionResult, setExecutionResult] = useState(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [announcement, setAnnouncement] = useState("");
   const [primaryColumnShare, setPrimaryColumnShare] = useState(50);
   const workspaceRef = useRef(null);
   const runnerRef = useRef(null);
+
+  const testCasesList = useMemo(() => {
+    if (currentProblem?.sampleTestCases && currentProblem.sampleTestCases.length > 0) {
+      return currentProblem.sampleTestCases.map((tc, idx) => ({
+        input: tc.input || "",
+        actual: "(Click Run Code)",
+        expected: tc.expectedOutput || "",
+        status: "Ready",
+        runtimeMs: 0,
+        memoryMb: 0,
+        matchPercent: 0,
+      }));
+    }
+    if (currentProblem?.sampleInput) {
+      return [{
+        input: currentProblem.sampleInput,
+        actual: "(Click Run Code)",
+        expected: currentProblem.sampleOutput || "",
+        status: "Ready",
+        runtimeMs: 0,
+        memoryMb: 0,
+        matchPercent: 0,
+      }];
+    }
+    return RUNNER_CASES;
+  }, [currentProblem]);
 
   useEffect(() => {
     async function loadProblem() {
@@ -1518,6 +1593,7 @@ function ProblemDetailsPage({ userName = "Your name", problemId = 1 }) {
   const handleLanguageChange = (nextLanguage) => {
     setLanguage(nextLanguage);
     setExecutionState("ready");
+    setExecutionResult(null);
     setAnnouncement(`${nextLanguage} editor selected.`);
   };
 
@@ -1527,6 +1603,7 @@ function ProblemDetailsPage({ userName = "Your name", problemId = 1 }) {
       [language]: RUNNER_CODE[language],
     }));
     setExecutionState("ready");
+    setExecutionResult(null);
     setAnnouncement(`${language} code reset.`);
   };
 
@@ -1548,24 +1625,67 @@ function ProblemDetailsPage({ userName = "Your name", problemId = 1 }) {
     if (executionState === "running") return;
     setExecutionState("running");
     setRunnerTab("console");
-    setAnnouncement("Sending code to backend runner...");
+    setAnnouncement("Running code against selected test case...");
+
+    const cases = testCasesList && testCasesList.length > 0 ? testCasesList : RUNNER_CASES;
+    const currentCase = cases[activeCaseIndex] || cases[0];
+    const testInput = currentCase?.input || "";
+    const expectedOutput = (currentCase?.expected || "").trim();
 
     try {
       const langKey = language.toLowerCase().replace("python 3", "python");
-      const result = await api.runCode(langKey, code, "");
-      if (result && (result.status === "SUCCESS" || result.status === "Passed" || result.passed)) {
-        setExecutionState("passed");
-        setAnnouncement(`Code execution finished: Passed.`);
-      } else {
-        setExecutionState("failed");
-        setAnnouncement(`Execution result: ${result?.status || result?.stderr || "Output received"}`);
+      const result = await api.runCode(langKey, code, testInput);
+
+      if (result) {
+        if (result.status === "Runtime Error" || result.status === "Time Limit Exceeded" || result.errorMessage) {
+          setExecutionState("failed");
+          setExecutionResult({
+            status: result.status || "Runtime Error",
+            actual: result.errorMessage || result.output || "(Runtime Error)",
+            expected: expectedOutput,
+            runtimeMs: result.executionTimeMs || 0,
+            memoryMb: result.memoryUsageMb || 0,
+            matchPercent: 0,
+          });
+          setAnnouncement(`Execution error: ${result.status || "Runtime Error"}`);
+          return;
+        }
+
+        const rawOutput = (result.output != null ? String(result.output) : "").trim();
+        const normActual = rawOutput.replace(/\r\n/g, "\n");
+        const normExpected = expectedOutput.replace(/\r\n/g, "\n");
+
+        const cleanActual = normActual.replace(/[\[\],]/g, " ").replace(/\s+/g, " ").trim();
+        const cleanExpected = normExpected.replace(/[\[\],]/g, " ").replace(/\s+/g, " ").trim();
+
+        const isExactMatch = normActual.length > 0 && normActual === normExpected;
+        const isCleanMatch = cleanActual.length > 0 && cleanActual === cleanExpected;
+        const isMatch = isExactMatch || isCleanMatch;
+        const status = isMatch ? "Passed" : "Wrong Answer";
+
+        setExecutionState(isMatch ? "passed" : "failed");
+        setExecutionResult({
+          status: status,
+          actual: normActual || "(No output returned)",
+          expected: normExpected || "(None)",
+          runtimeMs: result.executionTimeMs || 0.1,
+          memoryMb: result.memoryUsageMb || 14.5,
+          matchPercent: isMatch ? 100 : 0,
+        });
+        setAnnouncement(`Run Code: ${status}`);
       }
     } catch (err) {
-      console.warn("API Run error, falling back to simulation:", err);
-      window.setTimeout(() => {
-        setExecutionState("passed");
-        setAnnouncement(`Code execution simulated locally.`);
-      }, 450);
+      console.warn("API Run error:", err);
+      setExecutionState("failed");
+      setExecutionResult({
+        status: "Error",
+        actual: err.message || "Failed to execute code on server.",
+        expected: expectedOutput,
+        runtimeMs: 0,
+        memoryMb: 0,
+        matchPercent: 0,
+      });
+      setAnnouncement(`Execution error: ${err.message}`);
     }
   };
 
@@ -1575,20 +1695,53 @@ function ProblemDetailsPage({ userName = "Your name", problemId = 1 }) {
     setRunnerTab("console");
     setAnnouncement("Submitting solution to Spring Boot server...");
 
+    const cases = testCasesList && testCasesList.length > 0 ? testCasesList : RUNNER_CASES;
+    const currentCase = cases[activeCaseIndex] || cases[0];
+    const expectedOutput = (currentCase?.expected || "").trim();
+    const pid = problemId || currentProblem?.id || 1;
+
     try {
       const langKey = language.toLowerCase().replace("python 3", "python");
-      const res = await api.submitCode(1, langKey, code);
-      if (res && res.status === "ACCEPTED") {
-        setExecutionState("passed");
-        setAnnouncement("Submission Accepted! All test cases passed.");
-      } else {
-        setExecutionState("failed");
-        setAnnouncement(`Submission status: ${res?.status || "Evaluated"}`);
+      const res = await api.submitCode(pid, langKey, code);
+
+      if (res) {
+        const isAccepted = res.status === "Accepted" || res.status === "ACCEPTED";
+        const statusText = isAccepted ? "Accepted" : (res.status || "Wrong Answer");
+
+        setExecutionState(isAccepted ? "passed" : "failed");
+        setExecutionResult({
+          status: statusText,
+          actual: isAccepted
+            ? `All ${res.totalTestCases || res.passedTestCases || 0} test cases passed!`
+            : (res.output || res.errorMessage || `Failed test cases (${res.passedTestCases || 0}/${res.totalTestCases || 0} passed)`),
+          expected: res.expectedOutput || expectedOutput,
+          runtimeMs: res.executionTimeMs || 0.2,
+          memoryMb: res.memoryUsageMb || 15.0,
+          matchPercent: res.totalTestCases ? Math.round(((res.passedTestCases || 0) / res.totalTestCases) * 100) : (isAccepted ? 100 : 0),
+        });
+        setAnnouncement(
+          isAccepted
+            ? `Accepted! All test cases passed.`
+            : `Submission status: ${statusText} (${res.passedTestCases || 0}/${res.totalTestCases || 0} passed).`
+        );
       }
     } catch (err) {
       console.warn("API Submit error:", err);
-      setExecutionState("passed");
-      setAnnouncement(`Submission flow evaluated (Offline mode).`);
+      const isAuthErr = err.message && (err.message.includes("401") || err.message.includes("403") || err.message.includes("JWT") || err.message.includes("User not found"));
+      const errMsg = isAuthErr
+        ? "Please log in to submit solutions to leaderboard."
+        : (err.message || "Failed to submit code.");
+
+      setExecutionState("failed");
+      setExecutionResult({
+        status: isAuthErr ? "Login Required" : "Submission Error",
+        actual: errMsg,
+        expected: expectedOutput,
+        runtimeMs: 0,
+        memoryMb: 0,
+        matchPercent: 0,
+      });
+      setAnnouncement(`Submission error: ${errMsg}`);
     }
   };
   const handleSequenceAnnouncement = (message) => setAnnouncement(message);
@@ -1698,6 +1851,8 @@ function ProblemDetailsPage({ userName = "Your name", problemId = 1 }) {
                   activeTab={runnerTab}
                   activeCaseIndex={activeCaseIndex}
                   executionState={executionState}
+                  executionResult={executionResult}
+                  testCasesList={testCasesList}
                   isExpanded={isExpanded}
                   onLanguageChange={handleLanguageChange}
                   onCodeChange={handleCodeChange}
