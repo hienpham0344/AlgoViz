@@ -941,14 +941,18 @@
   height: 100%;
   border-radius: inherit;
   background: var(--problem-mint);
+  transition: width 240ms ease;
 }
 
-.problem-row:nth-child(2n) .acceptance-track span,
-.problem-row:nth-child(4n) .acceptance-track span {
+.acceptance-track span.acceptance-track--high {
+  background: var(--problem-mint);
+}
+
+.acceptance-track span.acceptance-track--medium {
   background: var(--problem-amber);
 }
 
-.problem-row:nth-child(6n) .acceptance-track span {
+.acceptance-track span.acceptance-track--low {
   background: var(--problem-hard);
 }
 

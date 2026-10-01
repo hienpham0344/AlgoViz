@@ -406,6 +406,12 @@ function DifficultyBadge({ difficulty }) {
   return <span className={`difficulty-badge difficulty-badge--${difficulty.toLowerCase()}`}>{difficulty}</span>;
 }
 
+function getAcceptanceColorClass(acceptance) {
+  if (acceptance >= 55) return "acceptance-track--high";
+  if (acceptance >= 40) return "acceptance-track--medium";
+  return "acceptance-track--low";
+}
+
 function ProblemRow({ problem, onAction }) {
   const titleId = `problem-${problem.id}-title`;
   return (
@@ -425,7 +431,12 @@ function ProblemRow({ problem, onAction }) {
       <div className="problem-row__difficulty"><DifficultyBadge difficulty={problem.difficulty} /></div>
       <div className="problem-row__acceptance">
         <span>{problem.acceptance.toFixed(1)}%</span>
-        <span className="acceptance-track" aria-hidden="true"><span style={{ width: `${problem.acceptance}%` }} /></span>
+        <span className="acceptance-track" aria-hidden="true">
+          <span
+            className={getAcceptanceColorClass(problem.acceptance)}
+            style={{ width: `${Math.min(100, Math.max(5, problem.acceptance))}%` }}
+          />
+        </span>
       </div>
       <button
         className="problem-action"
