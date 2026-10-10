@@ -2,36 +2,36 @@
 
 .landing-page {
   --scale: 1;
-  --canvas: #0a0d3a;
-  --canvas-deep: #070a31;
-  --surface: #1e2353;
-  --surface-raised: #303b75;
-  --surface-soft: rgb(88 101 242 / 13%);
-  --text: #ece7e1;
-  --text-muted: rgb(236 231 225 / 76%);
-  --line: rgb(236 231 225 / 17%);
-  --primary: #5865f2;
-  --green: #35ed7e;
-  --amber: #e8a552;
+  --canvas: var(--palette-deep);
+  --canvas-deep: var(--palette-deep);
+  --surface: var(--palette-deep);
+  --surface-raised: var(--palette-deep);
+  --surface-soft: rgb(var(--palette-steel-rgb) / 13%);
+  --text: var(--palette-surface);
+  --text-muted: rgb(var(--palette-surface-rgb) / 76%);
+  --line: rgb(var(--palette-surface-rgb) / 17%);
+  --primary: var(--palette-steel);
+  --green: var(--palette-steel);
+  --amber: var(--palette-surface);
   --font-display: "Poppins", "Trebuchet MS", sans-serif;
   --font-body: "Nunito Sans", "Segoe UI", sans-serif;
   --font-mono: "Roboto Mono", Consolas, monospace;
   --shadow-raised:
-    0 calc(32px * var(--scale)) calc(86px * var(--scale)) rgb(0 0 0 / 32%),
-    0 calc(3px * var(--scale)) calc(68px * var(--scale)) rgb(69 42 124 / 22%);
+    0 calc(32px * var(--scale)) calc(86px * var(--scale)) rgb(var(--palette-deep-rgb) / 32%),
+    0 calc(3px * var(--scale)) calc(68px * var(--scale)) rgb(var(--palette-deep-rgb) / 22%);
   --shadow-raised-sm:
-    0 calc(17px * var(--scale)) calc(40px * var(--scale)) rgb(0 0 0 / 24%),
-    0 calc(2px * var(--scale)) calc(28px * var(--scale)) rgb(69 42 124 / 18%);
+    0 calc(17px * var(--scale)) calc(40px * var(--scale)) rgb(var(--palette-deep-rgb) / 24%),
+    0 calc(2px * var(--scale)) calc(28px * var(--scale)) rgb(var(--palette-deep-rgb) / 18%);
   --shadow-recessed:
     inset calc(8px * var(--scale)) calc(8px * var(--scale))
-      calc(18px * var(--scale)) rgb(4 6 30 / 58%),
+      calc(18px * var(--scale)) rgb(var(--palette-deep-rgb) / 58%),
     inset calc(-8px * var(--scale)) calc(-8px * var(--scale))
-      calc(18px * var(--scale)) rgb(88 101 242 / 11%);
+      calc(18px * var(--scale)) rgb(var(--palette-steel-rgb) / 11%);
   --shadow-recessed-sm:
     inset calc(5px * var(--scale)) calc(5px * var(--scale))
-      calc(11px * var(--scale)) rgb(4 6 30 / 50%),
+      calc(11px * var(--scale)) rgb(var(--palette-deep-rgb) / 50%),
     inset calc(-4px * var(--scale)) calc(-4px * var(--scale))
-      calc(10px * var(--scale)) rgb(88 101 242 / 12%);
+      calc(10px * var(--scale)) rgb(var(--palette-steel-rgb) / 12%);
   --radius-panel: calc(32px * var(--scale));
   --radius-nav: calc(40px * var(--scale));
   --radius-button: calc(16px * var(--scale));
@@ -40,9 +40,9 @@
   overflow: hidden;
   color: var(--text);
   background:
-    radial-gradient(circle at 76% 12%, rgb(88 101 242 / 22%), transparent 29%),
-    radial-gradient(circle at 16% 72%, rgb(232 165 82 / 10%), transparent 25%),
-    linear-gradient(135deg, var(--canvas) 0%, #11154a 54%, var(--canvas) 100%);
+    radial-gradient(circle at 76% 12%, rgb(var(--palette-steel-rgb) / 22%), transparent 29%),
+    radial-gradient(circle at 16% 72%, rgb(var(--palette-surface-rgb) / 10%), transparent 25%),
+    linear-gradient(135deg, var(--canvas) 0%, var(--palette-deep) 54%, var(--canvas) 100%);
   font-family: var(--font-body);
 }
 
@@ -108,7 +108,7 @@
   min-height: calc(80px * var(--scale));
   padding: calc(16px * var(--scale)) calc(64px * var(--scale));
   border-radius: var(--radius-nav);
-  background: rgb(255 255 255 / 9%);
+  background: rgb(var(--palette-surface-rgb) / 9%);
   box-shadow: var(--shadow-raised-sm);
   backdrop-filter: blur(14px);
 }
@@ -197,12 +197,12 @@
   background:
     linear-gradient(
       90deg,
-      rgb(10 13 58 / 92%) 0%,
-      rgb(10 13 58 / 70%) 42%,
-      rgb(10 13 58 / 18%) 78%,
-      rgb(10 13 58 / 42%) 100%
+      rgb(var(--palette-deep-rgb) / 92%) 0%,
+      rgb(var(--palette-deep-rgb) / 70%) 42%,
+      rgb(var(--palette-deep-rgb) / 18%) 78%,
+      rgb(var(--palette-deep-rgb) / 42%) 100%
     ),
-    linear-gradient(180deg, rgb(10 13 58 / 10%) 55%, rgb(10 13 58 / 70%) 100%);
+    linear-gradient(180deg, rgb(var(--palette-deep-rgb) / 10%) 55%, rgb(var(--palette-deep-rgb) / 70%) 100%);
 }
 
 .dusk-hero-content {
@@ -216,7 +216,7 @@
   line-height: 1.06;
   letter-spacing: -0.045em;
   text-shadow: 0 calc(6px * var(--scale)) calc(24px * var(--scale))
-    rgb(0 0 0 / 32%);
+    rgb(var(--palette-deep-rgb) / 32%);
 }
 
 .dusk-hero-subtitle {
@@ -274,14 +274,14 @@
   margin-top: calc(96px * var(--scale));
   padding: calc(64px * var(--scale));
   border-radius: var(--radius-panel);
-  background: rgb(30 35 83 / 90%);
+  background: rgb(var(--palette-deep-rgb) / 90%);
   box-shadow: var(--shadow-raised);
 }
 
 .dusk-illustration-frame {
   margin: 0;
   overflow: hidden;
-  border: calc(8px * var(--scale)) solid rgb(236 231 225 / 90%);
+  border: calc(8px * var(--scale)) solid rgb(var(--palette-surface-rgb) / 90%);
   border-radius: calc(28px * var(--scale));
   background: var(--canvas);
   box-shadow: var(--shadow-recessed);
@@ -360,7 +360,7 @@
 }
 
 .dusk-course-card:hover {
-  border-color: rgb(53 237 126 / 58%);
+  border-color: rgb(var(--palette-steel-rgb) / 58%);
 }
 
 .dusk-course-image {
@@ -390,7 +390,7 @@
   place-items: center;
   border-radius: 50%;
   color: var(--text);
-  background: rgb(10 13 58 / 30%);
+  background: rgb(var(--palette-deep-rgb) / 30%);
   opacity: 0;
   transition:
     opacity 180ms ease,

@@ -5,6 +5,7 @@ import "./problemDetails.css";
 const DETAIL_TABS = [
   { id: "description", label: "Description", icon: "description" },
   { id: "solution-basic", label: "Solution 1: Basic", icon: "code-angle" },
+  { id: "submission-history", label: "Lịch sử submit", icon: "runner-tests" },
 ];
 
 const SEQUENCE_TABS = [
@@ -280,7 +281,7 @@ function DetailsIcon({ name, className = "" }) {
   );
 }
 
-function BreadcrumbBar() {
+function BreadcrumbBar({ problem }) {
   return (
     <div className="details-breadcrumb-bar">
       <nav className="details-breadcrumbs" aria-label="Problem breadcrumb">
@@ -288,9 +289,9 @@ function BreadcrumbBar() {
           <DetailsIcon name="arrow-left" /> Problems
         </a>
         <span>/</span>
-        <span>Sorting Algorithms</span>
+        <span>{problem.topics[0] || "Algorithms"}</span>
         <span>/</span>
-        <strong>Bubble Sort</strong>
+        <strong>{problem.title}</strong>
       </nav>
       <span className="details-ready-status">
         <DetailsIcon name="status-ready" /> Interactive Visualizer Ready
@@ -300,6 +301,7 @@ function BreadcrumbBar() {
 }
 
 function ProblemHeader({
+  problem,
   isBookmarked,
   onBookmark,
   onShare,
@@ -321,18 +323,18 @@ function ProblemHeader({
       />
       <div className="details-problem-identity">
         <div className="details-title-row">
-          <h1 id="detail-problem-title">Bubble Sort</h1>
+          <h1 id="detail-problem-title">{problem.title}</h1>
           <span className="details-difficulty">
-            <DetailsIcon name="difficulty-easy" /> Easy
+            <DetailsIcon name={`difficulty-${problem.difficulty.toLowerCase()}`} /> {problem.difficulty}
           </span>
-          <span className="details-problem-id">ID #042</span>
+          <span className="details-problem-id">ID #{String(problem.id).padStart(3, "0")}</span>
         </div>
         <div className="details-meta-row">
           <span>Category:</span>
-          <span className="details-meta-tag">Array</span>
-          <span className="details-meta-tag">Comparison Sort</span>
-          <span className="details-meta-tag">In-Place</span>
-          <span className="details-meta-tag details-meta-tag--mono">O(N²)</span>
+          {problem.topics.map((topic) => (
+            <span className="details-meta-tag" key={topic}>{topic}</span>
+          ))}
+          <span className="details-meta-tag details-meta-tag--mono">{problem.acceptance.toFixed(1)}% acceptance</span>
         </div>
       </div>
       <div className="details-header-actions" aria-label="Problem actions">
@@ -393,6 +395,98 @@ function WorkspaceTabs({ activeTab, onChange }) {
           </button>
         ))}
       </div>
+    </div>
+  );
+}
+
+function SubmissionHistoryPanel({ submissions }) {
+  return (
+    <section
+      className="details-card details-submission-history"
+      aria-labelledby="submission-history-title"
+    >
+      <div className="details-card-heading">
+        <h2 id="submission-history-title">Submission History</h2>
+        <span>{submissions.length} submission{submissions.length === 1 ? "" : "s"}</span>
+      </div>
+      {submissions.length === 0 ? (
+        <p className="details-submission-history__empty">
+          No submissions yet. Submit your solution to see its result here.
+        </p>
+      ) : (
+        <div className="details-submission-history__list">
+          {submissions.map((submission, index) => (
+            <article
+              className="details-submission-row"
+              key={submission.id}
+              aria-label={`Submission ${submissions.length - index}`}
+            >
+              <div className="details-submission-row__main">
+                <span
+                  className={`details-submission-status details-submission-status--${submission.status.toLowerCase()}`}
+                >
+                  {submission.status}
+                </span>
+                <span className="details-submission-row__tests">
+                  {submission.acceptedTestCases} / {submission.totalTestCases} test cases accepted
+                </span>
+              </div>
+              <div className="details-submission-row__meta">
+                <span>{submission.language}</span>
+                <time dateTime={submission.submittedAt}>
+                  {new Date(submission.submittedAt).toLocaleString()}
+                </time>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function SubmissionResultDialog({ submission, onClose }) {
+  if (!submission) return null;
+
+  const isAccepted = submission.status === "Accepted";
+
+  return (
+    <div
+      className="details-submission-dialog-backdrop"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <section
+        className={`details-submission-dialog ${isAccepted ? "is-accepted" : "is-failed"}`}
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="submission-result-title"
+        aria-describedby="submission-result-description"
+      >
+        <span className="details-submission-dialog__icon" aria-hidden="true">
+          {isAccepted ? "✓" : "!"}
+        </span>
+        <h2 id="submission-result-title">
+          {isAccepted ? "Chúc mừng!" : "Thử lại nhé"}
+        </h2>
+        <p id="submission-result-description">
+          {isAccepted
+            ? "Bài làm của bạn đã được chấp nhận."
+            : "Bài làm chưa vượt qua tất cả testcase. Hãy kiểm tra lại và thử submit lần nữa nhé."}
+        </p>
+        <p className="details-submission-dialog__tests">
+          {submission.acceptedTestCases} / {submission.totalTestCases} testcase được chấp nhận
+        </p>
+        <button
+          className="details-submission-dialog__close"
+          type="button"
+          onClick={onClose}
+          autoFocus
+        >
+          Đóng
+        </button>
+      </section>
     </div>
   );
 }
@@ -1371,7 +1465,14 @@ function DetailsFooter() {
   );
 }
 
-function ProblemDetailsPage({ userName = "Your name" }) {
+function ProblemDetailsPage({ userName = "Your name", problem }) {
+  const currentProblem = problem ?? {
+    id: 42,
+    title: "Bubble Sort",
+    difficulty: "Easy",
+    acceptance: 54.2,
+    topics: ["Array", "Comparison Sort", "In-Place"],
+  };
   const [activeTab, setActiveTab] = useState("description");
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [language, setLanguage] = useState("Python 3");
@@ -1379,11 +1480,24 @@ function ProblemDetailsPage({ userName = "Your name" }) {
   const [runnerTab, setRunnerTab] = useState("console");
   const [activeCaseIndex, setActiveCaseIndex] = useState(0);
   const [executionState, setExecutionState] = useState("ready");
+  const [submissions, setSubmissions] = useState([]);
+  const [submissionResult, setSubmissionResult] = useState(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [announcement, setAnnouncement] = useState("");
   const [primaryColumnShare, setPrimaryColumnShare] = useState(50);
   const workspaceRef = useRef(null);
   const runnerRef = useRef(null);
+
+  useEffect(() => {
+    if (!submissionResult) return undefined;
+
+    const handleDialogKeyDown = (event) => {
+      if (event.key === "Escape") setSubmissionResult(null);
+    };
+
+    window.addEventListener("keydown", handleDialogKeyDown);
+    return () => window.removeEventListener("keydown", handleDialogKeyDown);
+  }, [submissionResult]);
 
   const code = codeByLanguage[language];
 
@@ -1467,8 +1581,28 @@ function ProblemDetailsPage({ userName = "Your name" }) {
     }, 450);
   };
 
-  const handleSubmit = () =>
-    setAnnouncement("Submit Solution flow is ready to connect.");
+  const handleSubmit = () => {
+    const acceptedTestCases = RUNNER_CASES.filter(
+      (testCase) => testCase.status === "Passed",
+    ).length;
+    const status =
+      acceptedTestCases === RUNNER_CASES.length ? "Accepted" : "Failed";
+    const submittedAt = new Date().toISOString();
+
+    const submission = {
+      id: `${submittedAt}-${submissions.length}`,
+      status,
+      acceptedTestCases,
+      totalTestCases: RUNNER_CASES.length,
+      language,
+      submittedAt,
+    };
+    setSubmissions((current) => [submission, ...current]);
+    setSubmissionResult(submission);
+    setAnnouncement(
+      `Submission ${status.toLowerCase()}: ${acceptedTestCases} of ${RUNNER_CASES.length} test cases accepted.`,
+    );
+  };
   const handleSequenceAnnouncement = (message) => setAnnouncement(message);
 
   const handleSplitterPointerDown = (event) => {
@@ -1520,8 +1654,9 @@ function ProblemDetailsPage({ userName = "Your name" }) {
           userName={userName}
           className="details-navigation"
         />
-        <BreadcrumbBar />
+        <BreadcrumbBar problem={currentProblem} />
         <ProblemHeader
+          problem={currentProblem}
           isBookmarked={isBookmarked}
           onBookmark={() => {
             setIsBookmarked((current) => !current);
@@ -1595,6 +1730,8 @@ function ProblemDetailsPage({ userName = "Your name" }) {
               activeTab={activeTab}
               onAnnounce={setAnnouncement}
             />
+          ) : activeTab === "submission-history" ? (
+            <SubmissionHistoryPanel submissions={submissions} />
           ) : (
             <PlaceholderPanel activeTab={activeTab} />
           )}
@@ -1605,6 +1742,10 @@ function ProblemDetailsPage({ userName = "Your name" }) {
           onAnnounce={handleSequenceAnnouncement}
         />
       </div>
+      <SubmissionResultDialog
+        submission={submissionResult}
+        onClose={() => setSubmissionResult(null)}
+      />
       <p className="sr-only" aria-live="polite">
         {announcement || `${language} runner ready.`}
       </p>

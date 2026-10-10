@@ -2,32 +2,32 @@
 
 .problems-page {
   --problem-scale: 1;
-  --problem-canvas: #18063d;
-  --problem-banner: #130138;
-  --problem-panel: #201045;
-  --problem-row: #25154a;
-  --problem-toolbar: #2f2055;
-  --problem-action: #3a2b60;
-  --problem-nav: #583984;
-  --problem-primary: #703bf7;
-  --problem-primary-bright: #7c4dff;
-  --problem-mint: #70ffba;
-  --problem-mint-deep: #01e599;
-  --problem-amber: #ffb95f;
-  --problem-hard: #ffb4ab;
-  --problem-text: #e9ddff;
-  --problem-soft-text: #eae0ff;
-  --problem-muted: #cac3d9;
-  --problem-dim: #948ea2;
-  --problem-dark: #0d0327;
+  --problem-canvas: var(--palette-deep);
+  --problem-banner: var(--palette-deep);
+  --problem-panel: var(--palette-deep);
+  --problem-row: var(--palette-deep);
+  --problem-toolbar: var(--palette-deep);
+  --problem-action: var(--palette-deep);
+  --problem-nav: var(--palette-blue);
+  --problem-primary: var(--palette-steel);
+  --problem-primary-bright: var(--palette-steel);
+  --problem-mint: var(--palette-sky);
+  --problem-mint-deep: var(--palette-steel);
+  --problem-amber: var(--palette-surface);
+  --problem-hard: var(--palette-surface);
+  --problem-text: var(--palette-surface);
+  --problem-soft-text: var(--palette-surface);
+  --problem-muted: var(--palette-surface);
+  --problem-dim: var(--palette-sky);
+  --problem-dark: var(--palette-deep);
   --font-display: "Plus Jakarta Sans", "Trebuchet MS", sans-serif;
   --font-body: Inter, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", Consolas, monospace;
   --radius-panel: 16px;
   --radius-row: 48px;
   --radius-pill: 999px;
-  --shadow-panel: 0 8px 10px rgb(0 0 0 / 10%), 0 20px 25px rgb(0 0 0 / 10%);
-  --shadow-cta: 0 4px 6px rgb(0 0 0 / 10%), 0 10px 15px rgb(0 0 0 / 10%);
+  --shadow-panel: 0 8px 10px rgb(var(--palette-deep-rgb) / 10%), 0 20px 25px rgb(var(--palette-deep-rgb) / 10%);
+  --shadow-cta: 0 4px 6px rgb(var(--palette-deep-rgb) / 10%), 0 10px 15px rgb(var(--palette-deep-rgb) / 10%);
   width: min(
     calc(100% / var(--problem-scale)),
     calc(100vw / var(--problem-scale))
@@ -40,10 +40,10 @@
   background:
     radial-gradient(
       circle at 76% 12%,
-      rgb(112 59 247 / 20%),
+      rgb(var(--palette-steel-rgb) / 20%),
       transparent 24rem
     ),
-    radial-gradient(circle at 14% 62%, rgb(1 229 153 / 8%), transparent 22rem),
+    radial-gradient(circle at 14% 62%, rgb(var(--palette-steel-rgb) / 8%), transparent 22rem),
     var(--problem-canvas);
   font-family: var(--font-body);
   zoom: var(--problem-scale);
@@ -135,13 +135,13 @@
 .problems-hero__glow--violet {
   top: 0;
   right: 0;
-  background: rgb(112 59 247 / 20%);
+  background: rgb(var(--palette-steel-rgb) / 20%);
 }
 
 .problems-hero__glow--mint {
   top: 0;
   left: 33%;
-  background: rgb(1 229 153 / 10%);
+  background: rgb(var(--palette-steel-rgb) / 10%);
 }
 
 .problems-hero__copy {
@@ -175,7 +175,7 @@
 .problem-badge--mint {
   gap: 6px;
   color: var(--problem-mint);
-  background: rgb(1 229 153 / 20%);
+  background: rgb(var(--palette-steel-rgb) / 20%);
 }
 
 .problem-badge__dot {
@@ -208,17 +208,20 @@
   min-height: 56px;
   border-radius: var(--radius-pill);
   background: var(--problem-toolbar);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
+  box-shadow: 0 1px 2px rgb(var(--palette-deep-rgb) / 5%);
 }
 
 .metric-pill--progress {
   gap: 16px;
   padding: 8px 14px 8px 16px;
+  border: 0;
+  color: inherit;
+  text-align: left;
 }
 
 .metric-pill__label {
   display: block;
-  color: #655f76;
+  color: var(--palette-blue);
   font-family: var(--font-display);
   font-size: 12px;
   font-weight: 700;
@@ -272,7 +275,7 @@
   place-items: center;
   border-radius: 50%;
   color: var(--problem-amber);
-  background: rgb(255 185 95 / 16%);
+  background: rgb(var(--palette-surface-rgb) / 16%);
 }
 
 .metric-pill--challenge strong,
@@ -381,7 +384,7 @@
 .text-button {
   padding: 0;
   border: 0;
-  color: #cdbdff;
+  color: var(--palette-surface);
   background: transparent;
   font-family: var(--font-display);
   font-size: 12px;
@@ -390,7 +393,7 @@
 
 .text-button:hover,
 .text-button:focus-visible {
-  color: #fff;
+  color: var(--palette-surface);
   text-decoration: underline;
 }
 
@@ -439,7 +442,7 @@
 
 .filter-option:hover,
 .topic-option:hover {
-  background: rgb(58 43 96 / 48%);
+  background: rgb(var(--palette-deep-rgb) / 48%);
 }
 
 .filter-option input,
@@ -455,9 +458,9 @@
   display: block;
   width: 13px;
   height: 13px;
-  border: 1px solid #767676;
+  border: 1px solid var(--palette-steel);
   border-radius: 50%;
-  background: #fff;
+  background: var(--palette-surface);
 }
 
 .radio-mark::after {
@@ -537,7 +540,7 @@
 }
 
 .status-switcher button.is-selected {
-  color: #fff;
+  color: var(--palette-surface);
   background: var(--problem-primary);
 }
 
@@ -578,9 +581,9 @@
 .checkbox-mark {
   width: 14px;
   height: 14px;
-  border: 1px solid #767676;
+  border: 1px solid var(--palette-steel);
   border-radius: 3px;
-  background: #fff;
+  background: var(--palette-surface);
 }
 
 .topic-option input:checked + .checkbox-mark {
@@ -605,7 +608,7 @@
   align-items: center;
   border-radius: 6px;
   color: var(--problem-muted);
-  background: rgb(13 3 39 / 75%);
+  background: rgb(var(--palette-deep-rgb) / 75%);
   font-family: var(--font-display);
   font-size: 11px;
   font-weight: 400;
@@ -616,7 +619,7 @@
   min-height: 24px;
   padding: 0 10px;
   border-radius: var(--radius-pill);
-  background: rgb(58 43 96 / 48%);
+  background: rgb(var(--palette-deep-rgb) / 48%);
 }
 
 .problem-directory {
@@ -660,7 +663,7 @@
 }
 
 .search-field input::placeholder {
-  color: #9b92aa;
+  color: var(--palette-sky);
   opacity: 1;
 }
 
@@ -670,7 +673,7 @@
   border: 0;
   border-radius: 5px;
   color: var(--problem-dim);
-  background: rgb(148 142 162 / 12%);
+  background: rgb(var(--palette-sky-rgb) / 12%);
   font-family: var(--font-mono);
   font-size: 11px;
 }
@@ -726,7 +729,7 @@
   border: 0;
   border-radius: var(--radius-pill);
   color: var(--problem-muted);
-  background: rgb(47 32 85 / 65%);
+  background: rgb(var(--palette-deep-rgb) / 65%);
   font-family: var(--font-display);
   font-size: 13px;
   font-weight: 400;
@@ -738,12 +741,12 @@
 
 .quick-filters button:hover,
 .quick-filters button:focus-visible {
-  color: #fff;
+  color: var(--palette-surface);
   transform: translateY(-1px);
 }
 
 .quick-filters button.is-selected {
-  color: #fff;
+  color: var(--palette-surface);
   background: var(--problem-primary);
   font-weight: 700;
 }
@@ -766,7 +769,7 @@
 .problem-list-header,
 .problem-row {
   display: grid;
-  grid-template-columns: 72px minmax(300px, 1fr) 126px 150px 106px;
+  grid-template-columns: 150px minmax(300px, 1fr) 126px 150px 106px;
   align-items: center;
   column-gap: 0;
   min-width: 760px;
@@ -776,7 +779,7 @@
   min-height: 40px;
   padding: 0 24px;
   color: var(--problem-dim);
-  background: rgb(58 43 96 / 50%);
+  background: rgb(var(--palette-deep-rgb) / 50%);
   font-family: var(--font-display);
   font-size: 12px;
   font-weight: 700;
@@ -811,7 +814,7 @@
 }
 
 .problem-row:hover {
-  background: #2a1854;
+  background: var(--palette-deep);
   transform: translateX(2px);
 }
 
@@ -821,26 +824,40 @@
   justify-content: center;
 }
 
-.status-indicator {
-  display: grid;
-  width: 22px;
-  height: 22px;
-  place-items: center;
-  border-radius: 50%;
-  color: var(--problem-dim);
-  background: rgb(148 142 162 / 10%);
+.problem-progress-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 126px;
+  min-height: 26px;
+  padding: 0 9px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
-.status-indicator > span:not(.problem-icon) {
-  width: 6px;
-  height: 6px;
-  border: 1px solid currentColor;
-  border-radius: 50%;
+.problem-progress-badge__marker {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1;
 }
 
-.status-indicator.is-solved {
+.problem-progress-badge--completed {
   color: var(--problem-mint);
-  background: rgb(112 255 186 / 18%);
+  background: rgb(var(--palette-sky-rgb) / 18%);
+}
+
+.problem-progress-badge--incomplete {
+  color: var(--problem-amber);
+  background: rgb(var(--palette-surface-rgb) / 18%);
+}
+
+.problem-progress-badge--not-started {
+  color: var(--problem-muted);
+  background: rgb(var(--palette-sky-rgb) / 14%);
 }
 
 .problem-row__title {
@@ -906,17 +923,17 @@
 
 .difficulty-badge--easy {
   color: var(--problem-mint);
-  background: rgb(1 229 153 / 23%);
+  background: rgb(var(--palette-steel-rgb) / 23%);
 }
 
 .difficulty-badge--medium {
   color: var(--problem-amber);
-  background: rgb(255 185 95 / 23%);
+  background: rgb(var(--palette-surface-rgb) / 23%);
 }
 
 .difficulty-badge--hard {
   color: var(--problem-hard);
-  background: rgb(255 81 101 / 26%);
+  background: rgb(var(--palette-danger-rgb) / 26%);
 }
 
 .problem-row__acceptance {
@@ -984,7 +1001,7 @@
   gap: 16px;
   min-height: 58px;
   padding: 8px 16px;
-  background: rgb(47 32 85 / 50%);
+  background: rgb(var(--palette-deep-rgb) / 50%);
 }
 
 .problem-list-footer p {
@@ -1019,7 +1036,7 @@
 }
 
 .pagination button.is-current {
-  color: #fff;
+  color: var(--palette-surface);
   background: var(--problem-primary);
   box-shadow: var(--shadow-cta);
   font-weight: 700;
@@ -1155,7 +1172,7 @@
 .footer-link-column a:focus-visible,
 .problems-footer__legal a:hover,
 .problems-footer__legal a:focus-visible {
-  color: #fff;
+  color: var(--palette-surface);
 }
 
 .problems-footer__legal {
@@ -1165,7 +1182,7 @@
   gap: 24px;
   margin-top: 68px;
   padding-top: 20px;
-  border-top: 1px solid rgb(148 142 162 / 14%);
+  border-top: 1px solid rgb(var(--palette-sky-rgb) / 14%);
 }
 
 .problems-footer__legal p {
