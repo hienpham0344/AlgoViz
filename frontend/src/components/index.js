@@ -5,3 +5,4 @@ export { default as Footer } from "./Footer.jsx";
 export { default as LandingBar } from "./LandingBar.jsx";
 export { default as NavBarItem } from "./NavBarItem.jsx";
 export { default as NavigationBar } from "./NavigationBar.jsx";
+export { default as SmoothSortVisualizer } from "./visualizer/SmoothSortVisualizer.jsx";
