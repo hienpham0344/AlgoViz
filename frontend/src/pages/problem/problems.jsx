@@ -3,19 +3,10 @@ import { NavigationBar } from "../../components/index.js";
 import { api } from "../../services/api.js";
 import "./problems.css";
 
-const TOTAL_PROBLEMS = 125;
 const PAGE_SIZE = 8;
-const PAGE_COUNT = 5;
 
 const DIFFICULTIES = ["All", "Easy", "Medium", "Hard"];
 const STATUSES = ["All", "Solved", "To Do"];
-const TOPICS = [
-  { label: "Sorting", count: 18 },
-  { label: "Searching", count: 14 },
-  { label: "Graph Algorithms", count: 24 },
-  { label: "Tree & DFS / BFS", count: 29 },
-  { label: "Dynamic Programming", count: 32 },
-];
 const TECHNIQUES = [
   "Array",
   "Recursion",
@@ -24,6 +15,13 @@ const TECHNIQUES = [
   "Greedy",
   "Backtracking",
 ];
+
+// Lựa chọn ngẫu nhiên một bài tập từ danh sách lọc hoặc mặc định
+function selectRandomProblem(candidates) {
+  if (!candidates || candidates.length === 0) return null;
+  const randomIndex = Math.floor(Math.random() * candidates.length);
+  return candidates[randomIndex];
+}
 const QUICK_FILTERS = [
   { id: "all", label: "All Topics" },
   { id: "popular", label: "🔥 Popular" },
@@ -602,12 +600,10 @@ function ProblemsPage({ userName = "Your name", onOpenProblem }) {
   const [page, setPage] = useState(1);
   const [announcement, setAnnouncement] = useState("");
   const [problemsList, setProblemsList] = useState(PROBLEMS);
-  const [loading, setLoading] = useState(false);
   const searchInputRef = useRef(null);
 
   useEffect(() => {
     async function loadProblems() {
-      setLoading(true);
       try {
         let solvedProblemIds = new Set();
         try {
@@ -647,8 +643,6 @@ function ProblemsPage({ userName = "Your name", onOpenProblem }) {
         }
       } catch (err) {
         console.warn("Could not fetch problems from backend, using defaults:", err);
-      } finally {
-        setLoading(false);
       }
     }
     loadProblems();
@@ -735,7 +729,7 @@ function ProblemsPage({ userName = "Your name", onOpenProblem }) {
 
   const pickRandomProblem = () => {
     const candidates = filteredProblems.length > 0 ? filteredProblems : problemsList;
-    const selected = candidates[Math.floor(Math.random() * candidates.length)];
+    const selected = selectRandomProblem(candidates);
     if (selected) {
       handleProblemAction(selected);
     }

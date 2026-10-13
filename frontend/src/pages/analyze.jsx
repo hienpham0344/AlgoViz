@@ -629,7 +629,8 @@ function OutputResultsPanel({ executionResult, activeCase, customInput, language
   );
 }
 
-function FeedbackQualityPanel({ aiResult, onEvaluate }) {
+// Bảng hiển thị đánh giá chất lượng code và phản hồi phân tích từ AI (độ phức tạp, tối ưu, gợi ý bug)
+function FeedbackQualityPanel({ aiResult }) {
   const timeComplexity = aiResult?.timeComplexity || "O(N²)";
   const spaceComplexity = aiResult?.spaceComplexity || "O(1)";
   const summary = aiResult?.summary || "AI analysis completed. Your code structure has been verified for algorithmic efficiency and memory footprint.";

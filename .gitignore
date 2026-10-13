@@ -1,0 +1,9 @@
+# IDE & System
+.vs/
+.idea/
+
+# Nested tools
+AST-tool/
+
+# Office documents / reports
+*.docx

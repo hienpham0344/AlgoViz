@@ -779,7 +779,6 @@ function OutputCard({ type, testCase, executionResult }) {
 function RunnerOutput({
   activeTab,
   activeCaseIndex,
-  testCase,
   testCasesList,
   executionResult,
   onTabChange,
@@ -951,10 +950,6 @@ function normalizeJavaLine(rawLine) {
   return 5;
 }
 
-function formatSolutionIndex(index) {
-  return `[${index}]`;
-}
-
 function SolutionContextBar({ variant }) {
   return (
     <div className="details-solution-context">
@@ -968,186 +963,6 @@ function SolutionContextBar({ variant }) {
         <span>{variant.space}</span>
       </span>
     </div>
-  );
-}
-
-function SolutionArrayState({ step }) {
-  return (
-    <>
-      <div className="details-solution-board__topline">
-        <span>nums array</span>
-        <span>Length: {step.nums.length}</span>
-      </div>
-      <div className="details-solution-array" aria-label="Current array values">
-        {step.nums.map((value, index) => (
-          <span
-            className={`details-solution-array__cell ${
-              index === step.leftIndex || index === step.rightIndex
-                ? "is-active"
-                : ""
-            }`}
-            data-index={formatSolutionIndex(index)}
-            key={`${value}-${index}`}
-          >
-            {value}
-          </span>
-        ))}
-      </div>
-      <div
-        className="details-solution-pointers"
-        aria-label="Current array pointers"
-      >
-        <span
-          className="details-solution-pointer"
-          style={{ gridColumn: step.leftIndex + 1 }}
-        >
-          <b aria-hidden="true">↑</b>
-          <span>i</span>
-        </span>
-        <span
-          className="details-solution-pointer"
-          style={{ gridColumn: step.rightIndex + 1 }}
-        >
-          <b aria-hidden="true">↑</b>
-          <span>j</span>
-        </span>
-      </div>
-      <div className="details-solution-buffer">
-        <div className="details-solution-board__resultline">
-          <span>result / swap buffer</span>
-          <span>in-place mutation</span>
-        </div>
-        <div className="details-solution-buffer__row" aria-label="Swap buffer">
-          {step.resultBuffer.map((value, index) => (
-            <span key={`${value}-${index}`}>{value}</span>
-          ))}
-        </div>
-      </div>
-    </>
-  );
-}
-
-function SolutionPlaybackControls({
-  stepIndex,
-  stepCount,
-  isPlaying,
-  onTogglePlay,
-  onPrevious,
-  onNext,
-  onReplay,
-  onSeek,
-}) {
-  return (
-    <div
-      className="details-solution-controls"
-      aria-label="Visualizer playback controls"
-    >
-      <div className="details-solution-controls__buttons">
-        <button
-          type="button"
-          aria-label={isPlaying ? "Pause visualization" : "Play visualization"}
-          aria-pressed={isPlaying}
-          onClick={onTogglePlay}
-        >
-          {isPlaying ? "Ⅱ" : "▶"}
-        </button>
-        <button
-          type="button"
-          aria-label="Previous visualization step"
-          onClick={onPrevious}
-        >
-          |◀
-        </button>
-        <button
-          type="button"
-          aria-label="Next visualization step"
-          onClick={onNext}
-        >
-          ▶|
-        </button>
-        <button
-          type="button"
-          aria-label="Replay visualization"
-          onClick={onReplay}
-        >
-          ↻
-        </button>
-      </div>
-      <label className="details-solution-progress">
-        <span className="sr-only">Visualizer step</span>
-        <input
-          type="range"
-          min="0"
-          max={stepCount - 1}
-          value={stepIndex}
-          onChange={onSeek}
-          aria-label="Visualizer step"
-        />
-      </label>
-      <span className="details-solution-progress__label">
-        {stepIndex + 1} / {stepCount}
-        <strong>1.0×</strong>
-      </span>
-    </div>
-  );
-}
-
-function SolutionVisualizerCard({
-  variant,
-  step,
-  stepIndex,
-  stepCount,
-  isPlaying,
-  onTogglePlay,
-  onPrevious,
-  onNext,
-  onReplay,
-  onSeek,
-}) {
-  const isSwap = step.status === "swap";
-  return (
-    <section
-      className="details-solution-card details-solution-visualizer"
-      aria-label={`${variant.label} visualization`}
-    >
-      <SolutionContextBar variant={variant} />
-      <div className="details-solution-stage">
-        <header className="details-solution-stage__header">
-          <div className="details-solution-stage__heading">
-            <span className="details-solution-badge">VISUALIZATION</span>
-            <strong>Step Trace &amp; State Pointers</strong>
-          </div>
-          <span className="details-solution-live">LIVE BUFFER</span>
-        </header>
-        <div className="details-solution-board">
-          <SolutionArrayState step={step} />
-          <div className="details-solution-note">
-            <p>
-              <strong>⚡ Stop:</strong> Compare nums[{step.leftIndex}] ={" "}
-              {step.nums[step.leftIndex]} and nums[
-              {step.rightIndex}] = {step.nums[step.rightIndex]} →{" "}
-              {step.comparison}, {isSwap ? "swap required" : "keep order"}
-            </p>
-            <span
-              className={`details-solution-swap ${isSwap ? "is-triggered" : ""}`}
-            >
-              <small>Swap</small>
-              {isSwap ? "Triggered" : "Skipped"}
-            </span>
-          </div>
-          <SolutionPlaybackControls
-            stepIndex={stepIndex}
-            stepCount={stepCount}
-            isPlaying={isPlaying}
-            onTogglePlay={onTogglePlay}
-            onPrevious={onPrevious}
-            onNext={onNext}
-            onReplay={onReplay}
-            onSeek={onSeek}
-          />
-        </div>
-      </div>
-    </section>
   );
 }
 
@@ -1478,7 +1293,7 @@ function ProblemDetailsPage({ userName = "Your name", problemId = 1 }) {
 
   const testCasesList = useMemo(() => {
     if (currentProblem?.sampleTestCases && currentProblem.sampleTestCases.length > 0) {
-      return currentProblem.sampleTestCases.map((tc, idx) => ({
+      return currentProblem.sampleTestCases.map((tc) => ({
         input: tc.input || "",
         actual: "(Click Run Code)",
         expected: tc.expectedOutput || "",
@@ -1630,8 +1445,8 @@ function ProblemDetailsPage({ userName = "Your name", problemId = 1 }) {
         const normActual = rawOutput.replace(/\r\n/g, "\n");
         const normExpected = expectedOutput.replace(/\r\n/g, "\n");
 
-        const cleanActual = normActual.replace(/[\[\],]/g, " ").replace(/\s+/g, " ").trim();
-        const cleanExpected = normExpected.replace(/[\[\],]/g, " ").replace(/\s+/g, " ").trim();
+        const cleanActual = normActual.replace(/[[\\],]/g, " ").replace(/\s+/g, " ").trim();
+        const cleanExpected = normExpected.replace(/[[\\],]/g, " ").replace(/\s+/g, " ").trim();
 
         const isExactMatch = normActual.length > 0 && normActual === normExpected;
         const isCleanMatch = cleanActual.length > 0 && cleanActual === cleanExpected;

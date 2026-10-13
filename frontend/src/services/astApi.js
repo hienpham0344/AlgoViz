@@ -162,6 +162,7 @@ export function generateBubbleSortTrace(initialArray = [5, 2, 8, 1, 9, 3]) {
       const valJ1 = itemAtJ1.value;
 
       comparisonsTotal++;
+      const needSwap = valJ > valJ1;
       // Common active pair for this comparison & swap:
       // Item A (bên trái) luôn là XANH, Item B (bên phải) luôn là TÍM.
       const pairInfo = {

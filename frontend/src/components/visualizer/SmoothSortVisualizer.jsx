@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import {
   generateBubbleSortTrace,
   fetchDebugSteps,
@@ -40,7 +40,6 @@ export default function SmoothSortVisualizer({
   // AST backend connectivity
   const [isAstOnline, setIsAstOnline] = useState(false);
   const [isFetchingAst, setIsFetchingAst] = useState(false);
-  const [astSourceMode, setAstSourceMode] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
 
   const timerRef = useRef(null);
@@ -56,17 +55,7 @@ export default function SmoothSortVisualizer({
     };
   }, []);
 
-  // Update trace whenever currentArray changes
-  useEffect(() => {
-    if (!astSourceMode) {
-      const newTrace = generateBubbleSortTrace(currentArray);
-      setTrace(newTrace);
-      setStepIndex(0);
-      setIsPlaying(false);
-    }
-  }, [currentArray, astSourceMode]);
-
-  const currentStep = trace[stepIndex] || trace[0] || {};
+  const currentStep = useMemo(() => trace[stepIndex] || trace[0] || {}, [trace, stepIndex]);
 
   // Notify parent of active line / step
   useEffect(() => {
@@ -134,8 +123,10 @@ export default function SmoothSortVisualizer({
     }
     setShowCustomInput(false);
     const arr = PRESET_ARRAYS[presetKey] || PRESET_ARRAYS.default;
-    setAstSourceMode(false);
     setCurrentArray(arr);
+    setTrace(generateBubbleSortTrace(arr));
+    setStepIndex(0);
+    setIsPlaying(false);
     setCustomInput(arr.join(", "));
   };
 
@@ -148,8 +139,10 @@ export default function SmoothSortVisualizer({
       .filter((n) => !isNaN(n));
 
     if (parsed.length >= 2 && parsed.length <= 15) {
-      setAstSourceMode(false);
       setCurrentArray(parsed);
+      setTrace(generateBubbleSortTrace(parsed));
+      setStepIndex(0);
+      setIsPlaying(false);
       setStatusMessage(`Đã áp dụng mảng mới: [${parsed.join(", ")}]`);
       setTimeout(() => setStatusMessage(""), 2500);
     } else {
@@ -168,7 +161,6 @@ export default function SmoothSortVisualizer({
         setTrace(adapted);
         setStepIndex(0);
         setIsPlaying(false);
-        setAstSourceMode(true);
         setIsAstOnline(true);
         setStatusMessage("✅ Đã đồng bộ trace trực quan từ AST-tool JDI!");
       }
@@ -543,7 +535,7 @@ export default function SmoothSortVisualizer({
         {/* Speed Controller Pills */}
         <div className="smooth-vis-speed-pills">
           <span>Tốc độ:</span>
-          {Object.entries(SPEED_CONFIG).map(([key, cfg]) => (
+          {Object.entries(SPEED_CONFIG).map(([key]) => (
             <button
               type="button"
               key={key}
