@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NavigationBar } from "../../components/index.js";
+import SmoothSortVisualizer from "../../components/visualizer/SmoothSortVisualizer.jsx";
 import { api, getToken } from "../../services/api.js";
 import "./problemDetails.css";
 
@@ -937,6 +938,19 @@ function CodeRunnerPanel({
   );
 }
 
+function normalizeJavaLine(rawLine) {
+  if (!rawLine) return 5;
+  if (rawLine <= 12) return rawLine;
+  if (rawLine === 18) return 3;
+  if (rawLine === 19) return 4;
+  if (rawLine === 20) return 5;
+  if (rawLine === 21) return 6;
+  if (rawLine === 22) return 7;
+  if (rawLine === 23) return 8;
+  if (rawLine >= 24) return 12;
+  return 5;
+}
+
 function formatSolutionIndex(index) {
   return `[${index}]`;
 }
@@ -1208,26 +1222,30 @@ function SolutionCodeEditor({ step }) {
         aria-readonly="true"
         tabIndex="0"
       >
-        {SOLUTION_JAVA_LINES.map((line, index) => (
-          <span
-            className={`details-solution-code-line ${line.active ? "is-active" : ""}`}
-            key={`code-${index + 1}`}
-          >
-            {line.tokens.map((token, tokenIndex) => (
-              <span
-                className={`details-solution-token details-solution-token--${token.type}`}
-                key={`${index}-${tokenIndex}`}
-              >
-                {token.text}
-              </span>
-            ))}
-            {line.active && (
-              <span className="details-solution-annotation">
-                ← {step.annotation}
-              </span>
-            )}
-          </span>
-        ))}
+        {SOLUTION_JAVA_LINES.map((line, index) => {
+          const activeLineNum = normalizeJavaLine(step?.activeLine);
+          const isLineActive = index + 1 === activeLineNum;
+          return (
+            <span
+              className={`details-solution-code-line ${isLineActive ? "is-active" : ""}`}
+              key={`code-${index + 1}`}
+            >
+              {line.tokens.map((token, tokenIndex) => (
+                <span
+                  className={`details-solution-token details-solution-token--${token.type}`}
+                  key={`${index}-${tokenIndex}`}
+                >
+                  {token.text}
+                </span>
+              ))}
+              {isLineActive && (
+                <span className="details-solution-annotation">
+                  ← {step?.annotation || "Active step"}
+                </span>
+              )}
+            </span>
+          );
+        })}
       </pre>
     </div>
   );
@@ -1240,6 +1258,7 @@ function SolutionCodeCard({
   onAction,
   onToggleExpand,
 }) {
+  const activeLineNum = normalizeJavaLine(step?.activeLine);
   return (
     <section
       className={`details-solution-card details-solution-code-card ${isExpanded ? "is-expanded" : ""}`}
@@ -1255,7 +1274,7 @@ function SolutionCodeCard({
       <div className="details-solution-execution-context">
         <span className="details-solution-bulb" aria-hidden="true" />
         <p>
-          <strong>Line 5 Execution Context:</strong> {step.context}
+          <strong>Line {activeLineNum} Execution Context:</strong> {step?.context || step?.annotation || "Đang thực thi thuật toán."}
         </p>
       </div>
     </section>
@@ -1265,66 +1284,8 @@ function SolutionCodeCard({
 function SolutionPanel({ activeTab, onAnnounce }) {
   const variant =
     SOLUTION_VARIANTS[activeTab] ?? SOLUTION_VARIANTS["solution-optimized"];
-  const [stepIndex, setStepIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentStep, setCurrentStep] = useState(SOLUTION_STEPS[0]);
   const [isExpanded, setIsExpanded] = useState(false);
-  const step = SOLUTION_STEPS[stepIndex];
-
-  useEffect(() => {
-    if (!isPlaying) return undefined;
-    const intervalId = window.setInterval(() => {
-      setStepIndex((current) => {
-        if (current >= SOLUTION_STEPS.length - 1) {
-          setIsPlaying(false);
-          return current;
-        }
-        return current + 1;
-      });
-    }, 900);
-    return () => window.clearInterval(intervalId);
-  }, [isPlaying]);
-
-  const announceStep = (nextIndex) => {
-    const nextStep = SOLUTION_STEPS[nextIndex];
-    onAnnounce(
-      `Visualizer step ${nextIndex + 1} of ${SOLUTION_STEPS.length}: ${nextStep.comparison}.`,
-    );
-  };
-
-  const handleTogglePlay = () => {
-    if (!isPlaying && stepIndex === SOLUTION_STEPS.length - 1) {
-      setStepIndex(0);
-      announceStep(0);
-    }
-    setIsPlaying((current) => !current);
-  };
-
-  const handlePrevious = () => {
-    setIsPlaying(false);
-    const nextIndex = Math.max(0, stepIndex - 1);
-    setStepIndex(nextIndex);
-    announceStep(nextIndex);
-  };
-
-  const handleNext = () => {
-    setIsPlaying(false);
-    const nextIndex = Math.min(SOLUTION_STEPS.length - 1, stepIndex + 1);
-    setStepIndex(nextIndex);
-    announceStep(nextIndex);
-  };
-
-  const handleReplay = () => {
-    setIsPlaying(false);
-    setStepIndex(0);
-    announceStep(0);
-  };
-
-  const handleSeek = (event) => {
-    const nextIndex = Number(event.target.value);
-    setIsPlaying(false);
-    setStepIndex(nextIndex);
-    announceStep(nextIndex);
-  };
 
   const handleCopy = async () => {
     if (!navigator.clipboard) {
@@ -1350,20 +1311,19 @@ function SolutionPanel({ activeTab, onAnnounce }) {
       role="tabpanel"
       id={`detail-panel-${activeTab}`}
     >
-      <SolutionVisualizerCard
-        variant={variant}
-        step={step}
-        stepIndex={stepIndex}
-        stepCount={SOLUTION_STEPS.length}
-        isPlaying={isPlaying}
-        onTogglePlay={handleTogglePlay}
-        onPrevious={handlePrevious}
-        onNext={handleNext}
-        onReplay={handleReplay}
-        onSeek={handleSeek}
-      />
+      <section
+        className="details-solution-card details-solution-visualizer"
+        aria-label={`${variant.label} visualization`}
+      >
+        <SolutionContextBar variant={variant} />
+        <SmoothSortVisualizer
+          onStepChange={(step) => {
+            setCurrentStep(step);
+          }}
+        />
+      </section>
       <SolutionCodeCard
-        step={step}
+        step={currentStep}
         isExpanded={isExpanded}
         onCopy={handleCopy}
         onAction={onAnnounce}
