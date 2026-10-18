@@ -1192,6 +1192,11 @@ function ProblemDetailsPage({ userName = "Your name", problemId = 1 }) {
           onRunVisualizer={() => handleTabChange("solution-basic")}
           onSubmit={handleSubmit}
         />
+        <SequenceNavigator
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          onAnnounce={handleSequenceAnnouncement}
+        />
         <WorkspaceTabs activeTab={activeTab} onChange={handleTabChange} />
         <div
           className="details-tab-panel"
@@ -1241,11 +1246,6 @@ function ProblemDetailsPage({ userName = "Your name", problemId = 1 }) {
             <PlaceholderPanel activeTab={activeTab} />
           )}
         </div>
-        <SequenceNavigator
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
-          onAnnounce={handleSequenceAnnouncement}
-        />
       </div>
       <p className="sr-only" aria-live="polite">
         {announcement || `${language} runner ready.`}
