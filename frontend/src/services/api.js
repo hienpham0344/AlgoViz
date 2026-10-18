@@ -124,6 +124,12 @@ export const api = {
     return request(`/submissions/problem/${problemId}`);
   },
 
+  deleteSubmission: (submissionId) => {
+    return request(`/submissions/${submissionId}`, {
+      method: "DELETE",
+    });
+  },
+
   // AI Analysis API
   analyzeCode: (code, language = "python", problemContext = "") => {
     return request("/ai/analyze", {

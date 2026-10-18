@@ -3,6 +3,8 @@ import { BadgeProblemStatus, NavigationBar } from "../components/index.js";
 import { api } from "../services/api.js";
 import "./history.css";
 
+const PAGE_SIZE = 5;
+
 const FEATURES = [
   [
     "trace",
@@ -27,7 +29,7 @@ function HistoryIcon({ name }) {
   );
 }
 
-function HistoryHero({ onNewAnalysis }) {
+function HistoryHero({ onNewAnalysis, onDeleteSelected, selectedCount }) {
   return (
     <section className="history-hero">
       <div
@@ -69,8 +71,10 @@ function HistoryHero({ onNewAnalysis }) {
           <button
             className="history-button history-button--muted"
             type="button"
+            onClick={onDeleteSelected}
+            disabled={selectedCount === 0}
           >
-            <HistoryIcon name="delete" /> Delete Selected
+            <HistoryIcon name="delete" /> Delete Selected ({selectedCount})
           </button>
         </div>
       </div>
@@ -250,7 +254,20 @@ function LanguageBadge({ language }) {
   );
 }
 
-function HistoryTable({ rows, selected, onSelect, onDelete }) {
+function HistoryTable({
+  rows,
+  selected,
+  onSelect,
+  onDelete,
+  onInspect,
+  page,
+  pageCount,
+  totalCount,
+  onPageChange,
+}) {
+  const firstRow = totalCount === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const lastRow = Math.min(page * PAGE_SIZE, totalCount);
+
   return (
     <section
       className="history-table-card history-shell"
@@ -298,7 +315,10 @@ function HistoryTable({ rows, selected, onSelect, onDelete }) {
               <button
                 type="button"
                 aria-label={`Inspect ${row.algorithm}`}
-                onClick={(event) => event.stopPropagation()}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onInspect(row);
+                }}
               >
                 <HistoryIcon name="view" />
               </button>
@@ -318,20 +338,35 @@ function HistoryTable({ rows, selected, onSelect, onDelete }) {
       </div>
       <div className="history-table-footer">
         <span>
-          Showing {rows.length ? 1 : 0}-{rows.length} of 128 analyses
+          Showing {firstRow}-{lastRow} of {totalCount} analyses
         </span>
         <nav aria-label="History pages">
-          <button type="button" aria-label="Previous page">
+          <button
+            type="button"
+            aria-label="Previous page"
+            disabled={page === 1}
+            onClick={() => onPageChange(page - 1)}
+          >
             ‹
           </button>
-          <button className="is-current" type="button">
-            1
-          </button>
-          <button type="button">2</button>
-          <button type="button">3</button>
-          <button type="button">4</button>
-          <button type="button">5</button>
-          <button type="button" aria-label="Next page">
+          {Array.from({ length: pageCount }, (_, index) => index + 1).map(
+            (pageNumber) => (
+              <button
+                className={pageNumber === page ? "is-current" : ""}
+                type="button"
+                key={pageNumber}
+                onClick={() => onPageChange(pageNumber)}
+              >
+                {pageNumber}
+              </button>
+            ),
+          )}
+          <button
+            type="button"
+            aria-label="Next page"
+            disabled={page === pageCount}
+            onClick={() => onPageChange(page + 1)}
+          >
             ›
           </button>
         </nav>
@@ -412,6 +447,7 @@ function HistoryPage({ userName = "Your name" }) {
   const [selected, setSelected] = useState(new Set());
   const [announcement, setAnnouncement] = useState("");
   const [historyList, setHistoryList] = useState([]);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     async function loadHistory() {
@@ -420,6 +456,8 @@ function HistoryPage({ userName = "Your name" }) {
         if (Array.isArray(historyData)) {
           const mapped = historyData.map((item) => ({
             id: item.id,
+            problemId: item.problemId,
+            persisted: true,
             algorithm: item.problemTitle || "Problem #" + item.problemId,
             topic: item.status || "Evaluated",
             complexity: item.executionTimeMs ? `${item.executionTimeMs}ms` : "O(N)",
@@ -451,21 +489,73 @@ function HistoryPage({ userName = "Your name" }) {
     );
     return newestFirst ? filtered : [...filtered].reverse();
   }, [completion, historyList, language, newestFirst, query]);
+  const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount);
+  const visibleRows = rows.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
+  );
   const toggleSelected = (id) =>
     setSelected((current) => {
       const next = new Set(current);
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
-  const removeRow = (id) => {
-    setSelected(
-      (current) => new Set([...current].filter((item) => item !== id)),
-    );
-    setAnnouncement("Analysis removed from the selected history.");
-  };
   const clearSelected = () => {
     setSelected(new Set());
     setAnnouncement("Selected analyses cleared.");
+  };
+
+  const deleteRows = async (ids) => {
+    const idSet = new Set(ids);
+    if (idSet.size === 0) {
+      setAnnouncement("Select at least one analysis to delete.");
+      return;
+    }
+
+    const persistedIds = historyList
+      .filter((row) => idSet.has(row.id) && row.persisted)
+      .map((row) => row.id);
+
+    try {
+      await Promise.all(persistedIds.map((id) => api.deleteSubmission(id)));
+      setHistoryList((current) => current.filter((row) => !idSet.has(row.id)));
+      setSelected(
+        (current) => new Set([...current].filter((id) => !idSet.has(id))),
+      );
+      setAnnouncement(
+        `${idSet.size} analysis record${idSet.size === 1 ? "" : "s"} deleted.`,
+      );
+    } catch (error) {
+      setAnnouncement(`Delete failed: ${error.message}`);
+    }
+  };
+
+  const exportHistory = () => {
+    const escapeCsv = (value) =>
+      `"${String(value ?? "").replaceAll('"', '""')}"`;
+    const csvRows = [
+      ["Algorithm", "Topic", "Status", "Complexity", "Language", "Date"],
+      ...rows.map((row) => [
+        row.algorithm,
+        row.topic,
+        row.completed ? "Completed" : "Not completed",
+        row.complexity,
+        row.language,
+        row.date,
+      ]),
+    ];
+    const blob = new Blob(
+      [csvRows.map((row) => row.map(escapeCsv).join(",")).join("\n")],
+      { type: "text/csv;charset=utf-8" },
+    );
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "algoviz-history.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+    setAnnouncement(`${rows.length} analysis records exported.`);
   };
 
   return (
@@ -481,25 +571,48 @@ function HistoryPage({ userName = "Your name" }) {
         onNewAnalysis={() => {
           window.location.hash = "analyze";
         }}
+        onDeleteSelected={() => deleteRows([...selected])}
+        selectedCount={selected.size}
       />
       <HistoryStats />
       <HistoryToolbar
         query={query}
-        onQueryChange={setQuery}
+        onQueryChange={(value) => {
+          setQuery(value);
+          setPage(1);
+        }}
         language={language}
-        onLanguageChange={setLanguage}
+        onLanguageChange={(value) => {
+          setLanguage(value);
+          setPage(1);
+        }}
         completion={completion}
-        onCompletionChange={setCompletion}
+        onCompletionChange={(value) => {
+          setCompletion(value);
+          setPage(1);
+        }}
         newestFirst={newestFirst}
-        onSortChange={() => setNewestFirst((current) => !current)}
+        onSortChange={() => {
+          setNewestFirst((current) => !current);
+          setPage(1);
+        }}
         onClear={clearSelected}
-        onExport={() => setAnnouncement("History export prepared.")}
+        onExport={exportHistory}
       />
       <HistoryTable
-        rows={rows}
+        rows={visibleRows}
         selected={selected}
         onSelect={toggleSelected}
-        onDelete={removeRow}
+        onDelete={(id) => deleteRows([id])}
+        onInspect={(row) => {
+          window.location.hash = row.problemId
+            ? `problem-details?id=${row.problemId}`
+            : "analyze";
+        }}
+        page={currentPage}
+        pageCount={pageCount}
+        totalCount={rows.length}
+        onPageChange={setPage}
       />
       <HistoryFeatures />
       <p className="sr-only" aria-live="polite">
