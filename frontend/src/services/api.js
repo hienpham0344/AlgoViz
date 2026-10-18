@@ -136,4 +136,11 @@ export const api = {
   getProfile: () => {
     return request("/users/me");
   },
+
+  updateProfile: (fullName, avatarUrl = "") => {
+    return request("/users/profile", {
+      method: "PUT",
+      body: JSON.stringify({ fullName, avatarUrl }),
+    });
+  },
 };

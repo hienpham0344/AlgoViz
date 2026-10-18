@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NavigationBar } from "../components/index.js";
+import { api } from "../services/api.js";
 import "./profile.css";
 
 const PROFILE_PORTRAIT =
@@ -23,25 +24,29 @@ function ProfileIcon({ name }) {
   );
 }
 
-function ProfileHeader({ onEdit }) {
+function ProfileHeader({ profile, onEdit, onShare }) {
+  const displayName = profile?.fullName || profile?.username || "AlgoViz Learner";
+  const email = profile?.email || "amy@example.com";
+  const portrait = profile?.avatarUrl || PROFILE_PORTRAIT;
+
   return (
     <section className="profile-card profile-header-card">
       <div className="profile-glow profile-glow--violet" aria-hidden="true" />
       <div className="profile-glow profile-glow--cyan" aria-hidden="true" />
       <div className="profile-identity">
         <div className="profile-portrait-wrap">
-          <img src={PROFILE_PORTRAIT} alt="Nguyen Ai My" />
+          <img src={portrait} alt={displayName} />
           <i />
         </div>
         <div className="profile-details">
           <div className="profile-name-line">
-            <h1>Nguyễn Ái My</h1>
+            <h1>{displayName}</h1>
             <span className="profile-role">
               <i /> Pro Algorithmic Learner
             </span>
           </div>
-          <a className="profile-email" href="mailto:amy@example.com">
-            amy@example.com
+          <a className="profile-email" href={`mailto:${email}`}>
+            {email}
           </a>
           <p>
             Computer Science student at DevHub Academy. Specializing in
@@ -67,6 +72,7 @@ function ProfileHeader({ onEdit }) {
           className="profile-icon-button"
           type="button"
           aria-label="Share profile"
+          onClick={onShare}
         >
           <ProfileIcon name="share" />
         </button>
@@ -256,7 +262,6 @@ function LearningProgress() {
 }
 
 function AnalysisHistory() {
-  const [message, setMessage] = useState("");
   return (
     <section className="profile-card profile-history">
       <div className="profile-panel-heading">
@@ -294,16 +299,15 @@ function AnalysisHistory() {
             </div>
             <button
               type="button"
-              onClick={() => setMessage(`${title} details opened.`)}
+              onClick={() => {
+                window.location.hash = "history";
+              }}
             >
               View Details
             </button>
           </article>
         ))}
       </div>
-      <p className="sr-only" aria-live="polite">
-        {message}
-      </p>
     </section>
   );
 }
@@ -330,12 +334,59 @@ function ProfileFooter() {
 
 function ProfilePage({ userName = "Your name" }) {
   const [message, setMessage] = useState("");
+  const [profile, setProfile] = useState(null);
+
+  useEffect(() => {
+    api.getProfile()
+      .then(setProfile)
+      .catch((error) => setMessage(`Could not load profile: ${error.message}`));
+  }, []);
+
+  const handleEdit = async () => {
+    const currentName = profile?.fullName || profile?.username || userName;
+    const fullName = window.prompt("Enter your display name", currentName);
+    if (!fullName || fullName.trim() === currentName) return;
+
+    try {
+      const updated = await api.updateProfile(fullName.trim(), profile?.avatarUrl || "");
+      setProfile(updated);
+      localStorage.setItem("algoviz-user-name", updated.fullName || updated.username);
+      window.dispatchEvent(new CustomEvent("algoviz:profile-updated", {
+        detail: updated.fullName || updated.username,
+      }));
+      setMessage("Profile updated.");
+    } catch (error) {
+      setMessage(`Profile update failed: ${error.message}`);
+    }
+  };
+
+  const handleShare = async () => {
+    const shareData = {
+      title: `${profile?.fullName || userName}'s AlgoViz profile`,
+      text: "View my AlgoViz learning profile.",
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(shareData.url);
+        setMessage("Profile link copied to clipboard.");
+      }
+    } catch (error) {
+      if (error.name !== "AbortError") {
+        setMessage(`Profile sharing failed: ${error.message}`);
+      }
+    }
+  };
+
   return (
     <main className="profile-page" id="top">
       <div className="profile-nav-shell">
         <NavigationBar
           active=""
-          userName={userName}
+          userName={profile?.fullName || profile?.username || userName}
           className="profile-navigation"
         />
       </div>
@@ -345,7 +396,7 @@ function ProfilePage({ userName = "Your name" }) {
           <span>/</span>
           <strong>Profile</strong>
         </div>
-        <ProfileHeader onEdit={() => setMessage("Profile editor opened.")} />
+        <ProfileHeader profile={profile} onEdit={handleEdit} onShare={handleShare} />
         <Statistics />
         <Activity />
         <LearningProgress />

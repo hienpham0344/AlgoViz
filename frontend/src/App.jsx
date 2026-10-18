@@ -27,11 +27,16 @@ function App() {
       setIsAuthenticated(false);
       setUserName("Your name");
     };
+    const handleProfileUpdated = (event) => {
+      setUserName(event.detail || localStorage.getItem(USER_NAME_STORAGE_KEY) || "Your name");
+    };
     window.addEventListener("hashchange", handleHashChange);
     window.addEventListener("algoviz:logout", handleLogout);
+    window.addEventListener("algoviz:profile-updated", handleProfileUpdated);
     return () => {
       window.removeEventListener("hashchange", handleHashChange);
       window.removeEventListener("algoviz:logout", handleLogout);
+      window.removeEventListener("algoviz:profile-updated", handleProfileUpdated);
     };
   }, []);
 
