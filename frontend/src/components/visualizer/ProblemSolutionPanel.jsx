@@ -20,7 +20,12 @@ const SPEED_CONFIG = {
   "2x": { label: "2x", durationMs: 800, animSec: "0.55s" },
 };
 
-function SolutionVisualizerExecution({ problem, solution, onAnnounce }) {
+function SolutionVisualizerExecution({
+  problem,
+  solution,
+  onAnnounce,
+  onInspectExecution,
+}) {
   const source = solution?.codeSnippet || "";
   const lines = useMemo(() => source.split(/\r?\n/), [source]);
   const activeLineRef = useRef(null);
@@ -32,6 +37,11 @@ function SolutionVisualizerExecution({ problem, solution, onAnnounce }) {
   const [speedKey, setSpeedKey] = useState("1x");
   const [stepIndex, setStepIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const pinKey = `algoviz-pinned-solution:${problem?.id}:${solution?.id ?? "default"}`;
+  const commentKey = `algoviz-solution-comment:${problem?.id}:${solution?.id ?? "default"}`;
+  const [isPinned, setIsPinned] = useState(
+    () => localStorage.getItem(pinKey) === "true",
+  );
 
   // Zoom & Resize state for anti-overflow & customizable workspace
   const [zoomLevel, setZoomLevel] = useState(1);
@@ -312,6 +322,33 @@ function SolutionVisualizerExecution({ problem, solution, onAnnounce }) {
     } catch {
       if (onAnnounce) onAnnounce("Không thể sao chép mã nguồn.");
     }
+  };
+
+  const handlePin = () => {
+    const nextPinned = !isPinned;
+    setIsPinned(nextPinned);
+    localStorage.setItem(pinKey, String(nextPinned));
+    if (onAnnounce) {
+      onAnnounce(nextPinned ? "Solution pinned in this browser." : "Solution unpinned.");
+    }
+  };
+
+  const handleComment = () => {
+    const existingComment = localStorage.getItem(commentKey) || "";
+    const comment = window.prompt("Add a note for this solution", existingComment);
+    if (comment === null) return;
+    if (comment.trim()) {
+      localStorage.setItem(commentKey, comment.trim());
+      if (onAnnounce) onAnnounce("Solution note saved in this browser.");
+    } else {
+      localStorage.removeItem(commentKey);
+      if (onAnnounce) onAnnounce("Solution note removed.");
+    }
+  };
+
+  const handleDuplicate = () => {
+    sessionStorage.setItem("algoviz-analyze-draft", source);
+    window.location.hash = "analyze";
   };
 
   // Array square cells geometry (Ô VUÔNG MẢNG ĐỒNG ĐỀU)
@@ -897,9 +934,15 @@ function SolutionVisualizerExecution({ problem, solution, onAnnounce }) {
           <strong>
             {solution?.language || "Java"} · {javaFilename(source)}
           </strong>
-          <button type="button" onClick={handleCopyCode}>
-            Copy code
-          </button>
+          <div className="solution-runtime-code__actions">
+            <button type="button" aria-pressed={isPinned} onClick={handlePin}>
+              {isPinned ? "Unpin" : "Pin"}
+            </button>
+            <button type="button" onClick={handleComment}>Note</button>
+            <button type="button" onClick={onInspectExecution}>Inspect run</button>
+            <button type="button" onClick={handleDuplicate}>Duplicate</button>
+            <button type="button" onClick={handleCopyCode}>Copy code</button>
+          </div>
         </header>
 
         <div
@@ -938,7 +981,11 @@ function SolutionVisualizerExecution({ problem, solution, onAnnounce }) {
   );
 }
 
-export default function ProblemSolutionPanel({ problem, onAnnounce }) {
+export default function ProblemSolutionPanel({
+  problem,
+  onAnnounce,
+  onInspectExecution,
+}) {
   const solutions = problem?.solutions || [];
   const [selectedIndex, setSelectedIndex] = useState(0);
   const solution = solutions[selectedIndex];
@@ -984,6 +1031,7 @@ export default function ProblemSolutionPanel({ problem, onAnnounce }) {
         problem={problem}
         solution={solution}
         onAnnounce={onAnnounce}
+        onInspectExecution={onInspectExecution}
       />
     </div>
   );

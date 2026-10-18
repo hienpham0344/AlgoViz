@@ -1117,6 +1117,18 @@ body.is-resizing-height * {
   color: #ffffff;
 }
 
+.solution-runtime-code__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.solution-runtime-code__actions button[aria-pressed="true"] {
+  background: #6d28d9;
+  border-color: #c084fc;
+}
+
 .solution-source-lines {
   position: relative;
   max-height: 520px;
