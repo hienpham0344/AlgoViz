@@ -27,6 +27,7 @@ public class ProblemDetailDto {
     private String starterCodeJava;
     private String starterCodeJs;
     private List<SampleTestCaseDto> sampleTestCases;
+    private List<com.aisc.algoviz.problem.dto.response.SolutionResponseDto> solutions;
 
     @Data
     @Builder

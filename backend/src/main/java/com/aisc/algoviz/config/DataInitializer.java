@@ -20,6 +20,7 @@ public class DataInitializer implements CommandLineRunner {
     private final ProblemRepository problemRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ReferenceSolutionSeeder referenceSolutionSeeder;
 
     @Override
     public void run(String... args) throws Exception {
@@ -39,6 +40,7 @@ public class DataInitializer implements CommandLineRunner {
             List<Problem> initialProblems = createSampleProblems();
             problemRepository.saveAll(initialProblems);
         }
+        referenceSolutionSeeder.seed(problemRepository.findAll());
     }
 
     private List<Problem> createSampleProblems() {
