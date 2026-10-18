@@ -10,4 +10,4 @@ public class AlgoVizApplication {
 		SpringApplication.run(AlgoVizApplication.class, args);
 	}
 
-}
+}	
