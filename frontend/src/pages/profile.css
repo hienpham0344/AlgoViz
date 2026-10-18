@@ -1,16 +1,16 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
 .profile-page {
   --profile-scale: 0.75;
-  --profile-bg: #0c021f;
-  --profile-panel: #201045;
-  --profile-deep: #130138;
-  --profile-primary: #703bf7;
-  --profile-purple: #d8b4fe;
-  --profile-mint: #10b981;
-  --profile-cyan: #22d3ee;
-  --profile-text: #e9ddff;
-  --profile-muted: #cbd5e1;
-  --profile-dim: #94a3b8;
+  --profile-bg: var(--palette-deep);
+  --profile-panel: var(--palette-deep);
+  --profile-deep: var(--palette-deep);
+  --profile-primary: var(--palette-steel);
+  --profile-purple: var(--palette-surface);
+  --profile-mint: var(--palette-steel);
+  --profile-cyan: var(--palette-sky);
+  --profile-text: var(--palette-surface);
+  --profile-muted: var(--palette-surface);
+  --profile-dim: var(--palette-sky);
   width: min(
     calc(100% / var(--profile-scale)),
     calc(100vw / var(--profile-scale))
@@ -21,10 +21,10 @@
   overflow-x: clip;
   color: var(--profile-text);
   background:
-    radial-gradient(circle at 0 0, rgb(112 59 247 / 15%), transparent 24rem),
+    radial-gradient(circle at 0 0, rgb(var(--palette-steel-rgb) / 15%), transparent 24rem),
     radial-gradient(
       circle at 100% 100%,
-      rgb(139 92 246 / 10%),
+      rgb(var(--palette-sky-rgb) / 10%),
       transparent 26rem
     ),
     var(--profile-bg);
@@ -70,22 +70,22 @@
 .profile-breadcrumb {
   display: flex;
   gap: 8px;
-  color: rgb(216 180 254 / 70%);
+  color: rgb(var(--palette-surface-rgb) / 70%);
   font:
     500 13px/20px "Plus Jakarta Sans",
     sans-serif;
 }
 .profile-breadcrumb strong {
-  color: #f1e5ff;
+  color: var(--palette-surface);
 }
 .profile-card {
   position: relative;
   overflow: hidden;
-  border: 1px solid rgb(168 85 247 / 20%);
+  border: 1px solid rgb(var(--palette-sky-rgb) / 20%);
   border-radius: 24px;
-  background: rgb(32 16 69 / 65%);
+  background: rgb(var(--palette-deep-rgb) / 65%);
   backdrop-filter: blur(8px);
-  box-shadow: 0 10px 24px rgb(0 0 0 / 10%);
+  box-shadow: 0 10px 24px rgb(var(--palette-deep-rgb) / 10%);
 }
 .profile-header-card {
   display: flex;
@@ -105,14 +105,14 @@
   height: 320px;
   top: -80px;
   right: -80px;
-  background: rgb(112 59 247 / 20%);
+  background: rgb(var(--palette-steel-rgb) / 20%);
 }
 .profile-glow--cyan {
   width: 240px;
   height: 240px;
   bottom: -40px;
   left: -40px;
-  background: rgb(34 211 238 / 10%);
+  background: rgb(var(--palette-sky-rgb) / 10%);
 }
 .profile-identity {
   position: relative;
@@ -129,7 +129,7 @@
   padding: 4px;
   border-radius: 16px;
   background: var(--profile-purple);
-  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 25%);
+  box-shadow: 0 25px 50px -12px rgb(var(--palette-deep-rgb) / 25%);
 }
 .profile-portrait-wrap img {
   width: 100%;
@@ -160,7 +160,7 @@
 }
 .profile-name-line h1 {
   margin: 0;
-  color: #fff;
+  color: var(--palette-surface);
   font:
     700 30px/36px "Plus Jakarta Sans",
     sans-serif;
@@ -171,10 +171,10 @@
   align-items: center;
   gap: 6px;
   padding: 5px 13px;
-  border: 1px solid rgb(112 59 247 / 40%);
+  border: 1px solid rgb(var(--palette-steel-rgb) / 40%);
   border-radius: 999px;
-  color: #e9d5ff;
-  background: rgb(112 59 247 / 25%);
+  color: var(--palette-surface);
+  background: rgb(var(--palette-steel-rgb) / 25%);
   font:
     700 12px/16px "Plus Jakarta Sans",
     sans-serif;
@@ -187,7 +187,7 @@
   background: var(--profile-cyan);
 }
 .profile-email {
-  color: rgb(216 180 254 / 80%);
+  color: rgb(var(--palette-surface-rgb) / 80%);
   font:
     400 14px/20px "JetBrains Mono",
     monospace;
@@ -208,10 +208,10 @@
 }
 .profile-badges span {
   padding: 3px 11px;
-  border: 1px solid rgb(168 85 247 / 20%);
+  border: 1px solid rgb(var(--palette-sky-rgb) / 20%);
   border-radius: 6px;
   color: var(--profile-purple);
-  background: #18063d;
+  background: var(--palette-deep);
   font-size: 12px;
 }
 .profile-actions {
@@ -230,19 +230,19 @@
   padding: 0 20px;
   border: 0;
   border-radius: 12px;
-  color: #fff;
-  background: linear-gradient(90deg, var(--profile-primary), #8b5cf6);
+  color: var(--palette-surface);
+  background: linear-gradient(90deg, var(--profile-primary), var(--palette-sky));
   font-weight: 700;
 }
 .profile-button--primary {
-  box-shadow: 0 10px 15px -3px rgb(88 28 135 / 40%);
+  box-shadow: 0 10px 15px -3px rgb(var(--palette-blue-rgb) / 40%);
 }
 .profile-icon-button {
   display: grid;
   width: 40px;
   height: 40px;
   place-items: center;
-  border: 1px solid rgb(192 132 252 / 20%);
+  border: 1px solid rgb(var(--palette-sky-rgb) / 20%);
   border-radius: 12px;
   color: var(--profile-text);
   background: var(--profile-panel);
@@ -291,7 +291,7 @@
   align-items: center;
   gap: 10px;
   margin: 0;
-  color: #fff;
+  color: var(--palette-surface);
   font:
     700 20px/28px "Plus Jakarta Sans",
     sans-serif;
@@ -300,23 +300,23 @@
   width: 20px;
   height: 20px;
   padding: 7px;
-  border: 1px solid rgb(112 59 247 / 30%);
+  border: 1px solid rgb(var(--palette-steel-rgb) / 30%);
   border-radius: 8px;
   color: var(--profile-purple);
-  background: rgb(112 59 247 / 20%);
+  background: rgb(var(--palette-steel-rgb) / 20%);
   box-sizing: content-box;
 }
 .profile-section-heading p {
   margin: 4px 0 0;
-  color: rgb(216 180 254 / 70%);
+  color: rgb(var(--palette-surface-rgb) / 70%);
   font-size: 12px;
 }
 .profile-updated {
   padding: 5px 13px;
-  border: 1px solid rgb(34 211 238 / 25%);
+  border: 1px solid rgb(var(--palette-sky-rgb) / 25%);
   border-radius: 999px;
   color: var(--profile-cyan);
-  background: rgb(34 211 238 / 10%);
+  background: rgb(var(--palette-sky-rgb) / 10%);
   font:
     400 12px/16px "JetBrains Mono",
     monospace;
@@ -332,9 +332,9 @@
   flex-direction: column;
   justify-content: space-between;
   padding: 21px;
-  border: 1px solid rgb(168 85 247 / 20%);
+  border: 1px solid rgb(var(--palette-sky-rgb) / 20%);
   border-radius: 16px;
-  background: rgb(32 16 69 / 65%);
+  background: rgb(var(--palette-deep-rgb) / 65%);
   backdrop-filter: blur(8px);
 }
 .profile-metric-top {
@@ -343,7 +343,7 @@
 }
 .profile-metric-top span {
   display: block;
-  color: rgb(216 180 254 / 75%);
+  color: rgb(var(--palette-surface-rgb) / 75%);
   font:
     700 12px/16px "Plus Jakarta Sans",
     sans-serif;
@@ -353,7 +353,7 @@
 .profile-metric-top strong {
   display: block;
   margin-top: 6px;
-  color: #fff;
+  color: var(--palette-surface);
   font:
     700 30px/36px "JetBrains Mono",
     monospace;
@@ -363,32 +363,32 @@
   width: 48px;
   height: 48px;
   place-items: center;
-  border: 1px solid rgb(168 85 247 / 30%);
+  border: 1px solid rgb(var(--palette-sky-rgb) / 30%);
   border-radius: 12px;
   color: var(--profile-purple);
-  background: rgb(168 85 247 / 15%);
+  background: rgb(var(--palette-sky-rgb) / 15%);
 }
 .profile-metric--purple .profile-metric-icon {
   color: var(--profile-primary);
-  background: rgb(112 59 247 / 20%);
+  background: rgb(var(--palette-steel-rgb) / 20%);
 }
 .profile-metric--mint .profile-metric-icon {
   color: var(--profile-mint);
-  background: rgb(16 185 129 / 15%);
+  background: rgb(var(--palette-steel-rgb) / 15%);
 }
 .profile-metric-bottom {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding-top: 13px;
-  border-top: 1px solid rgb(168 85 247 / 15%);
+  border-top: 1px solid rgb(var(--palette-sky-rgb) / 15%);
   font-size: 12px;
 }
 .profile-metric-bottom span {
-  color: #34d399;
+  color: var(--palette-steel);
 }
 .profile-metric-bottom small {
-  color: rgb(216 180 254 / 80%);
+  color: rgb(var(--palette-surface-rgb) / 80%);
   font:
     400 12px/16px "JetBrains Mono",
     monospace;
@@ -401,7 +401,7 @@
 .profile-panel-heading h2 small {
   display: block;
   margin-top: 3px;
-  color: rgb(216 180 254 / 70%);
+  color: rgb(var(--palette-surface-rgb) / 70%);
   font:
     400 12px/16px Inter,
     sans-serif;
@@ -423,7 +423,7 @@
   min-height: 110px;
   align-items: center;
   padding: 22px 0 0 34px;
-  border-top: 1px solid rgb(168 85 247 / 15%);
+  border-top: 1px solid rgb(var(--palette-sky-rgb) / 15%);
   margin-top: 17px;
 }
 .profile-heat-labels {
@@ -450,19 +450,19 @@
 .profile-heat-legend i {
   display: block;
   border-radius: 2px;
-  background: #21104a;
+  background: var(--palette-deep);
 }
 .heat-level-1 {
-  background: #5121a7 !important;
+  background: var(--palette-blue) !important;
 }
 .heat-level-2 {
-  background: #8145dc !important;
+  background: var(--palette-steel) !important;
 }
 .heat-level-3 {
-  background: #a855f7 !important;
+  background: var(--palette-sky) !important;
 }
 .heat-level-4 {
-  background: #10b981 !important;
+  background: var(--palette-steel) !important;
 }
 .profile-heat-legend {
   display: flex;
@@ -484,7 +484,7 @@
   gap: 16px;
 }
 .profile-panel-heading > b {
-  color: #fff;
+  color: var(--palette-surface);
   font:
     700 12px/16px "JetBrains Mono",
     monospace;
@@ -494,7 +494,7 @@
   padding: 4px 7px;
   border-radius: 5px;
   color: var(--profile-mint);
-  background: rgb(16 185 129 / 15%);
+  background: rgb(var(--palette-steel-rgb) / 15%);
   font-style: normal;
 }
 .profile-total-progress {
@@ -509,7 +509,7 @@
   width: 40%;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--profile-mint), #f59e0b);
+  background: linear-gradient(90deg, var(--profile-mint), var(--palette-danger));
 }
 .profile-progress-stats {
   display: grid;
@@ -521,9 +521,9 @@
   grid-template-columns: 1fr auto;
   gap: 4px;
   padding: 12px;
-  border: 1px solid rgb(168 85 247 / 15%);
+  border: 1px solid rgb(var(--palette-sky-rgb) / 15%);
   border-radius: 8px;
-  background: rgb(19 1 56 / 55%);
+  background: rgb(var(--palette-deep-rgb) / 55%);
 }
 .profile-progress-stats b {
   color: var(--profile-mint);
@@ -532,7 +532,7 @@
     monospace;
 }
 .profile-progress-stats > div:nth-child(2) b {
-  color: #f59e0b;
+  color: var(--palette-danger);
 }
 .profile-progress-stats > div:nth-child(3) b {
   color: var(--profile-dim);
@@ -573,14 +573,14 @@
 }
 .profile-topics > div {
   padding: 9px;
-  border: 1px solid rgb(168 85 247 / 20%);
+  border: 1px solid rgb(var(--palette-sky-rgb) / 20%);
   border-radius: 7px;
-  background: rgb(19 1 56 / 55%);
+  background: rgb(var(--palette-deep-rgb) / 55%);
 }
 .profile-topics span {
   display: flex;
   justify-content: space-between;
-  color: #fff;
+  color: var(--palette-surface);
   font-size: 10px;
 }
 .profile-topics span b {
@@ -605,7 +605,7 @@
 }
 .profile-history-list {
   margin-top: 17px;
-  border-top: 1px solid rgb(168 85 247 / 15%);
+  border-top: 1px solid rgb(var(--palette-sky-rgb) / 15%);
 }
 .profile-history-list article {
   display: grid;
@@ -613,7 +613,7 @@
   align-items: center;
   gap: 10px;
   min-height: 58px;
-  border-bottom: 1px solid rgb(168 85 247 / 12%);
+  border-bottom: 1px solid rgb(var(--palette-sky-rgb) / 12%);
 }
 .profile-language {
   display: grid;
@@ -622,21 +622,21 @@
   place-items: center;
   border-radius: 6px;
   color: var(--profile-purple);
-  background: rgb(112 59 247 / 20%);
+  background: rgb(var(--palette-steel-rgb) / 20%);
   font:
     700 9px "JetBrains Mono",
     monospace;
 }
 .profile-language--java {
-  color: #f59e0b;
-  background: rgb(245 158 11 / 15%);
+  color: var(--palette-danger);
+  background: rgb(var(--palette-danger-rgb) / 15%);
 }
 .profile-language--py {
-  color: #c084fc;
+  color: var(--palette-sky);
 }
 .profile-history-list strong {
   display: block;
-  color: #fff;
+  color: var(--palette-surface);
   font:
     600 13px/18px "Plus Jakarta Sans",
     sans-serif;
@@ -664,7 +664,7 @@
 .profile-history-list article > button {
   justify-self: end;
   padding: 7px 10px;
-  border: 1px solid rgb(168 85 247 / 20%);
+  border: 1px solid rgb(var(--palette-sky-rgb) / 20%);
   border-radius: 6px;
 }
 .profile-footer {
@@ -674,7 +674,7 @@
   gap: 24px;
   margin-top: 32px;
   padding: 28px max(24px, calc((100% - 1232px) / 2));
-  border-top: 1px solid rgb(168 85 247 / 15%);
+  border-top: 1px solid rgb(var(--palette-sky-rgb) / 15%);
   color: var(--profile-dim);
   background: var(--profile-deep);
   font-size: 11px;
@@ -685,7 +685,7 @@
   gap: 3px;
 }
 .profile-footer > div > strong {
-  color: #fff;
+  color: var(--palette-surface);
   font-size: 14px;
 }
 .profile-footer nav {

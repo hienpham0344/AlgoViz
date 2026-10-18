@@ -12,7 +12,6 @@ import { getToken } from "./services/api.js";
 
 const AUTH_STORAGE_KEY = "algoviz-auth";
 const USER_NAME_STORAGE_KEY = "algoviz-user-name";
-
 function App() {
   const [hash, setHash] = useState(() => window.location.hash);
   const [isAuthenticated, setIsAuthenticated] = useState(

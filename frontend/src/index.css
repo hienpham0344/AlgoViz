@@ -1,4 +1,16 @@
 :root {
+  --palette-deep: #051923;
+  --palette-deep-rgb: 22 66 91;
+  --palette-blue: #00a6fb;
+  --palette-blue-rgb: 47 102 144;
+  --palette-steel: #3a7ca5;
+  --palette-steel-rgb: 58 124 165;
+  --palette-surface: #d9dcd6;
+  --palette-surface-rgb: 217 220 214;
+  --palette-sky: #81c3d7;
+  --palette-sky-rgb: 129 195 215;
+  --palette-danger: #bf0603;
+  --palette-danger-rgb: 191 6 3;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -15,7 +27,7 @@ html {
   min-width: 320px;
   max-width: 100%;
   overflow-x: hidden;
-  background: #0a0d3a;
+  background: var(--palette-deep);
   scroll-behavior: smooth;
 }
 
@@ -25,7 +37,7 @@ body {
   min-height: 100vh;
   margin: 0;
   overflow-x: hidden;
-  background: #18063d;
+  background: var(--palette-deep);
 }
 
 button,
@@ -40,4 +52,37 @@ button {
 img {
   display: block;
   max-width: 100%;
+}
+
+#root {
+  --font-size-content: 12px;
+  --font-size-title: 20px;
+  --font-size-subtitle: 16px;
+  --font-size-caption: 8px;
+}
+
+#root * {
+  font-size: var(--font-size-content) !important;
+}
+
+#root
+  :is(
+    small,
+    time,
+    figcaption,
+    [class*="label"],
+    [class*="caption"],
+    [class*="eyebrow"],
+    [class*="badge"],
+    [class*="status"]
+  ) {
+  font-size: var(--font-size-caption) !important;
+}
+
+#root :is(h1, .av-brand, .dusk-brand, .auth-brand) {
+  font-size: var(--font-size-title) !important;
+}
+
+#root :is(h2, h3, h4, h5, h6) {
+  font-size: var(--font-size-subtitle) !important;
 }
