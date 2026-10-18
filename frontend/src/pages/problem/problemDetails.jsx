@@ -748,7 +748,7 @@ function CodeRunnerPanel({
   );
 }
 
-function PlaceholderPanel({ activeTab }) {
+function PlaceholderPanel({ activeTab, onOpenDescription }) {
   const tab = DETAIL_TABS.find((item) => item.id === activeTab);
   return (
     <section
@@ -765,7 +765,7 @@ function PlaceholderPanel({ activeTab }) {
       <button
         className="details-placeholder-button"
         type="button"
-        onClick={() => (window.location.hash = "problem-details")}
+        onClick={onOpenDescription}
       >
         Open description
       </button>
@@ -773,7 +773,7 @@ function PlaceholderPanel({ activeTab }) {
   );
 }
 
-function SequenceNavigator({ activeTab, onTabChange, onAnnounce }) {
+function SequenceNavigator({ activeTab, onTabChange, onOpenLearningTrack }) {
   return (
     <nav
       className="details-sequence-card"
@@ -782,7 +782,7 @@ function SequenceNavigator({ activeTab, onTabChange, onAnnounce }) {
       <button
         className="sequence-topic sequence-topic--previous"
         type="button"
-        onClick={() => onAnnounce("Previous topic: Insertion Sort")}
+        onClick={onOpenLearningTrack}
       >
         <DetailsIcon name="sequence-left" />
         <span>
@@ -811,7 +811,7 @@ function SequenceNavigator({ activeTab, onTabChange, onAnnounce }) {
       <button
         className="sequence-topic sequence-topic--next"
         type="button"
-        onClick={() => onAnnounce("Next topic: Selection Sort")}
+        onClick={onOpenLearningTrack}
       >
         <span>
           <small>Next Topic</small>
@@ -1158,8 +1158,6 @@ function ProblemDetailsPage({ userName = "Your name", problemId = 1 }) {
     }
 
   };
-  const handleSequenceAnnouncement = (message) => setAnnouncement(message);
-
   if (!currentProblem) {
     return <main className="problem-details-page" id="top"><div className="details-shell">
       <NavigationBar active="Problems" userName={userName} className="details-navigation" />
@@ -1195,7 +1193,9 @@ function ProblemDetailsPage({ userName = "Your name", problemId = 1 }) {
         <SequenceNavigator
           activeTab={activeTab}
           onTabChange={handleTabChange}
-          onAnnounce={handleSequenceAnnouncement}
+          onOpenLearningTrack={() => {
+            window.location.hash = "learn";
+          }}
         />
         <WorkspaceTabs activeTab={activeTab} onChange={handleTabChange} />
         <div
@@ -1241,9 +1241,13 @@ function ProblemDetailsPage({ userName = "Your name", problemId = 1 }) {
               key={`${problemId}-${activeTab}`}
               problem={currentProblem}
               onAnnounce={setAnnouncement}
+              onInspectExecution={() => handleTabChange("visualizer")}
             />
           ) : (
-            <PlaceholderPanel activeTab={activeTab} />
+            <PlaceholderPanel
+              activeTab={activeTab}
+              onOpenDescription={() => handleTabChange("description")}
+            />
           )}
         </div>
       </div>
