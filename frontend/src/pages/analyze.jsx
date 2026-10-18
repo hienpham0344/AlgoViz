@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NavigationBar } from "../components/index.js";
 import { api } from "../services/api.js";
+import ResizableColumns from "../components/ResizableColumns.jsx";
 import "./analyze.css";
 
 const ANALYSIS_TABS = [
@@ -484,8 +485,17 @@ function CaseDetails({ activeCase, customInput, onCustomInputChange }) {
   const arrayLength = isCustom ? "n = ?" : `n = ${activeCase.input.length}`;
 
   return (
-    <div className="analyze-case-layout" id="analyze-case-panel" role="tabpanel" aria-labelledby={`analyze-case-${activeCase.id}`}>
-      <div className="analyze-case-main">
+    <ResizableColumns
+      className="analyze-case-layout"
+      initialPrimarySize="2.06fr"
+      minPrimaryWidth={300}
+      minSecondaryWidth={260}
+      resizeLabel="Đổi độ rộng test case và giới hạn thực thi"
+      id="analyze-case-panel"
+      role="tabpanel"
+      aria-labelledby={`analyze-case-${activeCase.id}`}
+    >
+      <div className="analyze-case-main independent-scroll-region" tabIndex={0} role="region" aria-label="Test case input and expected output">
         <div className="analyze-parameter-banner">
           <span>Target Parameter: arr</span>
           <b>•</b>
@@ -510,7 +520,7 @@ function CaseDetails({ activeCase, customInput, onCustomInputChange }) {
         />
       </div>
       <ExecutionLimits />
-    </div>
+    </ResizableColumns>
   );
 }
 
@@ -523,7 +533,7 @@ function ExecutionLimits() {
   ];
 
   return (
-    <aside className="analyze-limits-column" aria-label="Execution limits">
+    <aside className="analyze-limits-column independent-scroll-region" tabIndex={0} aria-label="Execution limits">
       <div className="analyze-limits-card">
         <h3>
           <AnalyzeIcon name="execution-limits" />

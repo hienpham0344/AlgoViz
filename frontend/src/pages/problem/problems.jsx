@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NavigationBar } from "../../components/index.js";
 import { api } from "../../services/api.js";
+import ResizableColumns from "../../components/ResizableColumns.jsx";
 import "./problems.css";
 
 const PAGE_SIZE = 8;
@@ -287,7 +288,7 @@ function FilterSidebar({
   onReset,
 }) {
   return (
-    <aside className="filter-sidebar" aria-label="Problem filters">
+    <aside className="filter-sidebar independent-scroll-region" tabIndex={0} aria-label="Problem filters">
       <div className="filter-sidebar__header">
         <h2><Icon name="filter" /> Filter</h2>
         <button type="button" className="text-button" onClick={onReset}>Reset All</button>
@@ -505,7 +506,7 @@ function ProblemDirectory({
   const displayTotal = totalFilteredCount !== undefined ? totalFilteredCount : rows.length;
 
   return (
-    <section className="problem-directory" aria-labelledby="directory-title">
+    <section className="problem-directory independent-scroll-region" tabIndex={0} aria-labelledby="directory-title">
       <h2 id="directory-title" className="sr-only">Problem directory</h2>
       <SearchToolbar
         query={filters.query}
@@ -755,7 +756,13 @@ function ProblemsPage({ userName = "Your name", onOpenProblem }) {
         announcement={announcement}
       />
       <section className="problems-workspace" aria-label="Browse algorithm problems">
-        <div className="problems-workspace__grid">
+        <ResizableColumns
+          className="problems-workspace__grid"
+          initialPrimarySize="280px"
+          minPrimaryWidth={220}
+          minSecondaryWidth={440}
+          resizeLabel="Đổi độ rộng bộ lọc và danh sách bài"
+        >
           <FilterSidebar
             filters={filters}
             difficultyCounts={difficultyCounts}
@@ -778,7 +785,7 @@ function ProblemsPage({ userName = "Your name", onOpenProblem }) {
             onPageChange={setPage}
             onAction={handleProblemAction}
           />
-        </div>
+        </ResizableColumns>
       </section>
       <ProblemsFooter />
     </main>

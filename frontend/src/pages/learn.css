@@ -484,10 +484,20 @@
     monospace;
 }
 .learn-quiz-grid {
-  display: grid;
-  grid-template-columns: 1.55fr 1fr;
-  gap: 20px;
+  align-items: start;
 }
+@media (min-width: 1051px) {
+  .learn-quiz-grid > :is(.learn-quiz-card, .learn-result-card) {
+    min-block-size: 0;
+    max-block-size: var(--workspace-pane-height);
+    overflow: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+  }
+
+  .learn-quiz-grid > .learn-quiz-card > * { flex-shrink: 0; }
+}
+
 .learn-quiz-card,
 .learn-result-card {
   overflow: hidden;
@@ -871,6 +881,7 @@
   .learn-quiz-grid {
     grid-template-columns: 1fr;
   }
+  .learn-quiz-grid > .resizable-column-divider { display: none; }
 }
 @media (max-width: 760px) {
   .learn-shell,
