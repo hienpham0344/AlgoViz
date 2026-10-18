@@ -41,6 +41,8 @@ const DEFAULT_JAVA_CODE = [
   "}",
 ].join("\n");
 
+const ANALYZE_DRAFT_KEY = "algoviz-analyze-draft";
+
 const ANALYZE_CASES = [
   {
     id: "case-1",
@@ -305,7 +307,7 @@ function EditorActions({ executionState, onEvaluate, onRun, onSubmit }) {
         onClick={onSubmit}
       >
         <AnalyzeIcon name="submit-check" />
-        Submit Solution
+        Choose Problem to Submit
       </button>
     </div>
   );
@@ -764,7 +766,6 @@ function AnalysisSuite({
   language,
   originalCode,
   onRun,
-  onEvaluate,
 }) {
   return (
     <section className="analyze-suite" aria-label="Interactive analysis suite">
@@ -786,12 +787,7 @@ function AnalysisSuite({
           onRun={onRun}
         />
       )}
-      {activeTab === "feedback" && (
-        <FeedbackQualityPanel
-          aiResult={aiResult}
-          onEvaluate={onEvaluate}
-        />
-      )}
+      {activeTab === "feedback" && <FeedbackQualityPanel aiResult={aiResult} />}
       {activeTab === "visualizer" && (
         <AlgorithmReviewPanel
           aiResult={aiResult}
@@ -849,7 +845,9 @@ function AnalyzeFooter() {
 
 function AnalyzePage({ userName = "Your name" }) {
   const [language, setLanguage] = useState("Java 21");
-  const [code, setCode] = useState(DEFAULT_JAVA_CODE);
+  const [code, setCode] = useState(
+    () => sessionStorage.getItem(ANALYZE_DRAFT_KEY) || DEFAULT_JAVA_CODE,
+  );
   const [executionState, setExecutionState] = useState("ready");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [activeTab, setActiveTab] = useState("tests");
@@ -865,7 +863,10 @@ function AnalyzePage({ userName = "Your name" }) {
     [activeCaseId],
   );
 
-  useEffect(() => () => window.clearTimeout(executionTimerRef.current), []);
+  useEffect(() => {
+    sessionStorage.removeItem(ANALYZE_DRAFT_KEY);
+    return () => window.clearTimeout(executionTimerRef.current);
+  }, []);
 
   const announce = (message) => setAnnouncement(message);
 
@@ -940,8 +941,7 @@ function AnalyzePage({ userName = "Your name" }) {
   };
 
   const handleSubmit = () => {
-    setExecutionState("passed");
-    announce("Solution submitted.");
+    window.location.hash = "problems";
   };
 
   const handleCopy = async () => {
@@ -1012,7 +1012,6 @@ function AnalyzePage({ userName = "Your name" }) {
           language={language}
           originalCode={code}
           onRun={handleRun}
-          onEvaluate={handleEvaluate}
         />
       </div>
       <p className="sr-only" aria-live="polite">
