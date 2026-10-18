@@ -1,6 +1,8 @@
 package com.aisc.algoviz.service;
 
 import com.aisc.algoviz.config.JwtUtils;
+import com.aisc.algoviz.common.exception.AppException;
+import com.aisc.algoviz.common.exception.CommonErrorCode;
 import com.aisc.algoviz.dto.*;
 import com.aisc.algoviz.model.User;
 import com.aisc.algoviz.repository.UserRepository;
@@ -22,11 +24,11 @@ public class AuthService {
 
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByUsername(request.getUsername())) {
-            throw new RuntimeException("Username is already taken!");
+            throw new AppException(CommonErrorCode.USERNAME_TAKEN);
         }
 
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email is already in use!");
+            throw new AppException(CommonErrorCode.EMAIL_TAKEN);
         }
 
         User user = User.builder()

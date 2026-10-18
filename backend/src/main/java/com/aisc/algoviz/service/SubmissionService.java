@@ -1,6 +1,8 @@
 package com.aisc.algoviz.service;
 
 import com.aisc.algoviz.dto.ExecutionResultDto;
+import com.aisc.algoviz.common.exception.AppException;
+import com.aisc.algoviz.problem.exception.ProblemErrorCode;
 import com.aisc.algoviz.dto.SubmissionRequest;
 import com.aisc.algoviz.dto.SubmissionResponse;
 import com.aisc.algoviz.model.Problem;
@@ -30,7 +32,7 @@ public class SubmissionService {
     public SubmissionResponse submitCode(SubmissionRequest request) {
         User user = userService.getCurrentUser();
         Problem problem = problemRepository.findById(request.getProblemId())
-                .orElseThrow(() -> new RuntimeException("Problem not found with id: " + request.getProblemId()));
+                .orElseThrow(() -> new AppException(ProblemErrorCode.PROBLEM_NOT_FOUND));
 
         ExecutionResultDto evalResult = codeExecutionService.evaluateTestCases(
                 request.getLanguage(),
@@ -51,10 +53,11 @@ public class SubmissionService {
                 .errorMessage(evalResult.getErrorMessage())
                 .build();
 
+        boolean alreadySolved = "Accepted".equals(evalResult.getStatus())
+                && submissionRepository.existsByUserIdAndProblemIdAndStatus(user.getId(), problem.getId(), "Accepted");
         Submission saved = submissionRepository.save(submission);
 
         if ("Accepted".equals(evalResult.getStatus())) {
-            boolean alreadySolved = submissionRepository.existsByUserIdAndProblemIdAndStatus(user.getId(), problem.getId(), "Accepted");
             if (!alreadySolved) {
                 user.setSolvedProblemsCount((user.getSolvedProblemsCount() != null ? user.getSolvedProblemsCount() : 0) + 1);
                 user.setPoints((user.getPoints() != null ? user.getPoints() : 0) + 10);
