@@ -69,7 +69,7 @@ function App() {
   }
 
   if (hash.startsWith("#problem-details")) {
-    return <ProblemDetailsPage userName={userName} problemId={getProblemIdFromHash()} />;
+    return <ProblemDetailsPage key={getProblemIdFromHash()} userName={userName} problemId={getProblemIdFromHash()} />;
   }
 
   if (hash === "#history") {

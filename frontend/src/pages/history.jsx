@@ -3,59 +3,6 @@ import { BadgeProblemStatus, NavigationBar } from "../components/index.js";
 import { api } from "../services/api.js";
 import "./history.css";
 
-const HISTORY_ROWS = [
-  {
-    id: 1,
-    algorithm: "Bubble Sort",
-    topic: "Sorting",
-    complexity: "O(N²)",
-    language: "C++",
-    date: "Aug 20",
-    icon: "sort",
-    completed: true,
-  },
-  {
-    id: 2,
-    algorithm: "Binary Search",
-    topic: "Searching",
-    complexity: "O(log N)",
-    language: "Java",
-    date: "Aug 19",
-    icon: "search",
-    completed: true,
-  },
-  {
-    id: 3,
-    algorithm: "Quick Sort",
-    topic: "Sorting",
-    complexity: "O(N log N)",
-    language: "Python",
-    date: "Aug 18",
-    icon: "quick",
-    completed: false,
-  },
-  {
-    id: 4,
-    algorithm: "Dijkstra's Algorithm",
-    topic: "Graph",
-    complexity: "O((V + E) log V)",
-    language: "C++",
-    date: "Aug 17",
-    icon: "graph",
-    completed: true,
-  },
-  {
-    id: 5,
-    algorithm: "Merge Sort",
-    topic: "Sorting",
-    complexity: "O(N log N)",
-    language: "Python",
-    date: "Aug 15",
-    icon: "merge",
-    completed: false,
-  },
-];
-
 const FEATURES = [
   [
     "trace",
@@ -464,19 +411,19 @@ function HistoryPage({ userName = "Your name" }) {
   const [newestFirst, setNewestFirst] = useState(true);
   const [selected, setSelected] = useState(new Set());
   const [announcement, setAnnouncement] = useState("");
-  const [historyList, setHistoryList] = useState(HISTORY_ROWS);
+  const [historyList, setHistoryList] = useState([]);
 
   useEffect(() => {
     async function loadHistory() {
       try {
         const historyData = await api.getSubmissionHistory();
-        if (Array.isArray(historyData) && historyData.length > 0) {
+        if (Array.isArray(historyData)) {
           const mapped = historyData.map((item) => ({
             id: item.id,
             algorithm: item.problemTitle || "Problem #" + item.problemId,
             topic: item.status || "Evaluated",
             complexity: item.executionTimeMs ? `${item.executionTimeMs}ms` : "O(N)",
-            language: item.language ? item.language.toUpperCase() : "JAVA",
+            language: ({ java: "Java", python: "Python", py: "Python", cpp: "C++", "c++": "C++", javascript: "JavaScript", js: "JavaScript" })[item.language?.toLowerCase()] || item.language || "Unknown",
             date: item.submittedAt ? new Date(item.submittedAt).toLocaleDateString() : "Today",
             icon: "sort",
             completed: ["accepted", "completed", "success"].includes(
