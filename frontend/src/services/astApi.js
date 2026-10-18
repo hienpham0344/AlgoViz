@@ -10,7 +10,7 @@
 
 import { javaFilename } from "./solutionTrace.js";
 
-const AST_API_BASE_URL = "http://localhost:8081";
+const AST_API_BASE_URL = import.meta.env.VITE_AST_API_BASE_URL || "http://localhost:8081";
 
 export const BUBBLE_SORT_SAMPLE_JAVA = `public class BubbleSortSample {
   public static void main(String[] args) {
