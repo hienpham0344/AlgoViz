@@ -1,6 +1,7 @@
 package com.aisc.algoviz.problem.entity;
 
 import com.aisc.algoviz.problem.enums.Difficulty;
+import com.aisc.algoviz.problem.enums.DifficultyConverter;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -12,7 +13,7 @@ import java.util.List;
  * Entity ánh xạ bảng 'problems' trong PostgreSQL.
  * Chứa thông tin bài toán LeetCode, mô tả, độ khó và danh sách tags thuật toán.
  */
-@Entity
+@Entity(name = "KnowledgeBaseProblem")
 @Table(name = "problems")
 @Getter
 @Setter
@@ -34,7 +35,7 @@ public class Problem {
     @Column(length = 255)
     private String slug;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = DifficultyConverter.class)
     @Column(nullable = false, length = 20)
     private Difficulty difficulty;
 

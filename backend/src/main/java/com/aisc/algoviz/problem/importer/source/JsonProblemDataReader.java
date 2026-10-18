@@ -3,8 +3,8 @@ package com.aisc.algoviz.problem.importer.source;
 import com.aisc.algoviz.problem.importer.model.ImportDataSet;
 import com.aisc.algoviz.problem.importer.model.ProblemImportRecord;
 import com.aisc.algoviz.problem.importer.model.SolutionImportRecord;
-import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 
 import java.nio.file.Files;
@@ -15,7 +15,7 @@ import java.util.List;
 /** Đọc hai file JSON và tách parsing khỏi validation và persistence. */
 public class JsonProblemDataReader {
 
-    private final JsonMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
     public ImportDataSet read(Path directory, String problemsFile, String solutionsFile) {
         // Resolve cả hai file từ cùng một thư mục cấu hình để problem và solution

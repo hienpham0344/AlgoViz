@@ -12,7 +12,7 @@ import java.util.Optional;
  * Kế thừa JpaRepository để có sẵn các hàm CRUD cơ bản (save, findById, findAll, delete...).
  * Kế thừa JpaSpecificationExecutor để hỗ trợ lọc động nhiều điều kiện (search title, filter difficulty, tag).
  */
-@Repository
+@Repository("versionedProblemRepository")
 public interface ProblemRepository extends JpaRepository<Problem, Long>, JpaSpecificationExecutor<Problem> {
 
     /**

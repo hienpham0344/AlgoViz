@@ -18,7 +18,7 @@ public class ProblemImportConfiguration {
 
     @Bean
     public JsonProblemDataReader jsonProblemDataReader(
-            tools.jackson.databind.json.JsonMapper objectMapper
+            com.fasterxml.jackson.databind.ObjectMapper objectMapper
     ) {
         return new JsonProblemDataReader(objectMapper);
     }

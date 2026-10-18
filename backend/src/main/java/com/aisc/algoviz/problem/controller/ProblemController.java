@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.*;
  * Controller tiếp nhận các yêu cầu HTTP liên quan đến bài toán (Problem Management).
  * Cung cấp các endpoint cho Frontend hiển thị danh sách, chi tiết và quản lý dữ liệu bài toán.
  */
-@RestController
+@RestController("versionedProblemController")
 @RequestMapping("/api/v1/problems")
 @RequiredArgsConstructor
 @Tag(name = "Problem Management", description = "Các API tra cứu và quản lý bài toán thuật toán")

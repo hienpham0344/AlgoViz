@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import tools.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Repository
 @RequiredArgsConstructor
@@ -51,7 +51,7 @@ public class JdbcProblemImportRepository implements ProblemImportRepository {
             """;
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
-    private final JsonMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
     @Override
     public Map<Integer, Long> upsertProblems(Collection<ProblemImportRecord> problems) {

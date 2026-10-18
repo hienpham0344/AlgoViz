@@ -4,7 +4,7 @@ import com.aisc.algoviz.problem.enums.Difficulty;
 import com.aisc.algoviz.problem.importer.config.ProblemImportProperties;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import tools.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
