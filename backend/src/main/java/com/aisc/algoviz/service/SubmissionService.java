@@ -2,6 +2,7 @@ package com.aisc.algoviz.service;
 
 import com.aisc.algoviz.dto.ExecutionResultDto;
 import com.aisc.algoviz.common.exception.AppException;
+import com.aisc.algoviz.common.exception.CommonErrorCode;
 import com.aisc.algoviz.problem.exception.ProblemErrorCode;
 import com.aisc.algoviz.dto.SubmissionRequest;
 import com.aisc.algoviz.dto.SubmissionResponse;
@@ -82,6 +83,14 @@ public class SubmissionService {
                 .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void deleteSubmission(Long submissionId) {
+        User user = userService.getCurrentUser();
+        Submission submission = submissionRepository.findByIdAndUserId(submissionId, user.getId())
+                .orElseThrow(() -> new AppException(CommonErrorCode.SUBMISSION_NOT_FOUND));
+        submissionRepository.delete(submission);
     }
 
     private SubmissionResponse mapToResponse(Submission s) {

@@ -44,4 +44,10 @@ public class SubmissionController {
     public ResponseEntity<List<SubmissionResponse>> getUserSubmissionsForProblem(@PathVariable Long problemId) {
         return ResponseEntity.ok(submissionService.getUserSubmissionsForProblem(problemId));
     }
+
+    @DeleteMapping("/{submissionId}")
+    public ResponseEntity<Void> deleteSubmission(@PathVariable Long submissionId) {
+        submissionService.deleteSubmission(submissionId);
+        return ResponseEntity.noContent().build();
+    }
 }

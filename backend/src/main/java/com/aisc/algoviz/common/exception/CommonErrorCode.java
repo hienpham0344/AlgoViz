@@ -9,6 +9,7 @@ public enum CommonErrorCode implements ErrorCode {
     AUTHENTICATION_FAILED(4010, "Invalid username/email or password", HttpStatus.UNAUTHORIZED),
     USERNAME_TAKEN(4090, "Username is already taken", HttpStatus.CONFLICT),
     EMAIL_TAKEN(4091, "Email is already in use", HttpStatus.CONFLICT),
+    SUBMISSION_NOT_FOUND(4042, "Submission not found", HttpStatus.NOT_FOUND),
 
     INVALID_REQUEST(
             4000,
