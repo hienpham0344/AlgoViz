@@ -1,0 +1,73 @@
+.resizable-columns {
+  --resizable-divider-width: 28px;
+  --resizable-gap: 10px;
+  display: grid;
+  grid-template-columns:
+    minmax(0, var(--resizable-primary))
+    var(--resizable-divider-width)
+    minmax(0, var(--resizable-secondary));
+  gap: var(--resizable-gap);
+  min-inline-size: 0;
+}
+
+.resizable-columns > * { min-inline-size: 0; }
+
+.resizable-column-divider {
+  position: relative;
+  display: grid;
+  align-self: stretch;
+  place-items: center;
+}
+
+.resizable-column-divider::before {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 50%;
+  width: 1px;
+  background: var(--resizable-line, rgb(var(--palette-sky-rgb) / 15%));
+  content: "";
+  pointer-events: none;
+}
+
+.resizable-column-handle {
+  position: relative;
+  display: grid;
+  place-items: center;
+  inline-size: var(--resizable-divider-width);
+  block-size: 32px;
+  padding: 0;
+  border: 1px solid var(--resizable-border, rgb(var(--palette-sky-rgb) / 40%));
+  border-radius: 6px;
+  color: var(--resizable-accent, var(--palette-sky));
+  background: var(--resizable-background, var(--palette-deep));
+  cursor: col-resize;
+  touch-action: none;
+  user-select: none;
+}
+
+.resizable-column-handle svg {
+  inline-size: 20px;
+  block-size: 20px;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.resizable-column-handle:hover,
+.resizable-column-handle.is-dragging {
+  border-color: var(--resizable-accent, var(--palette-sky));
+  background: var(--resizable-hover, var(--palette-steel));
+}
+
+.resizable-columns .resizable-column-handle:focus-visible {
+  outline: 2px solid var(--resizable-accent, var(--palette-sky));
+  outline-offset: 2px;
+}
+
+body.is-resizing-columns,
+body.is-resizing-columns * {
+  cursor: col-resize !important;
+  user-select: none !important;
+}

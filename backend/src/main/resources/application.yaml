@@ -1,3 +1,49 @@
+server:
+  port: 8080
+
 spring:
+  config:
+    import: optional:file:./.env[.properties]
   application:
     name: algoViz
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:algovizdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
+    username: ${SPRING_DATASOURCE_USERNAME:sa}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+    driver-class-name: ${SPRING_DATASOURCE_DRIVER:org.h2.Driver}
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+
+algoviz:
+  execution:
+    python-command: ${ALGOVIZ_PYTHON_COMMAND:python}
+    cpp-command: ${ALGOVIZ_CPP_COMMAND:g++}
+  jwt:
+    secret: ${ALGOVIZ_JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+    expiration-ms: ${ALGOVIZ_JWT_EXPIRATION_MS:86400000}
+  import:
+    enabled: ${ALGOVIZ_IMPORT_ENABLED:false}
+    source: ${ALGOVIZ_IMPORT_SOURCE:mock}
+    data-directory: ${ALGOVIZ_DATA_DIRECTORY:./data}
+    problems-file: ${ALGOVIZ_PROBLEMS_FILE:problems.json}
+    solutions-file: ${ALGOVIZ_SOLUTIONS_FILE:solutions.json}
+    mock-data-directory: ${ALGOVIZ_MOCK_DATA_DIRECTORY:./data/mock}
+    mock-problems-file: ${ALGOVIZ_MOCK_PROBLEMS_FILE:problems.json}
+    mock-solutions-file: ${ALGOVIZ_MOCK_SOLUTIONS_FILE:solutions.json}
