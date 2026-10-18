@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NavigationBar } from "../../components/index.js";
-import SmoothSortVisualizer from "../../components/visualizer/SmoothSortVisualizer.jsx";
+import ProblemSolutionPanel from "../../components/visualizer/ProblemSolutionPanel.jsx";
+import ResizableColumns from "../../components/ResizableColumns.jsx";
 import { api, getToken } from "../../services/api.js";
 import "./problemDetails.css";
 
 const DETAIL_TABS = [
   { id: "description", label: "Description", icon: "description" },
-  { id: "solution-basic", label: "Solution 1: Basic", icon: "code-angle" },
+  { id: "solution-basic", label: "Solutions", icon: "code-angle" },
 ];
 
 const SEQUENCE_TABS = [
@@ -15,56 +16,12 @@ const SEQUENCE_TABS = [
   { id: "workspace", label: "My Code" },
 ];
 
-const RUNNER_LANGUAGES = ["Python 3", "JavaScript", "C++"];
+const RUNNER_LANGUAGES = ["Python 3", "JavaScript", "C++", "Java"];
 const RUNNER_TABS = [
   { id: "tests", label: "Test Cases", icon: "runner-tests" },
   { id: "console", label: "Console Output", icon: "code-reference" },
 ];
-const RUNNER_CODE = {
-  "Python 3": `def bubble_sort(arr):
-    n = len(arr)
-    # Traverse through all array elements
-    for i in range(n):
-        swapped = False
-        # Last i elements are already in place
-        for j in range(0, n - i - 1):
-            # Swap if the element found is greater than
-            # adjacent
-            if arr[j] > arr[j + 1]:
-                arr[j], arr[j + 1] = arr[j + 1], arr[j]
-                swapped = True
-        # If no two elements were swapped by inner
-        # loop, then break
-        if not swapped:
-            break
-    return arr`,
-  JavaScript: `function bubbleSort(arr) {
-  for (let i = arr.length; i > 0; i--) {
-    let swapped = false;
-    for (let j = 0; j < i - 1; j++) {
-      if (arr[j] > arr[j + 1]) {
-        [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
-        swapped = true;
-      }
-    }
-    if (!swapped) break;
-  }
-  return arr;
-}`,
-  "C++": `vector<int> bubbleSort(vector<int> arr) {
-  for (int i = arr.size(); i > 0; --i) {
-    bool swapped = false;
-    for (int j = 0; j < i - 1; ++j) {
-      if (arr[j] > arr[j + 1]) {
-        swap(arr[j], arr[j + 1]);
-        swapped = true;
-      }
-    }
-    if (!swapped) break;
-  }
-  return arr;
-}`,
-};
+const RUNNER_CODE = { 'Python 3': '', JavaScript: '', 'C++': '', Java: '' };
 const RUNNER_CASES = [
   {
     input: "9\n2 7 11 15",
@@ -94,123 +51,6 @@ const RUNNER_CASES = [
     matchPercent: 0,
   },
 ];
-
-const SOLUTION_JAVA_LINES = [
-  {
-    tokens: [
-      { text: "public void ", type: "keyword" },
-      { text: "bubbleSort", type: "function" },
-      { text: "(", type: "plain" },
-      { text: "int", type: "type" },
-      { text: "[] arr) {", type: "plain" },
-    ],
-  },
-  {
-    tokens: [
-      { text: "    int", type: "type" },
-      { text: " n = arr.length;", type: "plain" },
-    ],
-  },
-  {
-    tokens: [
-      { text: "    for", type: "keyword" },
-      { text: " (", type: "plain" },
-      { text: "int", type: "type" },
-      { text: " i = 0; i < n - 1; i++) {", type: "plain" },
-    ],
-  },
-  {
-    tokens: [
-      { text: "        for", type: "keyword" },
-      { text: " (", type: "plain" },
-      { text: "int", type: "type" },
-      { text: " j = 0; j < n - i - 1; j++) {", type: "plain" },
-    ],
-  },
-  {
-    active: true,
-    tokens: [
-      { text: "            if", type: "keyword" },
-      { text: " (arr[j] > arr[j + 1]) {", type: "plain" },
-    ],
-  },
-  {
-    tokens: [
-      { text: "                int", type: "type" },
-      { text: " temp = arr[j];", type: "plain" },
-    ],
-  },
-  { tokens: [{ text: "                arr[j] = arr[j + 1];", type: "plain" }] },
-  { tokens: [{ text: "                arr[j + 1] = temp;", type: "plain" }] },
-  { tokens: [{ text: "            }", type: "plain" }] },
-  { tokens: [{ text: "        }", type: "plain" }] },
-  { tokens: [{ text: "    }", type: "plain" }] },
-  { tokens: [{ text: "}", type: "plain" }] },
-];
-
-const SOLUTION_STEPS = [
-  {
-    nums: [5, 2, 8, 1],
-    leftIndex: 0,
-    rightIndex: 1,
-    activeLine: 5,
-    status: "swap",
-    resultBuffer: ["[ ]", "[ ]", "[ ]", "[ ]"],
-    comparison: "5 > 2",
-    annotation: "arr[0]=5 > arr[1]=2 is TRUE (triggering swap)",
-    context:
-      "Because arr[0] = 5 is strictly greater than arr[1] = 2, the condition evaluates to true. Execution will proceed to lines 6–8 where values are swapped using temporary register variable state.",
-  },
-  {
-    nums: [2, 5, 8, 1],
-    leftIndex: 1,
-    rightIndex: 2,
-    activeLine: 5,
-    status: "compare",
-    resultBuffer: ["[ ]", "[ ]", "[ ]", "[ ]"],
-    comparison: "5 < 8",
-    annotation: "arr[1]=5 < arr[2]=8 is TRUE (no swap required)",
-    context:
-      "The adjacent values are already ordered, so the optimized pass continues without mutating the array.",
-  },
-  {
-    nums: [2, 5, 1, 8],
-    leftIndex: 2,
-    rightIndex: 3,
-    activeLine: 5,
-    status: "swap",
-    resultBuffer: ["[ ]", "[ ]", "[ ]", "[ ]"],
-    comparison: "8 > 1",
-    annotation: "arr[2]=8 > arr[3]=1 is TRUE (triggering swap)",
-    context:
-      "The largest remaining value is compared with the final unsorted element and moves one position toward its sorted location.",
-  },
-  {
-    nums: [1, 2, 5, 8],
-    leftIndex: 0,
-    rightIndex: 1,
-    activeLine: 5,
-    status: "complete",
-    resultBuffer: ["[ ]", "[ ]", "[ ]", "[ ]"],
-    comparison: "2 > 1",
-    annotation: "arr[0]=2 > arr[1]=1 is TRUE (final swap)",
-    context:
-      "The array is sorted after the final swap. The trace is ready to replay from the beginning.",
-  },
-];
-
-const SOLUTION_VARIANTS = {
-  "solution-basic": {
-    label: "Solution 1: Basic",
-    complexity: "Time: O(N²)",
-    space: "Space: O(1)",
-  },
-  "solution-optimized": {
-    label: "Solution 2: Optimized",
-    complexity: "Time: O(N²)",
-    space: "Space: O(1)",
-  },
-};
 
 const FOOTER_COLUMNS = [
   {
@@ -245,34 +85,6 @@ const FOOTER_COLUMNS = [
   },
 ];
 
-const EXAMPLES = [
-  {
-    label: "Example 1",
-    badge: "General Case",
-    input: "[5, 2, 8, 1]",
-    output: "[1, 2, 5, 8]",
-    passes: [
-      [
-        "Pass 1:",
-        "Compare (5, 2) → swap → [2, 5, 8, 1]. Compare (5, 8) → keep. Compare (8, 1) → swap → [2, 5, 1, 8]. (8 in position).",
-      ],
-      [
-        "Pass 2:",
-        "Compare (2, 5) → keep. Compare (5, 1) → swap → [2, 1, 5, 8]. (5 in position).",
-      ],
-      ["Pass 3:", "Compare (2, 1) → swap → [1, 2, 5, 8]. Complete!"],
-    ],
-  },
-  {
-    label: "Example 2",
-    badge: "Optimized Best Case",
-    input: "[1, 2, 3, 4]",
-    output: "[1, 2, 3, 4]",
-    explanation:
-      "The array is already sorted. In the optimized version, Pass 1 discovers zero swaps and short-circuits early in O(N) time.",
-  },
-];
-
 function DetailsIcon({ name, className = "" }) {
   return (
     <span
@@ -292,7 +104,7 @@ function BreadcrumbBar({ problem }) {
         <span>/</span>
         <span>{problem?.category || "Algorithms"}</span>
         <span>/</span>
-        <strong>{problem?.title || "Bubble Sort"}</strong>
+        <strong>{problem?.title || "Problem"}</strong>
       </nav>
       <span className="details-ready-status">
         <DetailsIcon name="status-ready" /> Interactive Visualizer Ready
@@ -309,7 +121,7 @@ function ProblemHeader({
   onRunVisualizer,
   onSubmit,
 }) {
-  const title = problem?.title || "Bubble Sort";
+  const title = problem?.title || "Problem";
   const difficulty = problem?.difficulty || "Easy";
   const idFormatted = problem?.id ? `#0${problem.id}` : "ID #042";
   const category = problem?.category || "Array";
@@ -441,10 +253,8 @@ function OverviewCard({ problem }) {
   const description = isLoaded
     ? (problem.description || problem.shortDescription || "Solve this algorithmic challenge.")
     : "Sort an array of elements by repeatedly swapping adjacent elements if they are in the wrong order until the entire array is sorted.";
-  const timeComplexity = isLoaded
-    ? (problem.difficulty === "Hard" ? "O(N log N)" : problem.difficulty === "Medium" ? "O(N)" : "O(1)")
-    : "O(N²)";
-  const spaceComplexity = "O(1)";
+  const timeComplexity = problem?.solutions?.[0]?.timeComplexity || "Not specified";
+  const spaceComplexity = problem?.solutions?.[0]?.spaceComplexity || "Not specified";
 
   return (
     <article className="details-card details-overview-card">
@@ -475,14 +285,14 @@ function OverviewCard({ problem }) {
           icon="time-complexity"
           label="Time Complexity"
           value={timeComplexity}
-          note="Target runtime"
+          note="Reference solution"
           className="complexity-metric--amber"
         />
         <ComplexityMetric
           icon="space-complexity"
           label="Space Complexity"
           value={spaceComplexity}
-          note="In-place auxiliary"
+          note="Reference solution"
           className="complexity-metric--mint"
         />
         <ComplexityMetric
@@ -577,7 +387,7 @@ function ExampleCard({ example }) {
 }
 
 function ExamplesSection({ problem }) {
-  let examplesToRender = EXAMPLES;
+  let examplesToRender = [];
 
   if (problem?.sampleTestCases && problem.sampleTestCases.length > 0) {
     examplesToRender = problem.sampleTestCases.map((tc, idx) => ({
@@ -610,13 +420,14 @@ function ExamplesSection({ problem }) {
       {examplesToRender.map((example) => (
         <ExampleCard key={example.label} example={example} />
       ))}
+      {examplesToRender.length === 0 && <p>No sample test cases have been provided.</p>}
     </section>
   );
 }
 
 function DescriptionColumn({ problem }) {
   return (
-    <div className="details-primary-column">
+    <div className="details-primary-column independent-scroll-region" tabIndex={0} role="region" aria-label="Problem description">
       <OverviewCard problem={problem} />
       <ConstraintsCard problem={problem} />
       <ExamplesSection problem={problem} />
@@ -682,7 +493,7 @@ function RunnerToolbar({ isExpanded, onReset, onCopy, onToggleExpand }) {
 }
 
 function CodeEditor({ language, code, isExpanded, onChange }) {
-  const lineCount = Math.max(1, code.split("\\n").length);
+  const lineCount = Math.max(1, code.split(/\r?\n/).length);
   return (
     <div className={`runner-editor ${isExpanded ? "is-expanded" : ""}`}>
       <div className="runner-editor__gutter" aria-hidden="true">
@@ -937,217 +748,6 @@ function CodeRunnerPanel({
   );
 }
 
-function normalizeJavaLine(rawLine) {
-  if (!rawLine) return 5;
-  if (rawLine <= 12) return rawLine;
-  if (rawLine === 18) return 3;
-  if (rawLine === 19) return 4;
-  if (rawLine === 20) return 5;
-  if (rawLine === 21) return 6;
-  if (rawLine === 22) return 7;
-  if (rawLine === 23) return 8;
-  if (rawLine >= 24) return 12;
-  return 5;
-}
-
-function SolutionContextBar({ variant }) {
-  return (
-    <div className="details-solution-context">
-      <span className="details-solution-context__left">
-        <strong>{variant.label}</strong>
-        <span>/</span>
-        <span>Bubble Sort</span>
-      </span>
-      <span className="details-solution-context__right">
-        <span>{variant.complexity}</span>
-        <span>{variant.space}</span>
-      </span>
-    </div>
-  );
-}
-
-function SolutionCodeToolbar({ isExpanded, onCopy, onAction, onToggleExpand }) {
-  const actions = [
-    { id: "pin", label: "Pin solution", icon: "workspace-edit" },
-    { id: "comment", label: "Add comment", icon: "code-reference" },
-    { id: "inspect", label: "Inspect execution", icon: "visualizer-sandbox" },
-    { id: "duplicate", label: "Duplicate solution", icon: "runner-copy" },
-  ];
-
-  return (
-    <header className="details-solution-code__toolbar">
-      <div className="details-solution-file-context">
-        <span className="details-solution-java-pill">Java</span>
-        <strong>
-          JDK 21 <span>• BubbleSort.java</span>
-        </strong>
-      </div>
-      <div
-        className="details-solution-code-actions"
-        aria-label="Solution code toolbar"
-      >
-        <button
-          type="button"
-          aria-label="Copy solution code"
-          title="Copy solution code"
-          onClick={onCopy}
-        >
-          <DetailsIcon name="runner-copy" />
-        </button>
-        {actions.map((action) => (
-          <button
-            type="button"
-            aria-label={action.label}
-            title={action.label}
-            key={action.id}
-            onClick={() => onAction(action.label)}
-          >
-            <DetailsIcon name={action.icon} />
-          </button>
-        ))}
-        <button
-          type="button"
-          aria-label={
-            isExpanded ? "Collapse solution code" : "Expand solution code"
-          }
-          title={isExpanded ? "Collapse solution code" : "Expand solution code"}
-          onClick={onToggleExpand}
-        >
-          <DetailsIcon name="runner-expand" />
-        </button>
-      </div>
-    </header>
-  );
-}
-
-function SolutionCodeEditor({ step }) {
-  return (
-    <div
-      className="details-solution-editor"
-      aria-label="Read-only Java solution editor"
-    >
-      <div className="details-solution-editor__gutter" aria-hidden="true">
-        {SOLUTION_JAVA_LINES.map((_, index) => (
-          <span key={`solution-line-${index + 1}`}>{index + 1}</span>
-        ))}
-      </div>
-      <pre
-        className="details-solution-editor__code"
-        role="textbox"
-        aria-readonly="true"
-        tabIndex="0"
-      >
-        {SOLUTION_JAVA_LINES.map((line, index) => {
-          const activeLineNum = normalizeJavaLine(step?.activeLine);
-          const isLineActive = index + 1 === activeLineNum;
-          return (
-            <span
-              className={`details-solution-code-line ${isLineActive ? "is-active" : ""}`}
-              key={`code-${index + 1}`}
-            >
-              {line.tokens.map((token, tokenIndex) => (
-                <span
-                  className={`details-solution-token details-solution-token--${token.type}`}
-                  key={`${index}-${tokenIndex}`}
-                >
-                  {token.text}
-                </span>
-              ))}
-              {isLineActive && (
-                <span className="details-solution-annotation">
-                  ← {step?.annotation || "Active step"}
-                </span>
-              )}
-            </span>
-          );
-        })}
-      </pre>
-    </div>
-  );
-}
-
-function SolutionCodeCard({
-  step,
-  isExpanded,
-  onCopy,
-  onAction,
-  onToggleExpand,
-}) {
-  const activeLineNum = normalizeJavaLine(step?.activeLine);
-  return (
-    <section
-      className={`details-solution-card details-solution-code-card ${isExpanded ? "is-expanded" : ""}`}
-      aria-label="Bubble Sort Java solution"
-    >
-      <SolutionCodeToolbar
-        isExpanded={isExpanded}
-        onCopy={onCopy}
-        onAction={onAction}
-        onToggleExpand={onToggleExpand}
-      />
-      <SolutionCodeEditor step={step} />
-      <div className="details-solution-execution-context">
-        <span className="details-solution-bulb" aria-hidden="true" />
-        <p>
-          <strong>Line {activeLineNum} Execution Context:</strong> {step?.context || step?.annotation || "Đang thực thi thuật toán."}
-        </p>
-      </div>
-    </section>
-  );
-}
-
-function SolutionPanel({ activeTab, onAnnounce }) {
-  const variant =
-    SOLUTION_VARIANTS[activeTab] ?? SOLUTION_VARIANTS["solution-optimized"];
-  const [currentStep, setCurrentStep] = useState(SOLUTION_STEPS[0]);
-  const [isExpanded, setIsExpanded] = useState(false);
-
-  const handleCopy = async () => {
-    if (!navigator.clipboard) {
-      onAnnounce("Solution code copying is unavailable in this browser.");
-      return;
-    }
-
-    try {
-      await navigator.clipboard.writeText(
-        SOLUTION_JAVA_LINES.map((line) =>
-          line.tokens.map((token) => token.text).join(""),
-        ).join("\n"),
-      );
-      onAnnounce("Java solution copied to clipboard.");
-    } catch {
-      onAnnounce("Solution code copying is unavailable in this browser.");
-    }
-  };
-
-  return (
-    <div
-      className="details-solution-panel"
-      role="tabpanel"
-      id={`detail-panel-${activeTab}`}
-    >
-      <section
-        className="details-solution-card details-solution-visualizer"
-        aria-label={`${variant.label} visualization`}
-      >
-        <SolutionContextBar variant={variant} />
-        <SmoothSortVisualizer
-          onStepChange={(step) => {
-            setCurrentStep(step);
-          }}
-        />
-      </section>
-      <SolutionCodeCard
-        step={currentStep}
-        isExpanded={isExpanded}
-        onCopy={handleCopy}
-        onAction={onAnnounce}
-        onToggleExpand={() => setIsExpanded((current) => !current)}
-      />
-    </div>
-  );
-}
-
 function PlaceholderPanel({ activeTab }) {
   const tab = DETAIL_TABS.find((item) => item.id === activeTab);
   return (
@@ -1160,7 +760,7 @@ function PlaceholderPanel({ activeTab }) {
       <h2>{tab?.label ?? "Workspace"}</h2>
       <p>
         This workspace is ready for the next learning layer. Switch back to
-        Description to review the Bubble Sort walkthrough.
+        Description to review the problem.
       </p>
       <button
         className="details-placeholder-button"
@@ -1277,6 +877,7 @@ function DetailsFooter() {
 
 function ProblemDetailsPage({ userName = "Your name", problemId = 1 }) {
   const [currentProblem, setCurrentProblem] = useState(null);
+  const [problemError, setProblemError] = useState("");
   const [activeTab, setActiveTab] = useState("description");
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [language, setLanguage] = useState("Python 3");
@@ -1287,8 +888,6 @@ function ProblemDetailsPage({ userName = "Your name", problemId = 1 }) {
   const [executionResult, setExecutionResult] = useState(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [announcement, setAnnouncement] = useState("");
-  const [primaryColumnShare, setPrimaryColumnShare] = useState(50);
-  const workspaceRef = useRef(null);
   const runnerRef = useRef(null);
 
   const testCasesList = useMemo(() => {
@@ -1318,24 +917,25 @@ function ProblemDetailsPage({ userName = "Your name", problemId = 1 }) {
   }, [currentProblem]);
 
   useEffect(() => {
+    let cancelled = false;
     async function loadProblem() {
       try {
         const data = await api.getProblemById(problemId);
-        if (data) {
+        if (data && !cancelled) {
           setCurrentProblem(data);
-          setCodeByLanguage((prev) => ({
-            ...prev,
-            "Python 3": data.starterCodePython || prev["Python 3"],
-            "C++": data.starterCodeCpp || prev["C++"],
-            "JavaScript": data.starterCodeJs || prev["JavaScript"],
-            "Java": data.starterCodeJava || prev["Java"] || "",
-          }));
+          setCodeByLanguage({
+            "Python 3": data.starterCodePython || "",
+            "C++": data.starterCodeCpp || "",
+            "JavaScript": data.starterCodeJs || "",
+            "Java": data.starterCodeJava || "",
+          });
         }
       } catch (err) {
-        console.warn("Could not load problem from API, fallback to default:", err);
+        if (!cancelled) setProblemError(err.message || "Could not load this problem.");
       }
     }
     loadProblem();
+    return () => { cancelled = true; };
   }, [problemId]);
 
   const code = codeByLanguage[language];
@@ -1390,7 +990,8 @@ function ProblemDetailsPage({ userName = "Your name", problemId = 1 }) {
   const handleResetCode = () => {
     setCodeByLanguage((current) => ({
       ...current,
-      [language]: RUNNER_CODE[language],
+      [language]: ({ "Python 3": currentProblem?.starterCodePython, "JavaScript": currentProblem?.starterCodeJs,
+        "C++": currentProblem?.starterCodeCpp, "Java": currentProblem?.starterCodeJava })[language] || "",
     }));
     setExecutionState("ready");
     setExecutionResult(null);
@@ -1458,8 +1059,8 @@ function ProblemDetailsPage({ userName = "Your name", problemId = 1 }) {
           status: status,
           actual: normActual || "(No output returned)",
           expected: normExpected || "(None)",
-          runtimeMs: result.executionTimeMs || 0.1,
-          memoryMb: result.memoryUsageMb || 14.5,
+          runtimeMs: result.executionTimeMs ?? 0,
+          memoryMb: result.memoryUsageMb ?? 0,
           matchPercent: isMatch ? 100 : 0,
         });
         setAnnouncement(`Run Code: ${status}`);
@@ -1484,7 +1085,6 @@ function ProblemDetailsPage({ userName = "Your name", problemId = 1 }) {
 
     // Guard: require real JWT token before hitting the backend
     const currentToken = getToken();
-    console.log("[AlgoViz] Submit: token present?", Boolean(currentToken), currentToken ? currentToken.substring(0, 20) + "..." : "NONE");
     if (!currentToken) {
       setExecutionState("failed");
       setExecutionResult({
@@ -1528,8 +1128,8 @@ function ProblemDetailsPage({ userName = "Your name", problemId = 1 }) {
             ? `All ${res.totalTestCases || res.passedTestCases || 0} test cases passed!`
             : (res.output || res.errorMessage || `Failed test cases (${res.passedTestCases || 0}/${res.totalTestCases || 0} passed)`),
           expected: res.expectedOutput || expectedOutput,
-          runtimeMs: res.executionTimeMs || 0.2,
-          memoryMb: res.memoryUsageMb || 15.0,
+          runtimeMs: res.executionTimeMs ?? 0,
+          memoryMb: res.memoryUsageMb ?? 0,
           matchPercent: res.totalTestCases ? Math.round(((res.passedTestCases || 0) / res.totalTestCases) * 100) : (isAccepted ? 100 : 0),
         });
         setAnnouncement(
@@ -1560,46 +1160,15 @@ function ProblemDetailsPage({ userName = "Your name", problemId = 1 }) {
   };
   const handleSequenceAnnouncement = (message) => setAnnouncement(message);
 
-  const handleSplitterPointerDown = (event) => {
-    if (!workspaceRef.current) return;
-    event.currentTarget.setPointerCapture(event.pointerId);
-    event.currentTarget.classList.add("is-dragging");
-  };
-
-  const handleSplitterPointerMove = (event) => {
-    if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
-    const bounds = workspaceRef.current?.getBoundingClientRect();
-    if (!bounds) return;
-    const nextShare = ((event.clientX - bounds.left) / bounds.width) * 100;
-    setPrimaryColumnShare(Math.min(72, Math.max(28, nextShare)));
-  };
-
-  const handleSplitterPointerUp = (event) => {
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-    event.currentTarget.classList.remove("is-dragging");
-  };
-
-  const handleSplitterKeyDown = (event) => {
-    const step = event.shiftKey ? 5 : 2;
-    if (event.key === "ArrowLeft") {
-      event.preventDefault();
-      setPrimaryColumnShare((current) => Math.max(28, current - step));
-    }
-    if (event.key === "ArrowRight") {
-      event.preventDefault();
-      setPrimaryColumnShare((current) => Math.min(72, current + step));
-    }
-    if (event.key === "Home") {
-      event.preventDefault();
-      setPrimaryColumnShare(28);
-    }
-    if (event.key === "End") {
-      event.preventDefault();
-      setPrimaryColumnShare(72);
-    }
-  };
+  if (!currentProblem) {
+    return <main className="problem-details-page" id="top"><div className="details-shell">
+      <NavigationBar active="Problems" userName={userName} className="details-navigation" />
+      <section className="details-card" role={problemError ? "alert" : "status"}>
+        <h1>{problemError ? "Could not load this problem" : "Loading problem…"}</h1>
+        {problemError && <p>{problemError}</p>}<a href="#problems">Back to problems</a>
+      </section>
+    </div></main>;
+  }
 
   return (
     <main className="problem-details-page" id="top">
@@ -1620,7 +1189,7 @@ function ProblemDetailsPage({ userName = "Your name", problemId = 1 }) {
             );
           }}
           onShare={handleShare}
-          onRunVisualizer={() => handleTabChange("visualizer")}
+          onRunVisualizer={() => handleTabChange("solution-basic")}
           onSubmit={handleSubmit}
         />
         <WorkspaceTabs activeTab={activeTab} onChange={handleTabChange} />
@@ -1631,33 +1200,14 @@ function ProblemDetailsPage({ userName = "Your name", problemId = 1 }) {
           aria-label={`${activeTab} content`}
         >
           {activeTab === "description" || activeTab === "visualizer" ? (
-            <div
+            <ResizableColumns
               className="details-workspace-grid"
-              ref={workspaceRef}
-              style={{
-                "--details-primary-share": `${primaryColumnShare}fr`,
-                "--details-secondary-share": `${100 - primaryColumnShare}fr`,
-              }}
+              minPrimaryWidth={300}
+              minSecondaryWidth={360}
+              resizeLabel="Đổi độ rộng đề bài và trình soạn code"
             >
               <DescriptionColumn problem={currentProblem} />
-              <button
-                className="details-workspace-splitter"
-                type="button"
-                role="separator"
-                aria-label="Resize problem and code panels"
-                aria-orientation="vertical"
-                aria-valuemin="28"
-                aria-valuemax="72"
-                aria-valuenow={Math.round(primaryColumnShare)}
-                onPointerDown={handleSplitterPointerDown}
-                onPointerMove={handleSplitterPointerMove}
-                onPointerUp={handleSplitterPointerUp}
-                onPointerCancel={handleSplitterPointerUp}
-                onKeyDown={handleSplitterKeyDown}
-              >
-                <span aria-hidden="true" />
-              </button>
-              <div className="details-secondary-column">
+              <div className="details-secondary-column independent-scroll-region" tabIndex={0} role="region" aria-label="Code editor and results">
                 <CodeRunnerPanel
                   runnerRef={runnerRef}
                   language={language}
@@ -1679,12 +1229,12 @@ function ProblemDetailsPage({ userName = "Your name", problemId = 1 }) {
                   onSubmit={handleSubmit}
                 />
               </div>
-            </div>
+            </ResizableColumns>
           ) : activeTab === "solution-basic" ||
             activeTab === "solution-optimized" ? (
-            <SolutionPanel
-              key={activeTab}
-              activeTab={activeTab}
+            <ProblemSolutionPanel
+              key={`${problemId}-${activeTab}`}
+              problem={currentProblem}
               onAnnounce={setAnnouncement}
             />
           ) : (

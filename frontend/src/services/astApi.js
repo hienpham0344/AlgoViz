@@ -8,6 +8,8 @@
  * persistent element ID tracking.
  */
 
+import { javaFilename } from "./solutionTrace.js";
+
 const AST_API_BASE_URL = "http://localhost:8081";
 
 export const BUBBLE_SORT_SAMPLE_JAVA = `public class BubbleSortSample {
@@ -56,7 +58,9 @@ export async function checkAstToolHealth() {
  * @param {string} [filename] — filename sent in the multipart body
  * @returns {Promise<object>} parsed JSON response
  */
-async function postJavaSource(path, javaSource, filename = "BubbleSortSample.java") {
+async function postJavaSource(path, javaSource, options = {}) {
+  if (!javaSource?.trim()) throw new Error("This solution has no executable source code.");
+  const filename = javaFilename(javaSource);
   const blob = new Blob([javaSource], { type: "text/x-java-source" });
   const formData = new FormData();
   formData.append("file", blob, filename);
@@ -64,6 +68,7 @@ async function postJavaSource(path, javaSource, filename = "BubbleSortSample.jav
   const response = await fetch(`${AST_API_BASE_URL}${path}`, {
     method: "POST",
     body: formData,
+    signal: options.signal,
   });
 
   const data = await response.json().catch(() => null);
@@ -83,8 +88,8 @@ async function postJavaSource(path, javaSource, filename = "BubbleSortSample.jav
 /**
  * Fetch step-by-step execution trace with visual sort states.
  */
-export async function fetchDebugSteps(javaSource = BUBBLE_SORT_SAMPLE_JAVA) {
-  return postJavaSource("/api/debug/steps", javaSource);
+export async function fetchDebugSteps(javaSource, options = {}) {
+  return postJavaSource("/api/debug/steps", javaSource, options);
 }
 
 /**
@@ -311,7 +316,7 @@ export function generateBubbleSortTrace(initialArray = [5, 2, 8, 1, 9, 3]) {
 export function adaptStepsForVisualizer(response) {
   const steps = Array.isArray(response?.steps) ? response.steps : [];
   if (steps.length === 0) {
-    return generateBubbleSortTrace();
+    return [];
   }
 
   // Filter steps that have sort visual state
@@ -321,7 +326,7 @@ export function adaptStepsForVisualizer(response) {
   });
 
   if (sortSteps.length === 0) {
-    return generateBubbleSortTrace();
+    return [];
   }
 
   // Find initial array from first frame

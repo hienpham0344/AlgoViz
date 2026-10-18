@@ -478,12 +478,7 @@
   background: var(--details-primary-bright);
 }
 .details-workspace-grid {
-  display: grid;
-  grid-template-columns:
-    minmax(0, var(--details-primary-share, 1fr))
-    20px minmax(0, var(--details-secondary-share, 1fr));
   align-items: start;
-  gap: 5px;
 }
 .details-primary-column,
 .details-secondary-column {
@@ -491,35 +486,43 @@
   min-width: 0;
   gap: 24px;
 }
-.details-workspace-splitter {
-  display: grid;
-  align-self: stretch;
-  place-items: center;
-  min-width: 18px;
-  min-height: 120px;
-  padding: 0;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  cursor: col-resize;
-  touch-action: none;
+@media (min-width: 1051px) {
+  .details-workspace-grid {
+    block-size: var(--workspace-pane-height);
+    min-block-size: 0;
+    grid-template-rows: minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .details-workspace-grid > :is(.details-primary-column, .details-secondary-column) {
+    display: flex;
+    flex-direction: column;
+    block-size: 100%;
+    min-block-size: 0;
+    overflow-x: auto;
+    overflow-y: scroll;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    padding-inline-end: 6px;
+  }
+
+  /* Keep cards at their natural height so overflow belongs to the pane, not a clipped grid row. */
+  .details-workspace-grid > :is(.details-primary-column, .details-secondary-column) > * {
+    flex: 0 0 auto;
+    min-inline-size: 0;
+  }
+
+  .details-workspace-grid .details-secondary-column > .details-runner-card {
+    block-size: max-content;
+  }
+
+  /* The entire right pane owns vertical scrolling; the editor only needs horizontal overflow. */
+  .details-workspace-grid .details-secondary-column .runner-editor {
+    max-block-size: none;
+    overscroll-behavior-inline: contain;
+  }
 }
-.details-workspace-splitter span {
-  width: 4px;
-  height: 100%;
-  min-height: 120px;
-  border-radius: 999px;
-  background: rgb(var(--palette-sky-rgb) / 30%);
-  transition:
-    width 160ms ease,
-    background-color 160ms ease;
-}
-.details-workspace-splitter:hover span,
-.details-workspace-splitter:focus-visible span,
-.details-workspace-splitter.is-dragging span {
-  width: 6px;
-  background: var(--details-mint);
-}
+
 .details-card {
   min-width: 0;
   border-radius: var(--details-radius-card);
@@ -2074,7 +2077,7 @@
   .details-workspace-grid {
     grid-template-columns: 1fr;
   }
-  .details-workspace-splitter {
+  .details-workspace-grid > .resizable-column-divider {
     display: none;
   }
 }
