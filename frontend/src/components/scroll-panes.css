@@ -1,0 +1,29 @@
+:root {
+  --workspace-pane-height: clamp(20rem, 72vh, 60rem);
+}
+
+@supports (height: 1dvh) {
+  :root { --workspace-pane-height: clamp(20rem, 72dvh, 60rem); }
+}
+
+.independent-scroll-region {
+  min-inline-size: 0;
+  min-block-size: 0;
+  scrollbar-width: auto;
+  scrollbar-color: var(--palette-steel) transparent;
+}
+
+.independent-scroll-region:focus-visible {
+  outline: 2px solid var(--palette-sky);
+  outline-offset: -2px;
+}
+
+.independent-scroll-region::-webkit-scrollbar { width: 10px; height: 10px; }
+.independent-scroll-region::-webkit-scrollbar-track { background: transparent; }
+.independent-scroll-region::-webkit-scrollbar-thumb {
+  min-height: 36px;
+  border: 2px solid var(--palette-deep);
+  border-radius: 10px;
+  background: var(--palette-steel);
+}
+.independent-scroll-region::-webkit-scrollbar-thumb:hover { background: var(--palette-sky); }

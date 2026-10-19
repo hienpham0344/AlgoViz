@@ -1,0 +1,1258 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { NavigationBar } from "../../components/index.js";
+import ProblemSolutionPanel from "../../components/visualizer/ProblemSolutionPanel.jsx";
+import ResizableColumns from "../../components/ResizableColumns.jsx";
+import { api, getToken } from "../../services/api.js";
+import "./problemDetails.css";
+
+const DETAIL_TABS = [
+  { id: "description", label: "Description", icon: "description" },
+  { id: "solution-basic", label: "Solutions", icon: "code-angle" },
+];
+
+const SEQUENCE_TABS = [
+  { id: "description", label: "Description" },
+  { id: "solution-basic", label: "Solution 1" },
+  { id: "workspace", label: "My Code" },
+];
+
+const RUNNER_LANGUAGES = ["Python 3", "JavaScript", "C++", "Java"];
+const RUNNER_TABS = [
+  { id: "tests", label: "Test Cases", icon: "runner-tests" },
+  { id: "console", label: "Console Output", icon: "code-reference" },
+];
+const RUNNER_CODE = { 'Python 3': '', JavaScript: '', 'C++': '', Java: '' };
+const RUNNER_CASES = [
+  {
+    input: "9\n2 7 11 15",
+    actual: "(Click Run Code)",
+    expected: "[0, 1]",
+    status: "Ready",
+    runtimeMs: 0,
+    memoryMb: 0,
+    matchPercent: 0,
+  },
+  {
+    input: "6\n3 2 4",
+    actual: "(Click Run Code)",
+    expected: "[1, 2]",
+    status: "Ready",
+    runtimeMs: 0,
+    memoryMb: 0,
+    matchPercent: 0,
+  },
+  {
+    input: "6\n3 3",
+    actual: "(Click Run Code)",
+    expected: "[0, 1]",
+    status: "Ready",
+    runtimeMs: 0,
+    memoryMb: 0,
+    matchPercent: 0,
+  },
+];
+
+const FOOTER_COLUMNS = [
+  {
+    title: "Curriculum",
+    links: [
+      "Dynamic Programming",
+      "Trees & Graph Algorithms",
+      "Binary Search & Pointers",
+      "Bit Manipulation",
+      "System Design Foundations",
+    ],
+  },
+  {
+    title: "Platform",
+    links: [
+      "Problem Directory",
+      "Algorithm Visualizer",
+      "Weekly Coding Battles",
+      "Company Tagged Lists",
+      "Leaderboard",
+    ],
+  },
+  {
+    title: "Community",
+    links: [
+      "Discussion Forums",
+      "Interview Experiences",
+      "Discord Community",
+      "Editorial Solutions",
+      "FAQ & Help Center",
+    ],
+  },
+];
+
+function DetailsIcon({ name, className = "" }) {
+  return (
+    <span
+      className={`details-icon details-icon--${name} ${className}`.trim()}
+      aria-hidden="true"
+    />
+  );
+}
+
+function BreadcrumbBar({ problem }) {
+  return (
+    <div className="details-breadcrumb-bar">
+      <nav className="details-breadcrumbs" aria-label="Problem breadcrumb">
+        <a href="#problems">
+          <DetailsIcon name="arrow-left" /> Problems
+        </a>
+        <span>/</span>
+        <span>{problem?.category || "Algorithms"}</span>
+        <span>/</span>
+        <strong>{problem?.title || "Problem"}</strong>
+      </nav>
+      <span className="details-ready-status">
+        <DetailsIcon name="status-ready" /> Interactive Visualizer Ready
+      </span>
+    </div>
+  );
+}
+
+function ProblemHeader({
+  problem,
+  isBookmarked,
+  onBookmark,
+  onShare,
+  onRunVisualizer,
+  onSubmit,
+}) {
+  const title = problem?.title || "Problem";
+  const difficulty = problem?.difficulty || "Easy";
+  const idFormatted = problem?.id ? `#0${problem.id}` : "ID #042";
+  const category = problem?.category || "Array";
+  const diffClass = difficulty.toLowerCase() === "hard" ? "difficulty-hard" : difficulty.toLowerCase() === "medium" ? "difficulty-medium" : "difficulty-easy";
+
+  return (
+    <section
+      className="details-problem-header"
+      aria-labelledby="detail-problem-title"
+    >
+      <div
+        className="details-header-glow details-header-glow--violet"
+        aria-hidden="true"
+      />
+      <div
+        className="details-header-glow details-header-glow--mint"
+        aria-hidden="true"
+      />
+      <div className="details-problem-identity">
+        <div className="details-title-row">
+          <h1 id="detail-problem-title">{title}</h1>
+          <span className="details-difficulty">
+            <DetailsIcon name={diffClass} /> {difficulty}
+          </span>
+          <span className="details-problem-id">{idFormatted}</span>
+        </div>
+        <div className="details-meta-row">
+          <span>Category:</span>
+          <span className="details-meta-tag">{category}</span>
+          <span className="details-meta-tag">Algorithm</span>
+          <span className="details-meta-tag">Optimized</span>
+          <span className="details-meta-tag details-meta-tag--mono">{difficulty === "Hard" ? "O(N log N)" : difficulty === "Medium" ? "O(N)" : "O(1)"}</span>
+        </div>
+      </div>
+      <div className="details-header-actions" aria-label="Problem actions">
+        <button
+          className={`details-action-button ${isBookmarked ? "is-active" : ""}`}
+          type="button"
+          aria-pressed={isBookmarked}
+          onClick={onBookmark}
+        >
+          <DetailsIcon name="bookmark" />{" "}
+          {isBookmarked ? "Bookmarked" : "Bookmark"}
+        </button>
+        <button
+          className="details-action-button"
+          type="button"
+          onClick={onShare}
+        >
+          <DetailsIcon name="share" /> Share
+        </button>
+        <button
+          className="details-action-button details-action-button--primary"
+          type="button"
+          onClick={onRunVisualizer}
+        >
+          <DetailsIcon name="run-visualizer" /> Run Visualizer
+        </button>
+        <button
+          className="details-action-button details-action-button--submit"
+          type="button"
+          onClick={onSubmit}
+        >
+          <DetailsIcon name="submit-solution" /> Submit Solution
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function WorkspaceTabs({ activeTab, onChange }) {
+  return (
+    <div className="details-tabs-bar">
+      <div
+        className="details-tabs"
+        role="tablist"
+        aria-label="Problem workspace tabs"
+      >
+        {DETAIL_TABS.map((tab) => (
+          <button
+            className={`details-tab ${activeTab === tab.id ? "is-active" : ""}`}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === tab.id}
+            aria-controls={`detail-panel-${tab.id}`}
+            key={tab.id}
+            onClick={() => onChange(tab.id)}
+          >
+            <DetailsIcon name={tab.icon} /> {tab.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ComplexityMetric({ icon, label, value, note, className = "" }) {
+  return (
+    <div className={`complexity-metric ${className}`.trim()}>
+      <div className="complexity-metric__label">
+        <span>{label}</span>
+        <DetailsIcon name={icon} />
+      </div>
+      <strong>{value}</strong>
+      <small>{note}</small>
+    </div>
+  );
+}
+
+/**
+ * Converts inline backtick spans (e.g. `true`) to <code> elements.
+ * Handles plain text safely — no dangerouslySetInnerHTML needed.
+ */
+function renderInlineMarkdown(text) {
+  if (!text) return null;
+  const parts = text.split(/(`[^`]+`)/);
+  return parts.map((part, i) => {
+    if (part.startsWith("`") && part.endsWith("`")) {
+      return <code key={i} className="inline-code">{part.slice(1, -1)}</code>;
+    }
+    return part;
+  });
+}
+
+function OverviewCard({ problem }) {
+  const isLoaded = Boolean(problem);
+  const title = isLoaded ? problem.title : "Concept Brief";
+  const category = isLoaded ? problem.category : "Stable Sort";
+  const description = isLoaded
+    ? (problem.description || problem.shortDescription || "Solve this algorithmic challenge.")
+    : "Sort an array of elements by repeatedly swapping adjacent elements if they are in the wrong order until the entire array is sorted.";
+  const timeComplexity = problem?.solutions?.[0]?.timeComplexity || "Not specified";
+  const spaceComplexity = problem?.solutions?.[0]?.spaceComplexity || "Not specified";
+
+  return (
+    <article className="details-card details-overview-card">
+      <div className="details-card-heading">
+        <h2>{title}</h2>
+        <span>{category}</span>
+      </div>
+      <p className="details-lead-copy">{renderInlineMarkdown(description)}</p>
+      {isLoaded && problem.inputFormat && (
+        <p className="details-support-copy">
+          <strong>Input Format:</strong> {problem.inputFormat}
+        </p>
+      )}
+      {isLoaded && problem.outputFormat && (
+        <p className="details-support-copy">
+          <strong>Output Format:</strong> {problem.outputFormat}
+        </p>
+      )}
+      {!isLoaded && (
+        <p className="details-support-copy">
+          In each iteration, the largest unsorted element &quot;bubbles up&quot;
+          to its correct position at the end of the array, similar to air bubbles
+          rising to the water&apos;s surface.
+        </p>
+      )}
+      <div className="complexity-grid">
+        <ComplexityMetric
+          icon="time-complexity"
+          label="Time Complexity"
+          value={timeComplexity}
+          note="Reference solution"
+          className="complexity-metric--amber"
+        />
+        <ComplexityMetric
+          icon="space-complexity"
+          label="Space Complexity"
+          value={spaceComplexity}
+          note="Reference solution"
+          className="complexity-metric--mint"
+        />
+        <ComplexityMetric
+          icon="stability"
+          label="Difficulty"
+          value={problem?.difficulty || "Standard"}
+          note="Verified test suite"
+          className="complexity-metric--soft"
+        />
+      </div>
+    </article>
+  );
+}
+
+function ConstraintsCard({ problem }) {
+  const constraintsText = problem?.constraints;
+  const constraintsList = constraintsText
+    ? constraintsText.split("\n").filter((item) => item.trim().length > 0)
+    : null;
+
+  return (
+    <article className="details-card details-constraints-card">
+      <h2 className="details-section-heading">
+        <DetailsIcon name="input-constraints" /> Input Constraints
+      </h2>
+      <ul className="constraints-list">
+        {constraintsList ? (
+          constraintsList.map((constraint, idx) => (
+            <li key={idx}>
+              <strong>Constraint #{idx + 1}:</strong>
+              <span> {constraint}</span>
+            </li>
+          ))
+        ) : (
+          <>
+            <li>
+              <strong>1 ≤ n ≤ 1000</strong>
+              <span>— array length. Suitable for quadratic time algorithms.</span>
+            </li>
+            <li>
+              <strong>-10⁴ ≤ arr[i] ≤ 10⁴</strong>
+              <span>— signed integer ranges fit within 32-bit registers.</span>
+            </li>
+            <li>
+              <span>
+                Elements may contain duplicates. The relative ordering of equal keys
+                must remain unaltered.
+              </span>
+            </li>
+          </>
+        )}
+      </ul>
+    </article>
+  );
+}
+
+function ExampleCard({ example }) {
+  return (
+    <article className="details-card details-example-card">
+      <div className="details-example-heading">
+        <h3>{example.label}</h3>
+        <span
+          className={
+            example.badge?.includes("Optimized") ? "is-amber" : "is-mint"
+          }
+        >
+          {example.badge || "Sample Case"}
+        </span>
+      </div>
+      <div className="details-io-block">
+        <code>Input: {example.input}</code>
+        <code>
+          Output: <em>{example.output}</em>
+        </code>
+      </div>
+      {example.passes ? (
+        <div className="details-pass-list">
+          <strong>Step-by-step trace:</strong>
+          {example.passes.map(([label, text]) => (
+            <p key={label}>
+              <b>{label}</b> {text}
+            </p>
+          ))}
+        </div>
+      ) : (
+        <p className="details-explanation">
+          <strong>Explanation:</strong> {example.explanation || "Correct output matches expected testcase result."}
+        </p>
+      )}
+    </article>
+  );
+}
+
+function ExamplesSection({ problem }) {
+  let examplesToRender = [];
+
+  if (problem?.sampleTestCases && problem.sampleTestCases.length > 0) {
+    examplesToRender = problem.sampleTestCases.map((tc, idx) => ({
+      label: `Example ${idx + 1}`,
+      badge: idx === 0 ? "Standard Test" : "Edge Case",
+      input: tc.input,
+      output: tc.expectedOutput,
+      explanation: `Test case verified against problem constraints.`,
+    }));
+  } else if (problem?.sampleInput) {
+    examplesToRender = [
+      {
+        label: "Example 1",
+        badge: "Sample Case",
+        input: problem.sampleInput,
+        output: problem.sampleOutput || "Valid output",
+        explanation: "Primary sample input provided in problem definition.",
+      },
+    ];
+  }
+
+  return (
+    <section
+      className="details-examples-section"
+      aria-labelledby="examples-title"
+    >
+      <h2 id="examples-title" className="details-section-heading">
+        <DetailsIcon name="walkthrough" /> Walkthrough Examples
+      </h2>
+      {examplesToRender.map((example) => (
+        <ExampleCard key={example.label} example={example} />
+      ))}
+      {examplesToRender.length === 0 && <p>No sample test cases have been provided.</p>}
+    </section>
+  );
+}
+
+function DescriptionColumn({ problem }) {
+  return (
+    <div className="details-primary-column independent-scroll-region" tabIndex={0} role="region" aria-label="Problem description">
+      <OverviewCard problem={problem} />
+      <ConstraintsCard problem={problem} />
+      <ExamplesSection problem={problem} />
+    </div>
+  );
+}
+
+function RunnerHeader({ language, executionState, onLanguageChange }) {
+  return (
+    <div className="runner-header">
+      <label className="runner-language">
+        <DetailsIcon name="code-angle" />
+        <span className="sr-only">Code language</span>
+        <select
+          value={language}
+          onChange={(event) => onLanguageChange(event.target.value)}
+          aria-label="Code language"
+        >
+          {RUNNER_LANGUAGES.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      </label>
+      <span className={`runner-status runner-status--${executionState}`}>
+        <DetailsIcon name="status-ready" />
+        {executionState === "running" ? "Running" : "Ready"}
+      </span>
+    </div>
+  );
+}
+
+function RunnerToolbar({ isExpanded, onReset, onCopy, onToggleExpand }) {
+  return (
+    <div className="runner-toolbar" aria-label="Runner toolbar">
+      <button
+        type="button"
+        aria-label="Reset code"
+        title="Reset code"
+        onClick={onReset}
+      >
+        <DetailsIcon name="reset" />
+      </button>
+      <button
+        type="button"
+        aria-label="Copy code"
+        title="Copy code"
+        onClick={onCopy}
+      >
+        <DetailsIcon name="runner-copy" />
+      </button>
+      <button
+        type="button"
+        aria-label={isExpanded ? "Collapse editor" : "Expand editor"}
+        title={isExpanded ? "Collapse editor" : "Expand editor"}
+        onClick={onToggleExpand}
+      >
+        <DetailsIcon name="runner-expand" />
+      </button>
+    </div>
+  );
+}
+
+function CodeEditor({ language, code, isExpanded, onChange }) {
+  const lineCount = Math.max(1, code.split(/\r?\n/).length);
+  return (
+    <div className={`runner-editor ${isExpanded ? "is-expanded" : ""}`}>
+      <div className="runner-editor__gutter" aria-hidden="true">
+        {Array.from({ length: lineCount }, (_, index) => (
+          <span key={`${language}-line-${index + 1}`}>{index + 1}</span>
+        ))}
+      </div>
+      <textarea
+        className="runner-editor__input"
+        value={code}
+        onChange={(event) => onChange(event.target.value)}
+        spellCheck="false"
+        rows={lineCount}
+        aria-label={`${language} code editor`}
+      />
+    </div>
+  );
+}
+
+function OutputCard({ type, testCase, executionResult }) {
+  const isActual = type === "actual";
+
+  let status = isActual ? (testCase?.status || "Ready") : "Target";
+  let displayValue = isActual ? (testCase?.actual || "(Click Run Code)") : (testCase?.expected || "");
+  let runtime = testCase?.runtimeMs ? `${testCase.runtimeMs.toFixed(1)}ms` : "--";
+  let memory = testCase?.memoryMb ? `${testCase.memoryMb.toFixed(1)} MB` : "--";
+  let matchPercent = testCase?.matchPercent ?? 0;
+  let isError = false;
+
+  if (executionResult) {
+    if (isActual) {
+      status = executionResult.status || (executionResult.passed ? "Passed" : "Wrong Answer");
+      displayValue = executionResult.actual !== undefined ? executionResult.actual : (executionResult.output || "(No output)");
+      if (executionResult.runtimeMs !== undefined && executionResult.runtimeMs > 0) {
+        runtime = `${executionResult.runtimeMs.toFixed(1)}ms`;
+      }
+      if (executionResult.memoryMb !== undefined && executionResult.memoryMb > 0) {
+        memory = `${executionResult.memoryMb.toFixed(1)} MB`;
+      }
+      if (status !== "Passed" && status !== "Accepted") {
+        isError = true;
+      }
+    } else {
+      if (executionResult.expected !== undefined && executionResult.expected !== "") {
+        displayValue = executionResult.expected;
+      }
+      const passed = executionResult.status === "Passed" || executionResult.status === "Accepted";
+      matchPercent = executionResult.matchPercent !== undefined ? executionResult.matchPercent : (passed ? 100 : 0);
+      if (!passed) isError = true;
+    }
+  }
+
+  const badgeClass = isActual
+    ? (isError ? "runner-output-badge--failed" : (status === "Ready" ? "runner-output-badge--ready" : "runner-output-badge--passed"))
+    : "runner-output-badge--target";
+
+  return (
+    <article className={`runner-output-card runner-output-card--${type}`}>
+      <div className="runner-output-card__heading">
+        <h3>
+          <DetailsIcon name="status-ready" />{" "}
+          {isActual ? "Actual Output" : "Expected Output"}
+        </h3>
+        <span className={`runner-output-badge ${badgeClass}`}>
+          {status}
+        </span>
+      </div>
+      <code className={`runner-output-card__value ${isError ? "is-error" : ""}`}>
+        {displayValue}
+      </code>
+      <div className="runner-output-card__meta">
+        {isActual ? (
+          <>
+            <span>
+              <DetailsIcon name="time-complexity" />{" "}
+              {runtime}
+            </span>
+            <span>
+              <DetailsIcon name="space-complexity" />{" "}
+              {memory}
+            </span>
+          </>
+        ) : (
+          <>
+            <span>{isError ? "Mismatch" : "Standard Match"}</span>
+            <strong>{matchPercent}% Match</strong>
+          </>
+        )}
+      </div>
+    </article>
+  );
+}
+
+function RunnerOutput({
+  activeTab,
+  activeCaseIndex,
+  testCasesList,
+  executionResult,
+  onTabChange,
+}) {
+  const cases = testCasesList && testCasesList.length > 0 ? testCasesList : RUNNER_CASES;
+  const currentCase = cases[activeCaseIndex] || cases[0];
+
+  return (
+    <section className="runner-output" aria-label="Code execution output">
+      <div className="runner-output__header">
+        <div
+          className="runner-output-tabs"
+          role="tablist"
+          aria-label="Execution output tabs"
+        >
+          {RUNNER_TABS.map((tab) => (
+            <button
+              className={activeTab === tab.id ? "is-active" : ""}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab.id}
+              aria-controls={`runner-panel-${tab.id}`}
+              key={tab.id}
+              onClick={() => onTabChange(tab.id)}
+            >
+              <DetailsIcon name={tab.icon} /> {tab.label}
+            </button>
+          ))}
+        </div>
+        <span className="runner-case-label">
+          Case {activeCaseIndex + 1} of {cases.length}
+        </span>
+      </div>
+      {activeTab === "console" ? (
+        <div
+          className="runner-output__cards"
+          id="runner-panel-console"
+          role="tabpanel"
+        >
+          <OutputCard type="actual" testCase={currentCase} executionResult={executionResult} />
+          <OutputCard type="expected" testCase={currentCase} executionResult={executionResult} />
+        </div>
+      ) : (
+        <div
+          className="runner-test-cases"
+          id="runner-panel-tests"
+          role="tabpanel"
+        >
+          {cases.map((item, index) => (
+            <button
+              className={index === activeCaseIndex ? "is-active" : ""}
+              type="button"
+              key={item.input || index}
+              onClick={() => onTabChange(`case:${index}`)}
+            >
+              <span>Case {index + 1}</span>
+              <code>{item.input}</code>
+              <DetailsIcon name="sequence-right" />
+            </button>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function RunnerFooter({ executionState, onRun, onSubmit }) {
+  return (
+    <div className="runner-footer">
+      <button
+        className="runner-action runner-action--run"
+        type="button"
+        onClick={onRun}
+        disabled={executionState === "running"}
+      >
+        <DetailsIcon name="run-visualizer" />{" "}
+        {executionState === "running" ? "Running..." : "Run Code"}
+      </button>
+      <button
+        className="runner-action runner-action--submit"
+        type="button"
+        onClick={onSubmit}
+      >
+        <DetailsIcon name="submit-solution" /> Submit
+      </button>
+    </div>
+  );
+}
+
+function CodeRunnerPanel({
+  runnerRef,
+  language,
+  code,
+  activeTab,
+  activeCaseIndex,
+  executionState,
+  executionResult,
+  testCasesList,
+  isExpanded,
+  onLanguageChange,
+  onCodeChange,
+  onOutputTabChange,
+  onCaseChange,
+  onReset,
+  onCopy,
+  onToggleExpand,
+  onRun,
+  onSubmit,
+}) {
+  const cases = testCasesList && testCasesList.length > 0 ? testCasesList : RUNNER_CASES;
+  const testCase = cases[activeCaseIndex] || cases[0];
+  const handleOutputTabChange = (value) => {
+    if (value.startsWith("case:")) {
+      onCaseChange(Number(value.slice(5)));
+      return;
+    }
+    onOutputTabChange(value);
+  };
+
+  return (
+    <article
+      className={`details-card details-runner-card ${isExpanded ? "is-expanded" : ""}`}
+      ref={runnerRef}
+    >
+      <RunnerHeader
+        language={language}
+        executionState={executionState}
+        onLanguageChange={onLanguageChange}
+      />
+      <RunnerToolbar
+        isExpanded={isExpanded}
+        onReset={onReset}
+        onCopy={onCopy}
+        onToggleExpand={onToggleExpand}
+      />
+      <CodeEditor
+        language={language}
+        code={code}
+        isExpanded={isExpanded}
+        onChange={onCodeChange}
+      />
+      <RunnerOutput
+        activeTab={activeTab}
+        activeCaseIndex={activeCaseIndex}
+        testCase={testCase}
+        testCasesList={testCasesList}
+        executionResult={executionResult}
+        onTabChange={handleOutputTabChange}
+      />
+      <RunnerFooter
+        executionState={executionState}
+        onRun={onRun}
+        onSubmit={onSubmit}
+      />
+    </article>
+  );
+}
+
+function PlaceholderPanel({ activeTab }) {
+  const tab = DETAIL_TABS.find((item) => item.id === activeTab);
+  return (
+    <section
+      className="details-card details-placeholder-panel"
+      role="tabpanel"
+      id={`detail-panel-${activeTab}`}
+    >
+      <DetailsIcon name={tab?.icon ?? "workspace-edit"} />
+      <h2>{tab?.label ?? "Workspace"}</h2>
+      <p>
+        This workspace is ready for the next learning layer. Switch back to
+        Description to review the problem.
+      </p>
+      <button
+        className="details-placeholder-button"
+        type="button"
+        onClick={() => (window.location.hash = "problem-details")}
+      >
+        Open description
+      </button>
+    </section>
+  );
+}
+
+function SequenceNavigator({ activeTab, onTabChange, onAnnounce }) {
+  return (
+    <nav
+      className="details-sequence-card"
+      aria-label="Problem sequence navigation"
+    >
+      <button
+        className="sequence-topic sequence-topic--previous"
+        type="button"
+        onClick={() => onAnnounce("Previous topic: Insertion Sort")}
+      >
+        <DetailsIcon name="sequence-left" />
+        <span>
+          <small>Previous Topic</small>
+          <strong>Insertion Sort</strong>
+        </span>
+      </button>
+      <div
+        className="sequence-tabs"
+        role="tablist"
+        aria-label="Sequence workspace tabs"
+      >
+        {SEQUENCE_TABS.map((tab) => (
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === tab.id}
+            className={activeTab === tab.id ? "is-active" : ""}
+            key={tab.id}
+            onClick={() => onTabChange(tab.id)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+      <button
+        className="sequence-topic sequence-topic--next"
+        type="button"
+        onClick={() => onAnnounce("Next topic: Selection Sort")}
+      >
+        <span>
+          <small>Next Topic</small>
+          <strong>Selection Sort</strong>
+        </span>
+        <DetailsIcon name="sequence-right" />
+      </button>
+    </nav>
+  );
+}
+
+function DetailsFooter() {
+  return (
+    <footer className="details-footer">
+      <div className="details-footer-grid">
+        <div className="details-footer-brand">
+          <a href="#top" className="details-footer-brand-link">
+            <span className="details-footer-brand-mark">
+              <DetailsIcon name="footer-brand" />
+            </span>
+            <span>
+              Algo<span>Master</span>
+            </span>
+          </a>
+          <p>
+            Elevate your algorithmic problem solving through immersive
+            visualizations, real-time code sandboxes, and structured learning
+            tracks.
+          </p>
+          <div className="details-footer-socials" aria-label="Community links">
+            <a href="#community" aria-label="Code community" />
+            <a href="#community" aria-label="Chat community" />
+            <a href="#community" aria-label="Network community" />
+          </div>
+        </div>
+        {FOOTER_COLUMNS.map((column) => (
+          <div className="details-footer-column" key={column.title}>
+            <h2>{column.title}</h2>
+            <nav aria-label={`${column.title} links`}>
+              {column.links.map((link) => (
+                <a
+                  href={`#${link.toLowerCase().replaceAll(" ", "-")}`}
+                  key={link}
+                >
+                  {link}
+                </a>
+              ))}
+            </nav>
+          </div>
+        ))}
+      </div>
+      <div className="details-footer-legal">
+        <p>© 2025 AlgoMaster Inc. Engineered for algorithmic mastery.</p>
+        <nav aria-label="Legal links">
+          <a href="#privacy">Privacy Policy</a>
+          <a href="#terms">Terms of Service</a>
+          <a href="#conduct">Code of Conduct</a>
+        </nav>
+      </div>
+    </footer>
+  );
+}
+
+function ProblemDetailsPage({ userName = "Your name", problemId = 1 }) {
+  const [currentProblem, setCurrentProblem] = useState(null);
+  const [problemError, setProblemError] = useState("");
+  const [activeTab, setActiveTab] = useState("description");
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [language, setLanguage] = useState("Python 3");
+  const [codeByLanguage, setCodeByLanguage] = useState(RUNNER_CODE);
+  const [runnerTab, setRunnerTab] = useState("console");
+  const [activeCaseIndex, setActiveCaseIndex] = useState(0);
+  const [executionState, setExecutionState] = useState("ready");
+  const [executionResult, setExecutionResult] = useState(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [announcement, setAnnouncement] = useState("");
+  const runnerRef = useRef(null);
+
+  const testCasesList = useMemo(() => {
+    if (currentProblem?.sampleTestCases && currentProblem.sampleTestCases.length > 0) {
+      return currentProblem.sampleTestCases.map((tc) => ({
+        input: tc.input || "",
+        actual: "(Click Run Code)",
+        expected: tc.expectedOutput || "",
+        status: "Ready",
+        runtimeMs: 0,
+        memoryMb: 0,
+        matchPercent: 0,
+      }));
+    }
+    if (currentProblem?.sampleInput) {
+      return [{
+        input: currentProblem.sampleInput,
+        actual: "(Click Run Code)",
+        expected: currentProblem.sampleOutput || "",
+        status: "Ready",
+        runtimeMs: 0,
+        memoryMb: 0,
+        matchPercent: 0,
+      }];
+    }
+    return RUNNER_CASES;
+  }, [currentProblem]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadProblem() {
+      try {
+        const data = await api.getProblemById(problemId);
+        if (data && !cancelled) {
+          setCurrentProblem(data);
+          setCodeByLanguage({
+            "Python 3": data.starterCodePython || "",
+            "C++": data.starterCodeCpp || "",
+            "JavaScript": data.starterCodeJs || "",
+            "Java": data.starterCodeJava || "",
+          });
+        }
+      } catch (err) {
+        if (!cancelled) setProblemError(err.message || "Could not load this problem.");
+      }
+    }
+    loadProblem();
+    return () => { cancelled = true; };
+  }, [problemId]);
+
+  const code = codeByLanguage[language];
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    if (tab === "visualizer") {
+      window.requestAnimationFrame(() =>
+        runnerRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        }),
+      );
+    }
+    if (tab === "solution-basic" || tab === "solution-optimized") {
+      window.requestAnimationFrame(() =>
+        document.getElementById(`detail-panel-${tab}`)?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        }),
+      );
+    }
+  };
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    if (!navigator.clipboard) {
+      setAnnouncement("Clipboard sharing is unavailable in this browser.");
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(url);
+      setAnnouncement("Problem link copied to clipboard.");
+    } catch {
+      setAnnouncement("Clipboard sharing is unavailable in this browser.");
+    }
+  };
+
+  const handleCodeChange = (nextCode) => {
+    setCodeByLanguage((current) => ({ ...current, [language]: nextCode }));
+    setExecutionState("ready");
+  };
+
+  const handleLanguageChange = (nextLanguage) => {
+    setLanguage(nextLanguage);
+    setExecutionState("ready");
+    setExecutionResult(null);
+    setAnnouncement(`${nextLanguage} editor selected.`);
+  };
+
+  const handleResetCode = () => {
+    setCodeByLanguage((current) => ({
+      ...current,
+      [language]: ({ "Python 3": currentProblem?.starterCodePython, "JavaScript": currentProblem?.starterCodeJs,
+        "C++": currentProblem?.starterCodeCpp, "Java": currentProblem?.starterCodeJava })[language] || "",
+    }));
+    setExecutionState("ready");
+    setExecutionResult(null);
+    setAnnouncement(`${language} code reset.`);
+  };
+
+  const handleCopyCode = async () => {
+    if (!navigator.clipboard) {
+      setAnnouncement("Clipboard copying is unavailable in this browser.");
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(code);
+      setAnnouncement("Code copied to clipboard.");
+    } catch {
+      setAnnouncement("Clipboard copying is unavailable in this browser.");
+    }
+  };
+
+  const handleRunCode = async () => {
+    if (executionState === "running") return;
+    setExecutionState("running");
+    setRunnerTab("console");
+    setAnnouncement("Running code against selected test case...");
+
+    const cases = testCasesList && testCasesList.length > 0 ? testCasesList : RUNNER_CASES;
+    const currentCase = cases[activeCaseIndex] || cases[0];
+    const testInput = currentCase?.input || "";
+    const expectedOutput = (currentCase?.expected || "").trim();
+
+    try {
+      const langKey = language.toLowerCase().replace("python 3", "python");
+      const result = await api.runCode(langKey, code, testInput);
+
+      if (result) {
+        if (result.status === "Runtime Error" || result.status === "Time Limit Exceeded" || result.errorMessage) {
+          setExecutionState("failed");
+          setExecutionResult({
+            status: result.status || "Runtime Error",
+            actual: result.errorMessage || result.output || "(Runtime Error)",
+            expected: expectedOutput,
+            runtimeMs: result.executionTimeMs || 0,
+            memoryMb: result.memoryUsageMb || 0,
+            matchPercent: 0,
+          });
+          setAnnouncement(`Execution error: ${result.status || "Runtime Error"}`);
+          return;
+        }
+
+        const rawOutput = (result.output != null ? String(result.output) : "").trim();
+        const normActual = rawOutput.replace(/\r\n/g, "\n");
+        const normExpected = expectedOutput.replace(/\r\n/g, "\n");
+
+        const cleanActual = normActual.replace(/[[\\],]/g, " ").replace(/\s+/g, " ").trim();
+        const cleanExpected = normExpected.replace(/[[\\],]/g, " ").replace(/\s+/g, " ").trim();
+
+        const isExactMatch = normActual.length > 0 && normActual === normExpected;
+        const isCleanMatch = cleanActual.length > 0 && cleanActual === cleanExpected;
+        const isMatch = isExactMatch || isCleanMatch;
+        const status = isMatch ? "Passed" : "Wrong Answer";
+
+        setExecutionState(isMatch ? "passed" : "failed");
+        setExecutionResult({
+          status: status,
+          actual: normActual || "(No output returned)",
+          expected: normExpected || "(None)",
+          runtimeMs: result.executionTimeMs ?? 0,
+          memoryMb: result.memoryUsageMb ?? 0,
+          matchPercent: isMatch ? 100 : 0,
+        });
+        setAnnouncement(`Run Code: ${status}`);
+      }
+    } catch (err) {
+      console.warn("API Run error:", err);
+      setExecutionState("failed");
+      setExecutionResult({
+        status: "Error",
+        actual: err.message || "Failed to execute code on server.",
+        expected: expectedOutput,
+        runtimeMs: 0,
+        memoryMb: 0,
+        matchPercent: 0,
+      });
+      setAnnouncement(`Execution error: ${err.message}`);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (executionState === "running") return;
+
+    // Guard: require real JWT token before hitting the backend
+    const currentToken = getToken();
+    if (!currentToken) {
+      setExecutionState("failed");
+      setExecutionResult({
+        status: "Login Required",
+        actual: "No session token found. Please log out and log in again to submit.",
+        expected: "",
+        runtimeMs: 0,
+        memoryMb: 0,
+        matchPercent: 0,
+      });
+      setAnnouncement("Please log in to submit solutions.");
+      // Redirect to login after short delay
+      setTimeout(() => {
+        window.dispatchEvent(new Event("algoviz:logout"));
+        window.location.hash = "login";
+      }, 2000);
+      return;
+    }
+
+    setExecutionState("running");
+    setRunnerTab("console");
+    setAnnouncement("Submitting solution to Spring Boot server...");
+
+    const cases = testCasesList && testCasesList.length > 0 ? testCasesList : RUNNER_CASES;
+    const currentCase = cases[activeCaseIndex] || cases[0];
+    const expectedOutput = (currentCase?.expected || "").trim();
+    const pid = problemId || currentProblem?.id || 1;
+
+    try {
+      const langKey = language.toLowerCase().replace("python 3", "python");
+      const res = await api.submitCode(pid, langKey, code);
+
+      if (res) {
+        const isAccepted = res.status === "Accepted" || res.status === "ACCEPTED";
+        const statusText = isAccepted ? "Accepted" : (res.status || "Wrong Answer");
+
+        setExecutionState(isAccepted ? "passed" : "failed");
+        setExecutionResult({
+          status: statusText,
+          actual: isAccepted
+            ? `All ${res.totalTestCases || res.passedTestCases || 0} test cases passed!`
+            : (res.output || res.errorMessage || `Failed test cases (${res.passedTestCases || 0}/${res.totalTestCases || 0} passed)`),
+          expected: res.expectedOutput || expectedOutput,
+          runtimeMs: res.executionTimeMs ?? 0,
+          memoryMb: res.memoryUsageMb ?? 0,
+          matchPercent: res.totalTestCases ? Math.round(((res.passedTestCases || 0) / res.totalTestCases) * 100) : (isAccepted ? 100 : 0),
+        });
+        setAnnouncement(
+          isAccepted
+            ? `Accepted! All test cases passed.`
+            : `Submission status: ${statusText} (${res.passedTestCases || 0}/${res.totalTestCases || 0} passed).`
+        );
+      }
+    } catch (err) {
+      console.warn("API Submit error:", err);
+      const isAuthErr = err.message && (err.message.includes("401") || err.message.includes("403") || err.message.includes("JWT") || err.message.includes("User not found") || err.message.includes("Forbidden") || err.message.includes("Unauthorized"));
+      const errMsg = isAuthErr
+        ? "Session expired. Please log out and log in again."
+        : (err.message || "Failed to submit code.");
+
+      setExecutionState("failed");
+      setExecutionResult({
+        status: isAuthErr ? "Login Required" : "Submission Error",
+        actual: errMsg,
+        expected: expectedOutput,
+        runtimeMs: 0,
+        memoryMb: 0,
+        matchPercent: 0,
+      });
+      setAnnouncement(`Submission error: ${errMsg}`);
+    }
+
+  };
+  const handleSequenceAnnouncement = (message) => setAnnouncement(message);
+
+  if (!currentProblem) {
+    return <main className="problem-details-page" id="top"><div className="details-shell">
+      <NavigationBar active="Problems" userName={userName} className="details-navigation" />
+      <section className="details-card" role={problemError ? "alert" : "status"}>
+        <h1>{problemError ? "Could not load this problem" : "Loading problem…"}</h1>
+        {problemError && <p>{problemError}</p>}<a href="#problems">Back to problems</a>
+      </section>
+    </div></main>;
+  }
+
+  return (
+    <main className="problem-details-page" id="top">
+      <div className="details-shell">
+        <NavigationBar
+          active="Problems"
+          userName={userName}
+          className="details-navigation"
+        />
+        <BreadcrumbBar problem={currentProblem} />
+        <ProblemHeader
+          problem={currentProblem}
+          isBookmarked={isBookmarked}
+          onBookmark={() => {
+            setIsBookmarked((current) => !current);
+            setAnnouncement(
+              isBookmarked ? "Bookmark removed." : "Problem bookmarked.",
+            );
+          }}
+          onShare={handleShare}
+          onRunVisualizer={() => handleTabChange("solution-basic")}
+          onSubmit={handleSubmit}
+        />
+        <SequenceNavigator
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          onAnnounce={handleSequenceAnnouncement}
+        />
+        <WorkspaceTabs activeTab={activeTab} onChange={handleTabChange} />
+        <div
+          className="details-tab-panel"
+          role="tabpanel"
+          id={`detail-panel-${activeTab}`}
+          aria-label={`${activeTab} content`}
+        >
+          {activeTab === "description" || activeTab === "visualizer" ? (
+            <ResizableColumns
+              className="details-workspace-grid"
+              minPrimaryWidth={300}
+              minSecondaryWidth={360}
+              resizeLabel="Đổi độ rộng đề bài và trình soạn code"
+            >
+              <DescriptionColumn problem={currentProblem} />
+              <div className="details-secondary-column independent-scroll-region" tabIndex={0} role="region" aria-label="Code editor and results">
+                <CodeRunnerPanel
+                  runnerRef={runnerRef}
+                  language={language}
+                  code={code}
+                  activeTab={runnerTab}
+                  activeCaseIndex={activeCaseIndex}
+                  executionState={executionState}
+                  executionResult={executionResult}
+                  testCasesList={testCasesList}
+                  isExpanded={isExpanded}
+                  onLanguageChange={handleLanguageChange}
+                  onCodeChange={handleCodeChange}
+                  onOutputTabChange={setRunnerTab}
+                  onCaseChange={setActiveCaseIndex}
+                  onReset={handleResetCode}
+                  onCopy={handleCopyCode}
+                  onToggleExpand={() => setIsExpanded((current) => !current)}
+                  onRun={handleRunCode}
+                  onSubmit={handleSubmit}
+                />
+              </div>
+            </ResizableColumns>
+          ) : activeTab === "solution-basic" ||
+            activeTab === "solution-optimized" ? (
+            <ProblemSolutionPanel
+              key={`${problemId}-${activeTab}`}
+              problem={currentProblem}
+              onAnnounce={setAnnouncement}
+            />
+          ) : (
+            <PlaceholderPanel activeTab={activeTab} />
+          )}
+        </div>
+      </div>
+      <p className="sr-only" aria-live="polite">
+        {announcement || `${language} runner ready.`}
+      </p>
+      <DetailsFooter />
+    </main>
+  );
+}
+
+export default ProblemDetailsPage;

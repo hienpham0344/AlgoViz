@@ -1,0 +1,540 @@
+@import url("https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700&family=Poppins:wght@500;600;700;800&family=Roboto+Mono:wght@400;500;600&display=swap");
+
+.landing-page {
+  --scale: 1;
+  --canvas: var(--palette-deep);
+  --canvas-deep: var(--palette-deep);
+  --surface: var(--palette-deep);
+  --surface-raised: var(--palette-deep);
+  --surface-soft: rgb(var(--palette-steel-rgb) / 13%);
+  --text: var(--palette-surface);
+  --text-muted: rgb(var(--palette-surface-rgb) / 76%);
+  --line: rgb(var(--palette-surface-rgb) / 17%);
+  --primary: var(--palette-steel);
+  --green: var(--palette-steel);
+  --amber: var(--palette-surface);
+  --font-display: "Poppins", "Trebuchet MS", sans-serif;
+  --font-body: "Nunito Sans", "Segoe UI", sans-serif;
+  --font-mono: "Roboto Mono", Consolas, monospace;
+  --shadow-raised:
+    0 calc(32px * var(--scale)) calc(86px * var(--scale)) rgb(var(--palette-deep-rgb) / 32%),
+    0 calc(3px * var(--scale)) calc(68px * var(--scale)) rgb(var(--palette-deep-rgb) / 22%);
+  --shadow-raised-sm:
+    0 calc(17px * var(--scale)) calc(40px * var(--scale)) rgb(var(--palette-deep-rgb) / 24%),
+    0 calc(2px * var(--scale)) calc(28px * var(--scale)) rgb(var(--palette-deep-rgb) / 18%);
+  --shadow-recessed:
+    inset calc(8px * var(--scale)) calc(8px * var(--scale))
+      calc(18px * var(--scale)) rgb(var(--palette-deep-rgb) / 58%),
+    inset calc(-8px * var(--scale)) calc(-8px * var(--scale))
+      calc(18px * var(--scale)) rgb(var(--palette-steel-rgb) / 11%);
+  --shadow-recessed-sm:
+    inset calc(5px * var(--scale)) calc(5px * var(--scale))
+      calc(11px * var(--scale)) rgb(var(--palette-deep-rgb) / 50%),
+    inset calc(-4px * var(--scale)) calc(-4px * var(--scale))
+      calc(10px * var(--scale)) rgb(var(--palette-steel-rgb) / 12%);
+  --radius-panel: calc(32px * var(--scale));
+  --radius-nav: calc(40px * var(--scale));
+  --radius-button: calc(16px * var(--scale));
+  --radius-small: calc(12px * var(--scale));
+  min-height: 100svh;
+  overflow: hidden;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 76% 12%, rgb(var(--palette-steel-rgb) / 22%), transparent 29%),
+    radial-gradient(circle at 16% 72%, rgb(var(--palette-surface-rgb) / 10%), transparent 25%),
+    linear-gradient(135deg, var(--canvas) 0%, var(--palette-deep) 54%, var(--canvas) 100%);
+  font-family: var(--font-body);
+}
+
+.dusk-shell {
+  width: calc(100% - 40px);
+  min-width: 0;
+  margin: 0 auto;
+  padding: calc(40px * var(--scale)) 0 calc(56px * var(--scale));
+}
+
+.type-display,
+.type-body,
+.type-mono {
+  margin: 0;
+}
+
+.type-display {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.type-body {
+  font-family: var(--font-body);
+}
+
+.type-mono {
+  font-family: var(--font-mono);
+}
+
+.dusk-nav,
+.dusk-hero,
+.dusk-intro,
+.dusk-course-card {
+  border: 1px solid var(--line);
+}
+
+.dusk-nav,
+.dusk-hero,
+.dusk-intro,
+.dusk-course-card,
+.dusk-cta {
+  transition:
+    transform 240ms cubic-bezier(0.2, 0, 0, 1),
+    box-shadow 240ms cubic-bezier(0.2, 0, 0, 1),
+    border-color 240ms cubic-bezier(0.2, 0, 0, 1),
+    background-color 240ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.dusk-parallax {
+  will-change: transform;
+}
+
+.dusk-card-parallax {
+  min-width: 0;
+  height: 100%;
+}
+
+.dusk-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: calc(80px * var(--scale));
+  padding: calc(16px * var(--scale)) calc(64px * var(--scale));
+  border-radius: var(--radius-nav);
+  background: rgb(var(--palette-surface-rgb) / 9%);
+  box-shadow: var(--shadow-raised-sm);
+  backdrop-filter: blur(14px);
+}
+
+.dusk-brand,
+.dusk-nav-link,
+.dusk-register,
+.dusk-cta,
+.dusk-course-link,
+.dusk-dot {
+  text-decoration: none;
+}
+
+.dusk-brand {
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: calc(48px * var(--scale));
+  font-weight: 700;
+  letter-spacing: -0.06em;
+  line-height: 1;
+}
+
+.dusk-auth {
+  display: flex;
+  align-items: center;
+  gap: calc(12px * var(--scale));
+}
+
+.dusk-nav-link,
+.dusk-register {
+  display: inline-flex;
+  align-items: center;
+  min-height: calc(44px * var(--scale));
+  border-radius: var(--radius-button);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: calc(16px * var(--scale));
+  font-weight: 600;
+}
+
+.dusk-nav-link {
+  padding: 0 calc(16px * var(--scale));
+  color: var(--text-muted);
+}
+
+.dusk-nav-link:hover {
+  color: var(--text);
+}
+
+.dusk-register {
+  padding: 0 calc(20px * var(--scale));
+  color: var(--canvas);
+  background: var(--green);
+  box-shadow: var(--shadow-raised-sm);
+}
+
+.dusk-hero {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  min-height: calc(635px * var(--scale));
+  margin-top: calc(40px * var(--scale));
+  overflow: hidden;
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  box-shadow: var(--shadow-raised);
+}
+
+.dusk-hero-image,
+.dusk-hero-vignette {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.dusk-hero-image {
+  z-index: -2;
+  object-fit: cover;
+  object-position: 50% 4%;
+}
+
+.dusk-hero-vignette {
+  z-index: -1;
+  background:
+    linear-gradient(
+      90deg,
+      rgb(var(--palette-deep-rgb) / 92%) 0%,
+      rgb(var(--palette-deep-rgb) / 70%) 42%,
+      rgb(var(--palette-deep-rgb) / 18%) 78%,
+      rgb(var(--palette-deep-rgb) / 42%) 100%
+    ),
+    linear-gradient(180deg, rgb(var(--palette-deep-rgb) / 10%) 55%, rgb(var(--palette-deep-rgb) / 70%) 100%);
+}
+
+.dusk-hero-content {
+  max-width: calc(620px * var(--scale));
+  padding: calc(64px * var(--scale)) calc(135px * var(--scale));
+}
+
+.dusk-hero-title {
+  color: var(--text);
+  font-size: calc(64px * var(--scale));
+  line-height: 1.06;
+  letter-spacing: -0.045em;
+  text-shadow: 0 calc(6px * var(--scale)) calc(24px * var(--scale))
+    rgb(var(--palette-deep-rgb) / 32%);
+}
+
+.dusk-hero-subtitle {
+  max-width: calc(480px * var(--scale));
+  margin-top: calc(20px * var(--scale));
+  color: var(--text-muted);
+  font-size: calc(20px * var(--scale));
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.dusk-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(54px * var(--scale));
+  border: 2px solid var(--text);
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: calc(18px * var(--scale));
+  font-weight: 700;
+  line-height: 1;
+}
+
+.dusk-cta:hover,
+.dusk-register:hover,
+.dusk-course-card:hover {
+  transform: translateY(calc(-4px * var(--scale)));
+}
+
+.dusk-cta:focus-visible,
+.dusk-brand:focus-visible,
+.dusk-nav-link:focus-visible,
+.dusk-register:focus-visible,
+.dusk-course-link:focus-visible,
+.dusk-dot:focus-visible {
+  outline: 3px solid var(--green);
+  outline-offset: 4px;
+}
+
+.dusk-cta-primary {
+  min-width: calc(255px * var(--scale));
+  margin-top: calc(36px * var(--scale));
+  padding: 0 calc(40px * var(--scale));
+  color: var(--canvas);
+  background: var(--green);
+  box-shadow: var(--shadow-raised-sm);
+}
+
+.dusk-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1.06fr) minmax(0, 0.94fr);
+  align-items: center;
+  gap: calc(64px * var(--scale));
+  margin-top: calc(96px * var(--scale));
+  padding: calc(64px * var(--scale));
+  border-radius: var(--radius-panel);
+  background: rgb(var(--palette-deep-rgb) / 90%);
+  box-shadow: var(--shadow-raised);
+}
+
+.dusk-illustration-frame {
+  margin: 0;
+  overflow: hidden;
+  border: calc(8px * var(--scale)) solid rgb(var(--palette-surface-rgb) / 90%);
+  border-radius: calc(28px * var(--scale));
+  background: var(--canvas);
+  box-shadow: var(--shadow-recessed);
+}
+
+.dusk-illustration-frame img {
+  width: 100%;
+  height: auto;
+  border-radius: calc(18px * var(--scale));
+  object-fit: cover;
+}
+
+.dusk-intro-copy {
+  min-width: 0;
+}
+
+.dusk-section-title {
+  color: var(--text);
+  font-size: calc(48px * var(--scale));
+  line-height: 1.1;
+  letter-spacing: -0.045em;
+}
+
+.dusk-section-description {
+  margin-top: calc(24px * var(--scale));
+  color: var(--text-muted);
+  font-size: calc(20px * var(--scale));
+  line-height: 1.55;
+}
+
+.dusk-section-description strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.dusk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(16px * var(--scale));
+  margin-top: calc(32px * var(--scale));
+}
+
+.dusk-cta-sage {
+  padding: 0 calc(28px * var(--scale));
+  color: var(--canvas);
+  background: var(--amber);
+  box-shadow: var(--shadow-raised-sm);
+}
+
+.dusk-cta-secondary {
+  padding: 0 calc(32px * var(--scale));
+  color: var(--text);
+  background: var(--primary);
+}
+
+.dusk-courses {
+  margin-top: calc(96px * var(--scale));
+  padding-bottom: calc(56px * var(--scale));
+}
+
+.dusk-course-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: calc(48px * var(--scale));
+  max-width: none;
+  margin: 0 auto;
+}
+
+.dusk-course-card {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: calc(28px * var(--scale));
+  background: var(--surface);
+  box-shadow: var(--shadow-raised);
+}
+
+.dusk-course-card:hover {
+  border-color: rgb(var(--palette-steel-rgb) / 58%);
+}
+
+.dusk-course-image {
+  height: calc(270px * var(--scale));
+  background: var(--amber);
+}
+
+.dusk-course-copy {
+  min-height: calc(150px * var(--scale));
+  padding: calc(24px * var(--scale)) calc(28px * var(--scale));
+  background: var(--surface-raised);
+}
+
+.dusk-course-copy h3 {
+  color: var(--text);
+  font-size: calc(20px * var(--scale));
+  font-weight: 700;
+}
+
+.dusk-course-link {
+  position: absolute;
+  right: calc(16px * var(--scale));
+  bottom: calc(16px * var(--scale));
+  display: grid;
+  width: calc(28px * var(--scale));
+  height: calc(28px * var(--scale));
+  place-items: center;
+  border-radius: 50%;
+  color: var(--text);
+  background: rgb(var(--palette-deep-rgb) / 30%);
+  opacity: 0;
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.dusk-course-card:hover .dusk-course-link,
+.dusk-course-link:focus-visible {
+  opacity: 1;
+}
+
+.dusk-pagination {
+  display: flex;
+  justify-content: center;
+  gap: calc(12px * var(--scale));
+  margin-top: calc(40px * var(--scale));
+}
+
+.dusk-dot {
+  width: calc(16px * var(--scale));
+  height: calc(16px * var(--scale));
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: var(--shadow-raised-sm);
+}
+
+.dusk-dot.is-active {
+  background: var(--amber);
+}
+
+@media (max-width: 760px) {
+  .dusk-shell {
+    width: calc(100% - 32px);
+    padding-top: 16px;
+  }
+
+  .dusk-nav {
+    min-height: 56px;
+    padding: 10px 16px;
+  }
+
+  .dusk-brand {
+    font-size: 26px;
+  }
+
+  .dusk-auth {
+    gap: 2px;
+  }
+
+  .dusk-nav-link,
+  .dusk-register {
+    min-height: 36px;
+    font-size: 13px;
+  }
+
+  .dusk-nav-link {
+    padding: 0 8px;
+  }
+
+  .dusk-register {
+    padding: 0 12px;
+  }
+
+  .dusk-hero {
+    min-height: 430px;
+    margin-top: 20px;
+  }
+
+  .dusk-hero-content {
+    max-width: 100%;
+    padding: 56px 24px 72px;
+  }
+
+  .dusk-hero-title {
+    font-size: clamp(38px, 12vw, 52px);
+  }
+
+  .dusk-hero-subtitle {
+    max-width: 300px;
+    font-size: 14px;
+  }
+
+  .dusk-cta-primary {
+    width: 100%;
+    min-width: 0;
+    margin-top: 28px;
+  }
+
+  .dusk-intro {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    margin-top: 56px;
+    padding: 20px;
+  }
+
+  .dusk-section-title {
+    font-size: 34px;
+  }
+
+  .dusk-section-description {
+    font-size: 15px;
+  }
+
+  .dusk-actions {
+    gap: 10px;
+  }
+
+  .dusk-actions .dusk-cta {
+    width: 100%;
+  }
+
+  .dusk-courses {
+    margin-top: 56px;
+  }
+
+  .dusk-course-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .dusk-course-card {
+    border-radius: 20px;
+  }
+
+  .dusk-course-image {
+    height: 160px;
+  }
+
+  .dusk-course-copy {
+    min-height: 96px;
+    padding: 16px 18px;
+  }
+
+  .dusk-course-copy h3 {
+    font-size: 15px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-page *,
+  .landing-page *::before,
+  .landing-page *::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}

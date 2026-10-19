@@ -85,6 +85,7 @@ public interface ProblemMapper {
     /**
      * Hàm tiện ích tự động sinh ra chuỗi Slug URL chuẩn SEO từ Tiêu đề bài toán (Title).
      */
+    @Named("generateSlug")
     default String generateSlug(String title) {
         if (title == null || title.isBlank()) return "";
         return title.toLowerCase(Locale.ROOT)

@@ -1,0 +1,35 @@
+<svg viewBox="0 0 156 36" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0" y="0"><defs><filter id="filter26_d_191_768" x="28.000499999999988" y="-12" width="60" height="60" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset/>
+<feGaussianBlur stdDeviation="6"/>
+<feComposite in2="hardAlpha" operator="out"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0.803922 0 0 0 0 0.741176 0 0 0 0 1 0 0 0 0.4 0"/>
+<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_191_768"/>
+<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_191_768" result="shape"/>
+</filter></defs><g id="Container_92">
+<g id="Button_9">
+<rect x="0.0004999999999881766" y="0" width="36" height="36" rx="18" fill="#2F2055"/>
+<g id="Container_93">
+<path id="Icon_18" d="M13.1255,22.5v-9h1.5v9zM22.8755,22.5l-6.75,-4.5l6.75,-4.5zM21.3755,19.688v-3.376l-2.55,1.688z" fill="#E9DDFF"/>
+</g>
+</g>
+<g id="Button_10" filter="url(#filter26_d_191_768)">
+<rect x="40.00049999999999" y="0" width="36" height="36" rx="18" fill="#CDBDFF" shape-rendering="crispEdges"/>
+<g id="Container_94">
+<path id="Icon_19" d="M53.4165,23.833v-11.666l9.167,5.833zM55.0835,20.792l4.375,-2.792l-4.375,-2.792z" fill="#370096"/>
+</g>
+</g>
+<g id="Button_11">
+<rect x="80.00049999999999" y="0" width="36" height="36" rx="18" fill="#2F2055"/>
+<g id="Container_95">
+<path id="Icon_20" d="M101.3755,22.5v-9h1.5v9zM93.1255,22.5v-9l6.75,4.5zM94.6255,19.688l2.55,-1.688l-2.55,-1.688z" fill="#E9DDFF"/>
+</g>
+</g>
+<g id="Button_12">
+<rect x="120.00049999999999" y="0" width="36" height="36" rx="18" fill="#2F2055"/>
+<g id="Container_96">
+<path id="Icon_21" d="M138.0005,25.875c-0.938,0 -1.816,-0.178 -2.635,-0.534c-0.819,-0.357 -1.531,-0.838 -2.137,-1.444c-0.607,-0.606 -1.088,-1.319 -1.444,-2.138c-0.356,-0.818 -0.534,-1.697 -0.534,-2.634h1.5c0,1.462 0.509,2.703 1.528,3.722c1.018,1.019 2.259,1.528 3.722,1.528c1.462,0 2.703,-0.509 3.721,-1.528c1.019,-1.019 1.529,-2.26 1.529,-3.722c0,-1.463 -0.51,-2.703 -1.529,-3.722c-1.018,-1.019 -2.259,-1.528 -3.721,-1.528h-0.113l1.163,1.162l-1.05,1.088l-3,-3l3,-3l1.05,1.087l-1.163,1.163h0.113c0.937,0 1.815,0.178 2.634,0.534c0.819,0.357 1.531,0.838 2.137,1.444c0.607,0.606 1.088,1.319 1.444,2.138c0.356,0.818 0.535,1.697 0.535,2.634c0,0.937 -0.179,1.816 -0.535,2.634c-0.356,0.819 -0.837,1.532 -1.444,2.138c-0.606,0.606 -1.318,1.087 -2.137,1.444c-0.819,0.356 -1.697,0.534 -2.634,0.534z" fill="#E9DDFF"/>
+</g>
+</g>
+</g></svg>

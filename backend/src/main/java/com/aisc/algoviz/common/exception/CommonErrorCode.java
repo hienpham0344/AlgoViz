@@ -6,6 +6,10 @@ import org.springframework.http.HttpStatus;
 @Getter
 public enum CommonErrorCode implements ErrorCode {
 
+    AUTHENTICATION_FAILED(4010, "Invalid username/email or password", HttpStatus.UNAUTHORIZED),
+    USERNAME_TAKEN(4090, "Username is already taken", HttpStatus.CONFLICT),
+    EMAIL_TAKEN(4091, "Email is already in use", HttpStatus.CONFLICT),
+
     INVALID_REQUEST(
             4000,
             "Dữ liệu đầu vào không hợp lệ",
