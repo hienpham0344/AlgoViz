@@ -7,3 +7,7 @@ AST-tool/
 
 # Office documents / reports
 *.docx
+
+# Temporary skill artifacts & scratch
+.taste-skill*
+scratch*
