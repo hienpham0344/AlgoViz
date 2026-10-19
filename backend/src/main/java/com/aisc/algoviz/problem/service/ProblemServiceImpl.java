@@ -62,6 +62,7 @@ public class ProblemServiceImpl implements ProblemService {
 
     @Override
     @Transactional(readOnly = true)
+    @org.springframework.cache.annotation.Cacheable(value = com.aisc.algoviz.config.CacheConfig.PROBLEM_DETAIL_CACHE, key = "#id")
     public ProblemDetailDto getProblemById(Long id) {
         log.debug("Fetching problem detail by ID: {}", id);
 
@@ -73,6 +74,7 @@ public class ProblemServiceImpl implements ProblemService {
 
     @Override
     @Transactional(readOnly = true)
+    @org.springframework.cache.annotation.Cacheable(value = com.aisc.algoviz.config.CacheConfig.PROBLEM_DETAIL_SLUG_CACHE, key = "#slug")
     public ProblemDetailDto getProblemBySlug(String slug) {
         log.debug("Fetching problem detail by slug: {}", slug);
 
@@ -101,6 +103,7 @@ public class ProblemServiceImpl implements ProblemService {
 
     @Override
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = {com.aisc.algoviz.config.CacheConfig.PROBLEM_DETAIL_CACHE, com.aisc.algoviz.config.CacheConfig.PROBLEM_DETAIL_SLUG_CACHE}, allEntries = true)
     public ProblemDetailDto updateProblem(Long id, UpdateProblemRequestDto updateDto) {
         log.info("Updating problem ID: {}", id);
 
@@ -123,6 +126,7 @@ public class ProblemServiceImpl implements ProblemService {
 
     @Override
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = {com.aisc.algoviz.config.CacheConfig.PROBLEM_DETAIL_CACHE, com.aisc.algoviz.config.CacheConfig.PROBLEM_DETAIL_SLUG_CACHE}, allEntries = true)
     public void deleteProblem(Long id) {
         log.info("Deleting problem ID: {}", id);
 
