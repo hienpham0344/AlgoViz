@@ -34,6 +34,12 @@ public enum CommonErrorCode implements ErrorCode {
             HttpStatus.BAD_REQUEST
     ),
 
+    TOO_MANY_REQUESTS(
+            4290,
+            "Quá nhiều yêu cầu gửi lên hệ thống. Vui lòng thử lại sau.",
+            HttpStatus.TOO_MANY_REQUESTS
+    ),
+
     INTERNAL_SERVER_ERROR(
             5000,
             "Lỗi hệ thống nội bộ, vui lòng thử lại sau",
