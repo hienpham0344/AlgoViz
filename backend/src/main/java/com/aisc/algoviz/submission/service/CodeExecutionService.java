@@ -2,8 +2,10 @@ package com.aisc.algoviz.submission.service;
 
 import com.aisc.algoviz.submission.dto.ExecutionResultDto;
 import com.aisc.algoviz.submission.entity.TestCase;
-import org.springframework.stereotype.Service;
+import com.aisc.algoviz.submission.sandbox.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -21,6 +23,20 @@ public class CodeExecutionService {
     private String pythonCommand = "python";
     @Value("${algoviz.execution.cpp-command:g++}")
     private String cppCommand = "g++";
+
+    private final SandboxManager sandboxManager;
+
+    @Autowired
+    public CodeExecutionService(SandboxManager sandboxManager) {
+        this.sandboxManager = sandboxManager;
+    }
+
+    public CodeExecutionService() {
+        this(new SandboxManager(List.of(
+                new DockerJavaSandboxStrategy(new DockerSandboxProperties()),
+                new NativeSandboxStrategy()
+        )));
+    }
 
     public ExecutionResultDto runCodeCustomInput(String language, String code, String customInput) {
         try {
@@ -142,26 +158,33 @@ public class CodeExecutionService {
         Path tempDir = Files.createTempDirectory("algoviz_sandbox_");
         try {
             String runnableCode = prepareCodeWithDriver(lang, code);
-            String[] command;
+            String sourceFileName;
+            String[] command = null;
+
             if (lang.equals("python") || lang.equals("py")) {
-                Path source = tempDir.resolve("script.py");
+                sourceFileName = "script.py";
+                Path source = tempDir.resolve(sourceFileName);
                 Files.writeString(source, runnableCode);
                 command = new String[]{pythonCommand, source.toString()};
             } else if (lang.equals("javascript") || lang.equals("js")) {
-                Path source = tempDir.resolve("script.js");
+                sourceFileName = "script.js";
+                Path source = tempDir.resolve(sourceFileName);
                 Files.writeString(source, runnableCode);
                 command = new String[]{"node", source.toString()};
             } else if (lang.equals("java")) {
-                Path source = tempDir.resolve("Main.java");
+                String className = JavaDriverHelper.extractClassName(runnableCode);
+                sourceFileName = className + ".java";
+                Path source = tempDir.resolve(sourceFileName);
                 Files.writeString(source, runnableCode);
-                command = new String[]{"java", source.toString()};
+                command = new String[]{"java", sourceFileName};
             } else if (lang.equals("cpp") || lang.equals("c++")) {
-                Path source = tempDir.resolve("main.cpp");
+                sourceFileName = "main.cpp";
+                Path source = tempDir.resolve(sourceFileName);
                 Path binary = tempDir.resolve(System.getProperty("os.name").startsWith("Windows") ? "main.exe" : "main");
                 Files.writeString(source, runnableCode);
                 ProcessResult compilation;
                 try {
-                    compilation = runProcess(new String[]{cppCommand, "-std=c++17", source.toString(), "-o", binary.toString()}, tempDir, "");
+                    compilation = runNativeProcess(new String[]{cppCommand, "-std=c++17", source.toString(), "-o", binary.toString()}, tempDir, "");
                 } catch (IOException exception) {
                     throw new IOException("C++ compiler is not available. Install g++ or configure ALGOVIZ_CPP_COMMAND.", exception);
                 }
@@ -170,13 +193,24 @@ public class CodeExecutionService {
             } else {
                 throw new IllegalArgumentException("Unsupported execution language: " + language);
             }
-            return runProcess(command, tempDir, input == null ? "" : input);
+
+            SandboxExecutionRequest request = SandboxExecutionRequest.builder()
+                    .language(lang)
+                    .workDirectory(tempDir)
+                    .sourceFileName(sourceFileName)
+                    .command(command)
+                    .input(input == null ? "" : input)
+                    .timeoutSeconds(timeoutSeconds)
+                    .build();
+
+            SandboxExecutionResult res = sandboxManager.execute(request);
+            return new ProcessResult(res.isTimedOut(), res.getExitCode(), res.getOutput(), res.getError(), res.getExecutionTimeMs(), res.getMemoryUsageMb());
         } finally {
             cleanupDirectory(tempDir);
         }
     }
 
-    private ProcessResult runProcess(String[] command, Path directory, String input) throws IOException, InterruptedException {
+    private ProcessResult runNativeProcess(String[] command, Path directory, String input) throws IOException, InterruptedException {
         Path stdin = directory.resolve("stdin.txt");
         Path stdout = directory.resolve("stdout.txt");
         Path stderr = directory.resolve("stderr.txt");
@@ -206,6 +240,9 @@ public class CodeExecutionService {
 
     private String prepareCodeWithDriver(String language, String code) {
         String lang = language.toLowerCase();
+        if (lang.equals("java")) {
+            return JavaDriverHelper.prepareJavaCode(code);
+        }
         if ((lang.equals("javascript") || lang.equals("js")) && !code.contains("console.log")) {
             if (code.contains("twoSum")) {
                 return code + "\n\nconst fs = require('fs');\n" +

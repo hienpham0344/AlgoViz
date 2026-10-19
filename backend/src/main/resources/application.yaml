@@ -37,6 +37,15 @@ algoviz:
     python-command: ${ALGOVIZ_PYTHON_COMMAND:python}
     cpp-command: ${ALGOVIZ_CPP_COMMAND:g++}
     timeout-seconds: ${ALGOVIZ_EXECUTION_TIMEOUT_SECONDS:5}
+  sandbox:
+    docker:
+      enabled: ${ALGOVIZ_DOCKER_SANDBOX_ENABLED:false}
+      docker-command: ${ALGOVIZ_DOCKER_COMMAND:docker}
+      image: ${ALGOVIZ_DOCKER_JAVA_IMAGE:eclipse-temurin:21-alpine}
+      memory: ${ALGOVIZ_DOCKER_MEMORY:256m}
+      cpus: ${ALGOVIZ_DOCKER_CPUS:1.0}
+      pids-limit: ${ALGOVIZ_DOCKER_PIDS_LIMIT:64}
+      timeout-kill-seconds: ${ALGOVIZ_DOCKER_TIMEOUT_KILL_SECONDS:3}
   gamification:
     points-per-accepted: ${ALGOVIZ_POINTS_PER_ACCEPTED:10}
   security:

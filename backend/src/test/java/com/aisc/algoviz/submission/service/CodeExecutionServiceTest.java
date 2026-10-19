@@ -55,4 +55,40 @@ class CodeExecutionServiceTest {
         assertEquals("Success", result.getStatus(), result.getErrorMessage());
         assertEquals("[0, 1]", result.getOutput());
     }
+
+    @Test
+    void handlesPublicClassSolutionWithoutFilenameMismatch() {
+        String code = "public class Solution { public static void main(String[] args) { System.out.println(\"Hello Solution\"); } }";
+        var result = service.runCodeCustomInput("java", code, "");
+        assertEquals("Success", result.getStatus(), result.getErrorMessage());
+        assertEquals("Hello Solution", result.getOutput());
+    }
+
+    @Test
+    void evaluatesJavaLeetCodeTwoSumWithoutMain() {
+        String code = """
+                class Solution {
+                    public int[] twoSum(int[] nums, int target) {
+                        for (int i = 0; i < nums.length; i++) {
+                            for (int j = i + 1; j < nums.length; j++) {
+                                if (nums[i] + nums[j] == target) return new int[]{i, j};
+                            }
+                        }
+                        return new int[]{};
+                    }
+                }
+                """;
+        var result = service.runCodeCustomInput("java", code, "9\n2 7 11 15");
+        assertEquals("Success", result.getStatus(), result.getErrorMessage());
+        assertEquals("[0, 1]", result.getOutput());
+    }
+
+    @Test
+    void handlesJavaInfiniteLoopTimeout() {
+        ReflectionTestUtils.setField(service, "timeoutSeconds", 1L);
+        String code = "class Main { public static void main(String[] args) { while(true) {} } }";
+        var result = service.runCodeCustomInput("java", code, "");
+        assertEquals("Time Limit Exceeded", result.getStatus());
+        assertTrue(result.getErrorMessage().contains("timed out"));
+    }
 }
