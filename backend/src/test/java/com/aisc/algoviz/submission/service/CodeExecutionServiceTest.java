@@ -1,4 +1,4 @@
-package com.aisc.algoviz.service;
+package com.aisc.algoviz.submission.service;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
