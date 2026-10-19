@@ -3,23 +3,19 @@ package com.aisc.algoviz.service;
 import com.aisc.algoviz.dto.ExecutionResultDto;
 import com.aisc.algoviz.model.TestCase;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Value;
+import com.aisc.algoviz.sandbox.runtime.SandboxRuntime;
+import lombok.RequiredArgsConstructor;
 
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.IOException;
+
 import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 @Service
+@RequiredArgsConstructor
 public class CodeExecutionService {
 
     private static final long TIMEOUT_SECONDS = 5;
-    @Value("${algoviz.execution.python-command:python}")
-    private String pythonCommand = "python";
-    @Value("${algoviz.execution.cpp-command:g++}")
-    private String cppCommand = "g++";
+    private final SandboxRuntime sandbox;
 
     public ExecutionResultDto runCodeCustomInput(String language, String code, String customInput) {
         try {
@@ -137,72 +133,16 @@ public class CodeExecutionService {
     }
 
     private ProcessResult executeCode(String language, String code, String input) throws IOException, InterruptedException {
-        String lang = language.toLowerCase();
-        Path tempDir = Files.createTempDirectory("algoviz_sandbox_");
-        try {
-            String runnableCode = prepareCodeWithDriver(lang, code);
-            String[] command;
-            if (lang.equals("python") || lang.equals("py")) {
-                Path source = tempDir.resolve("script.py");
-                Files.writeString(source, runnableCode);
-                command = new String[]{pythonCommand, source.toString()};
-            } else if (lang.equals("javascript") || lang.equals("js")) {
-                Path source = tempDir.resolve("script.js");
-                Files.writeString(source, runnableCode);
-                command = new String[]{"node", source.toString()};
-            } else if (lang.equals("java")) {
-                Path source = tempDir.resolve("Main.java");
-                Files.writeString(source, runnableCode);
-                command = new String[]{"java", source.toString()};
-            } else if (lang.equals("cpp") || lang.equals("c++")) {
-                Path source = tempDir.resolve("main.cpp");
-                Path binary = tempDir.resolve(System.getProperty("os.name").startsWith("Windows") ? "main.exe" : "main");
-                Files.writeString(source, runnableCode);
-                ProcessResult compilation;
-                try {
-                    compilation = runProcess(new String[]{cppCommand, "-std=c++17", source.toString(), "-o", binary.toString()}, tempDir, "");
-                } catch (IOException exception) {
-                    throw new IOException("C++ compiler is not available. Install g++ or configure ALGOVIZ_CPP_COMMAND.", exception);
-                }
-                if (compilation.timedOut || compilation.exitCode != 0) return compilation;
-                command = new String[]{binary.toString()};
-            } else {
-                throw new IllegalArgumentException("Unsupported execution language: " + language);
-            }
-            return runProcess(command, tempDir, input == null ? "" : input);
-        } finally {
-            cleanupDirectory(tempDir);
-        }
+        if (language == null) throw new IllegalArgumentException("Language is required");
+        String lang = language.toLowerCase(java.util.Locale.ROOT);
+        // Keep the source-launcher semantics of Run/Submit (public class need not be named Main).
+        String engineLanguage = lang.equals("java") ? "java-source" : lang;
+        var result = sandbox.execute(engineLanguage, prepareCodeWithDriver(lang, code), input, "Main", 5000, 64, 512);
+        boolean timedOut = !result.outputExceeded() && (result.timedOut() || result.exitCode() == 124 || result.exitCode() == 137);
+        String error = result.outputExceeded() ? "Output limit exceeded (1 MiB per stream)" : result.stderr();
+        int exit = result.outputExceeded() ? 1 : result.exitCode();
+        return new ProcessResult(timedOut, exit, result.stdout(), error, result.elapsedMs(), 0);
     }
-
-    private ProcessResult runProcess(String[] command, Path directory, String input) throws IOException, InterruptedException {
-        Path stdin = directory.resolve("stdin.txt");
-        Path stdout = directory.resolve("stdout.txt");
-        Path stderr = directory.resolve("stderr.txt");
-        Files.writeString(stdin, input);
-        ProcessBuilder builder = new ProcessBuilder(command).directory(directory.toFile())
-                .redirectInput(stdin.toFile()).redirectOutput(stdout.toFile()).redirectError(stderr.toFile());
-        long started = System.nanoTime();
-        Process process = builder.start();
-        boolean finished;
-        try {
-            finished = process.waitFor(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        } catch (InterruptedException exception) {
-            process.descendants().forEach(ProcessHandle::destroyForcibly);
-            process.destroyForcibly();
-            Thread.currentThread().interrupt();
-            throw exception;
-        }
-        double elapsed = (System.nanoTime() - started) / 1_000_000.0;
-        if (!finished) {
-            process.descendants().forEach(ProcessHandle::destroyForcibly);
-            process.destroyForcibly();
-            process.waitFor(1, TimeUnit.SECONDS);
-            return new ProcessResult(true, 1, "", "Time Limit Exceeded", elapsed, 0);
-        }
-        return new ProcessResult(false, process.exitValue(), Files.readString(stdout), Files.readString(stderr), elapsed, 0);
-    }
-
     private String prepareCodeWithDriver(String language, String code) {
         String lang = language.toLowerCase();
         if ((lang.equals("javascript") || lang.equals("js")) && !code.contains("console.log")) {
@@ -332,16 +272,6 @@ public class CodeExecutionService {
             }
         }
         return code;
-    }
-
-    private void cleanupDirectory(Path dir) {
-        try (var paths = Files.walk(dir)) {
-            paths
-                    .sorted((a, b) -> b.compareTo(a))
-                    .forEach(p -> {
-                        try { Files.deleteIfExists(p); } catch (Exception ignored) {}
-                    });
-        } catch (Exception ignored) {}
     }
 
     private static class ProcessResult {

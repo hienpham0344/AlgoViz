@@ -6,6 +6,7 @@ import com.aisc.algoviz.sandbox.service.SandboxService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,14 +25,14 @@ public class SandboxController {
     private final SandboxService sandboxService;
 
     /**
-     * Endpoint API thực thi mã nguồn trong môi trường Sandbox bằng ProcessBuilder.
+     * Compile and execute one Java program inside a restricted, disposable container.
      *
      * @param request DTO chứa thông tin mã nguồn, input và các cấu hình giới hạn
      * @return ExecutionResultDto Kết quả thực thi
      */
     @PostMapping("/execute")
-    @Operation(summary = "Thực thi mã nguồn Java", description = "Chạy code trong môi trường Sandbox cô lập với ProcessBuilder, giới hạn tài nguyên và thời gian.")
-    public ResponseEntity<ExecutionResultDto> executeCode(@RequestBody ExecutionRequestDto request) {
+    @Operation(summary = "Thực thi mã nguồn Java", description = "Biên dịch và chạy Java trong container riêng, không có mạng hoặc quyền truy cập filesystem host.")
+    public ResponseEntity<ExecutionResultDto> executeCode(@Valid @RequestBody ExecutionRequestDto request) {
         ExecutionResultDto result = sandboxService.executeCode(request);
         return ResponseEntity.ok(result);
     }

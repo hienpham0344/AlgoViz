@@ -16,6 +16,8 @@ public enum ExecutionStatus {
     /** Lỗi khi chạy chương trình (Runtime Error - RE) như StackOverflowError, NullPointerException,... */
     RUNTIME_ERROR,
 
+    OUTPUT_LIMIT_EXCEEDED,
+
     /** Vi phạm chính sách an toàn (Security Violation) do chứa mã nguy hiểm */
     SECURITY_VIOLATION,
 
