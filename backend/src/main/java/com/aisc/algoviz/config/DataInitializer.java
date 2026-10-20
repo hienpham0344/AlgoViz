@@ -1,10 +1,10 @@
 package com.aisc.algoviz.config;
 
-import com.aisc.algoviz.model.Problem;
-import com.aisc.algoviz.model.TestCase;
-import com.aisc.algoviz.model.User;
-import com.aisc.algoviz.repository.ProblemRepository;
-import com.aisc.algoviz.repository.UserRepository;
+import com.aisc.algoviz.problem.entity.LegacyProblem;
+import com.aisc.algoviz.submission.entity.TestCase;
+import com.aisc.algoviz.user.entity.User;
+import com.aisc.algoviz.problem.repository.LegacyProblemRepository;
+import com.aisc.algoviz.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,7 +17,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
 
-    private final ProblemRepository problemRepository;
+    private final LegacyProblemRepository problemRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final ReferenceSolutionSeeder referenceSolutionSeeder;
@@ -37,17 +37,17 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         if (problemRepository.count() == 0) {
-            List<Problem> initialProblems = createSampleProblems();
+            List<LegacyProblem> initialProblems = createSampleProblems();
             problemRepository.saveAll(initialProblems);
         }
         referenceSolutionSeeder.seed(problemRepository.findAll());
     }
 
-    private List<Problem> createSampleProblems() {
-        List<Problem> list = new ArrayList<>();
+    private List<LegacyProblem> createSampleProblems() {
+        List<LegacyProblem> list = new ArrayList<>();
 
         // Problem 1: Two Sum
-        Problem p1 = Problem.builder()
+        LegacyProblem p1 = LegacyProblem.legacyBuilder()
                 .title("Two Sum")
                 .category("Arrays & Hashing")
                 .difficulty("Easy")
@@ -70,7 +70,7 @@ public class DataInitializer implements CommandLineRunner {
         list.add(p1);
 
         // Problem 2: Valid Anagram
-        Problem p2 = Problem.builder()
+        LegacyProblem p2 = LegacyProblem.legacyBuilder()
                 .title("Valid Anagram")
                 .category("Strings")
                 .difficulty("Easy")
@@ -90,7 +90,7 @@ public class DataInitializer implements CommandLineRunner {
         list.add(p2);
 
         // Problem 3: Binary Search
-        Problem p3 = Problem.builder()
+        LegacyProblem p3 = LegacyProblem.legacyBuilder()
                 .title("Binary Search")
                 .category("Searching")
                 .difficulty("Easy")

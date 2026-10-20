@@ -1,6 +1,6 @@
 package com.aisc.algoviz.config;
 
-import com.aisc.algoviz.model.Problem;
+import com.aisc.algoviz.problem.entity.LegacyProblem;
 import com.aisc.algoviz.problem.entity.Solution;
 import com.aisc.algoviz.problem.repository.SolutionRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,8 +17,8 @@ public class ReferenceSolutionSeeder {
     private final com.aisc.algoviz.problem.repository.ProblemRepository problems;
 
     @Transactional
-    public void seed(List<Problem> practiceProblems) {
-        for (Problem problem : practiceProblems) {
+    public void seed(List<LegacyProblem> practiceProblems) {
+        for (LegacyProblem problem : practiceProblems) {
             if (!solutions.findByProblemId(problem.getId()).isEmpty()) continue;
             Reference reference = switch (problem.getTitle()) {
                 case "Two Sum" -> new Reference(TWO_SUM, "Try each pair of indices until their values sum to target. Return those two indices.", "O(n²)", "O(1)");
@@ -37,7 +37,7 @@ public class ReferenceSolutionSeeder {
         }
     }
 
-    private boolean sampleMatches(Problem problem) {
+    private boolean sampleMatches(LegacyProblem problem) {
         String sample = problem.getSampleInput() == null ? "" : problem.getSampleInput().replace("\r", "").trim();
         return switch (problem.getTitle()) {
             case "Two Sum" -> sample.equals("9\n2 7 11 15");
