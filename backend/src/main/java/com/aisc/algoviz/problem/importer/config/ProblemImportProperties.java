@@ -15,14 +15,14 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "algoviz.import")
 public class ProblemImportProperties {
 
-    private boolean enabled;
-    private Source source;
-    private String dataDirectory;
-    private String problemsFile;
-    private String solutionsFile;
-    private String mockDataDirectory;
-    private String mockProblemsFile;
-    private String mockSolutionsFile;
+    private boolean enabled = false;
+    private Source source = Source.MOCK;
+    private String dataDirectory = "./data";
+    private String problemsFile = "problems.json";
+    private String solutionsFile = "solutions.json";
+    private String mockDataDirectory = "./data/mock";
+    private String mockProblemsFile = "problems.json";
+    private String mockSolutionsFile = "solutions.json";
 
     public enum Source {
         FILE,

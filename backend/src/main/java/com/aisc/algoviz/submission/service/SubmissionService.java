@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,7 +36,9 @@ public class SubmissionService {
     @Transactional
     public SubmissionResponse submitCode(SubmissionRequest request) {
         User user = userService.getCurrentUser();
-        LegacyProblem problem = legacyProblemRepository.findById(request.getProblemId())
+        Long rawId = request.getProblemId();
+        LegacyProblem problem = legacyProblemRepository.findById(rawId)
+                .or(() -> rawId != null ? legacyProblemRepository.findByLeetcodeId(rawId.intValue()) : Optional.empty())
                 .orElseThrow(() -> new AppException(ProblemErrorCode.PROBLEM_NOT_FOUND));
 
         ExecutionResultDto evalResult = codeExecutionService.evaluateTestCases(
@@ -72,6 +75,7 @@ public class SubmissionService {
         return mapToResponse(saved);
     }
 
+    @Transactional(readOnly = true)
     public List<SubmissionResponse> getUserSubmissionHistory() {
         User user = userService.getCurrentUser();
         return submissionRepository.findByUserIdOrderBySubmittedAtDesc(user.getId())
@@ -80,18 +84,33 @@ public class SubmissionService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public com.aisc.algoviz.common.dto.PageResponse<SubmissionResponse> getUserSubmissionHistoryPaged(org.springframework.data.domain.Pageable pageable) {
+        User user = userService.getCurrentUser();
+        org.springframework.data.domain.Page<Submission> page = submissionRepository.findByUserIdOrderBySubmittedAtDesc(user.getId(), pageable);
+        return com.aisc.algoviz.common.dto.PageResponse.from(page.map(this::mapToResponse));
+    }
+
+    @Transactional(readOnly = true)
     public List<SubmissionResponse> getUserSubmissionsForProblem(Long problemId) {
         User user = userService.getCurrentUser();
-        return submissionRepository.findByUserIdAndProblemIdOrderBySubmittedAtDesc(user.getId(), problemId)
+        LegacyProblem problem = legacyProblemRepository.findById(problemId)
+                .or(() -> problemId != null ? legacyProblemRepository.findByLeetcodeId(problemId.intValue()) : Optional.empty())
+                .orElse(null);
+        Long targetId = (problem != null) ? problem.getId() : problemId;
+        return submissionRepository.findByUserIdAndProblemIdOrderBySubmittedAtDesc(user.getId(), targetId)
                 .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
     private SubmissionResponse mapToResponse(Submission s) {
+        Long pId = s.getProblem().getLeetcodeId() != null 
+                ? Long.valueOf(s.getProblem().getLeetcodeId()) 
+                : s.getProblem().getId();
         return SubmissionResponse.builder()
                 .id(s.getId())
-                .problemId(s.getProblem().getId())
+                .problemId(pId)
                 .problemTitle(s.getProblem().getTitle())
                 .username(s.getUser().getUsername())
                 .language(s.getLanguage())

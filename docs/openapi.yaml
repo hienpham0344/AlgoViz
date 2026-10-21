@@ -1,0 +1,1133 @@
+openapi: 3.0.1
+info:
+  title: AlgoViz Platform REST API Engine
+  description: 'Tài liệu đặc tả toàn bộ RESTful API cho nền tảng trực quan hóa thuật
+    toán và chấm bài tự động AlgoViz.
+
+
+    ### Các module API chính:
+
+    - **Problems (Core & Studio)**: Kho hơn 4,000 bài toán LeetCode với test cases,
+    constraints, và solutions đa ngôn ngữ.
+
+    - **Problem Management (/api/v1/problems)**: API quản lý bài toán nâng cao có
+    lọc, phân trang PageResponse.
+
+    - **Submissions & Execution**: Sandbox chạy code an toàn hỗ trợ Python, Java,
+    C++, JS và lưu lịch sử nộp bài.
+
+    - **Authentication & Authorization**: Đăng ký, đăng nhập JWT, rate limiting, refresh
+    token và blacklist.
+
+    - **User Management**: Hồ sơ cá nhân, điểm thưởng (gamification) và streak.
+
+    - **AI Code Analysis**: Phân tích Big-O Time & Space complexity và đề xuất tối
+    ưu hóa.'
+  contact:
+    name: AlgoViz Dev Team
+    url: http://localhost:5173
+    email: support@algoviz.aisc.com
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+  version: 1.0.0
+servers:
+- url: http://localhost:8080
+  description: Local Development Server
+- url: https://api.algoviz.internal
+  description: Production / Staging Server
+security:
+- bearerAuth: []
+tags:
+- name: Submissions & Execution
+  description: APIs thực thi code trực tuyến, chấm bài qua Sandbox và quản lý lịch
+    sử submit
+- name: Problems (Core & Studio)
+  description: APIs phục vụ danh sách bài tập, visualizer studio và chi tiết bài toán
+- name: User Management
+  description: APIs thông tin hồ sơ cá nhân và cập nhật thông tin người dùng
+- name: AI Code Analysis
+  description: APIs phân tích độ phức tạp thời gian/không gian (Big-O) và tối ưu hóa
+    mã nguồn
+- name: Authentication & Authorization
+  description: APIs đăng ký tài khoản, đăng nhập JWT, làm mới access token và đăng
+    xuất
+- name: Problem Management
+  description: Các API tra cứu và quản lý bài toán thuật toán
+paths:
+  /api/v1/problems/{id}:
+    get:
+      tags:
+      - Problem Management
+      summary: Lấy chi tiết bài toán theo ID
+      description: Trả về đầy đủ mô tả đề bài, ví dụ, ràng buộc và các giải pháp tham
+        khảo (Reference Solutions).
+      operationId: getProblemById
+      parameters:
+      - name: id
+        in: path
+        description: ID của bài toán
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ApiResponseProblemDetailDto'
+    put:
+      tags:
+      - Problem Management
+      summary: Cập nhật bài toán theo ID
+      description: Chỉnh sửa các trường thông tin tiêu đề, độ khó, mô tả hoặc tags
+        của bài toán.
+      operationId: updateProblem
+      parameters:
+      - name: id
+        in: path
+        description: ID của bài toán cần cập nhật
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProblemRequestDto'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ApiResponseProblemDetailDto'
+    delete:
+      tags:
+      - Problem Management
+      summary: Xóa bài toán theo ID
+      description: Xóa bài toán cùng toàn bộ lời giải thuộc bài toán khỏi hệ thống.
+      operationId: deleteProblem
+      parameters:
+      - name: id
+        in: path
+        description: ID của bài toán cần xóa
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ApiResponseVoid'
+  /api/users/profile:
+    put:
+      tags:
+      - User Management
+      summary: Cập nhật hồ sơ cá nhân
+      description: Cập nhật họ tên hiển thị và URL avatar của người dùng
+      operationId: updateProfile
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: string
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/UserDto'
+      security:
+      - bearerAuth: []
+  /api/v1/problems:
+    get:
+      tags:
+      - Problem Management
+      summary: Lấy danh sách bài toán (Phân trang & Lọc)
+      description: Trả về danh sách tóm tắt các bài toán, hỗ trợ lọc theo độ khó,
+        tag và từ khóa tìm kiếm.
+      operationId: getProblems
+      parameters:
+      - name: filterRequest
+        in: query
+        required: true
+        schema:
+          $ref: '#/components/schemas/ProblemFilterRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ApiResponsePageResponseProblemSummaryDto'
+    post:
+      tags:
+      - Problem Management
+      summary: Tạo mới bài toán thuật toán
+      description: Thêm một bài toán mới kèm mô tả và các giải pháp tham khảo vào
+        hệ thống.
+      operationId: createProblem
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProblemRequestDto'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ApiResponseProblemDetailDto'
+  /api/v1/problems/{id}/solutions:
+    post:
+      tags:
+      - Problem Management
+      summary: Thêm lời giải mẫu cho bài toán
+      description: Bổ sung một lời giải thuật toán tham khảo vào bài toán theo ID.
+      operationId: addSolution
+      parameters:
+      - name: id
+        in: path
+        description: ID của bài toán
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSolutionRequestDto'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ApiResponseSolutionResponseDto'
+  /api/submissions/submit:
+    post:
+      tags:
+      - Submissions & Execution
+      summary: Nộp bài giải và chấm điểm tự động (Submit Solution)
+      description: Chấm toàn bộ test cases của bài toán trong Sandbox, lưu lịch sử
+        nộp bài và cộng điểm nếu Accepted
+      operationId: submitCode
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmissionRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/SubmissionResponse'
+      security:
+      - bearerAuth: []
+  /api/submissions/run:
+    post:
+      tags:
+      - Submissions & Execution
+      summary: Chạy thử nghiệm code với input tùy biến (Run Code)
+      description: Thực thi code ngay lập tức trong sandbox an toàn với input do người
+        dùng chỉ định
+      operationId: runCode
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RunCodeRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ExecutionResultDto'
+  /api/auth/register:
+    post:
+      tags:
+      - Authentication & Authorization
+      summary: Đăng ký tài khoản người dùng mới
+      description: Tạo tài khoản mới và trả về Access Token cùng Refresh Token
+      operationId: register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+  /api/auth/refresh:
+    post:
+      tags:
+      - Authentication & Authorization
+      summary: Làm mới Access Token
+      description: Cấp mới Access Token bằng Refresh Token hợp lệ
+      operationId: refresh
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+  /api/auth/logout:
+    post:
+      tags:
+      - Authentication & Authorization
+      summary: Đăng xuất tài khoản
+      description: Thu hồi Refresh Token và đưa Access Token vào danh sách đen (Blacklist)
+      operationId: logout
+      parameters:
+      - name: Authorization
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+      security:
+      - bearerAuth: []
+  /api/auth/login:
+    post:
+      tags:
+      - Authentication & Authorization
+      summary: Đăng nhập hệ thống bằng username hoặc email
+      description: Xác thực thông tin và cấp phát Access Token (15 phút) cùng Refresh
+        Token (7 ngày)
+      operationId: login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+  /api/analyze:
+    post:
+      tags:
+      - AI Code Analysis
+      summary: Phân tích mã nguồn và giải thích thuật toán bằng AI
+      description: Trả về phân tích Big-O (Time & Space complexity), phát hiện lỗi
+        tiềm ẩn, gợi ý tối ưu và giải thích từng bước
+      operationId: analyzeCode
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiAnalysisRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/AiAnalysisResponse'
+  /api/ai/analyze:
+    post:
+      tags:
+      - AI Code Analysis
+      summary: Phân tích mã nguồn và giải thích thuật toán bằng AI
+      description: Trả về phân tích Big-O (Time & Space complexity), phát hiện lỗi
+        tiềm ẩn, gợi ý tối ưu và giải thích từng bước
+      operationId: analyzeCode_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiAnalysisRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/AiAnalysisResponse'
+  /api/v1/problems/slug/{slug}:
+    get:
+      tags:
+      - Problem Management
+      summary: Lấy chi tiết bài toán theo Slug URL
+      description: Hỗ trợ định tuyến URL thân thiện cho Frontend.
+      operationId: getProblemBySlug
+      parameters:
+      - name: slug
+        in: path
+        description: 'Slug của bài toán (vd: two-sum)'
+        required: true
+        schema:
+          type: string
+        example: two-sum
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ApiResponseProblemDetailDto'
+  /api/users/me:
+    get:
+      tags:
+      - User Management
+      summary: Lấy hồ sơ cá nhân của người dùng hiện tại
+      description: 'Trả về thông tin chi tiết: username, email, điểm thưởng (points),
+        số bài đã giải và streak'
+      operationId: getCurrentUser
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/UserDto'
+      security:
+      - bearerAuth: []
+  /api/submissions/problem/{problemId}:
+    get:
+      tags:
+      - Submissions & Execution
+      summary: Lấy lịch sử các lần nộp bài cho một bài toán cụ thể
+      description: Trả về danh sách tất cả các lần nộp của người dùng đăng nhập cho
+        bài toán theo problemId hoặc leetcodeId
+      operationId: getUserSubmissionsForProblem
+      parameters:
+      - name: problemId
+        in: path
+        description: ID hoặc LeetCode ID của bài toán
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SubmissionResponse'
+      security:
+      - bearerAuth: []
+  /api/submissions/history:
+    get:
+      tags:
+      - Submissions & Execution
+      summary: Lấy lịch sử nộp bài của người dùng hiện tại (Hỗ trợ phân trang)
+      description: Nếu truyền page và size sẽ phân trang kết quả; nếu không truyền
+        sẽ trả về toàn bộ danh sách
+      operationId: getUserHistory
+      parameters:
+      - name: page
+        in: query
+        description: Số trang (bắt đầu từ 0)
+        required: false
+        schema:
+          type: integer
+          format: int32
+      - name: size
+        in: query
+        description: Kích thước mỗi trang
+        required: false
+        schema:
+          type: integer
+          format: int32
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+      security:
+      - bearerAuth: []
+  /api/problems:
+    get:
+      tags:
+      - Problems (Core & Studio)
+      summary: Lấy danh sách bài toán (Hỗ trợ cả List đầy đủ lẫn Phân trang)
+      description: Nếu truyền page và size sẽ trả về PageResponse có phân trang. Nếu
+        không truyền page/size sẽ trả về toàn bộ danh sách phù hợp với frontend visualizer.
+      operationId: getProblems_1
+      parameters:
+      - name: difficulty
+        in: query
+        description: 'Lọc theo độ khó: Easy, Medium, Hard'
+        required: false
+        schema:
+          type: string
+      - name: category
+        in: query
+        description: Lọc theo danh mục/chủ đề thuật toán
+        required: false
+        schema:
+          type: string
+      - name: search
+        in: query
+        description: Tìm kiếm từ khóa theo tiêu đề bài toán
+        required: false
+        schema:
+          type: string
+      - name: page
+        in: query
+        description: Số trang (bắt đầu từ 0)
+        required: false
+        schema:
+          type: integer
+          format: int32
+      - name: size
+        in: query
+        description: Kích thước mỗi trang
+        required: false
+        schema:
+          type: integer
+          format: int32
+      - name: sortBy
+        in: query
+        description: Trường sắp xếp (mặc định id)
+        required: false
+        schema:
+          type: string
+          default: id
+      - name: sortDirection
+        in: query
+        description: 'Hướng sắp xếp: asc hoặc desc'
+        required: false
+        schema:
+          type: string
+          default: asc
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /api/problems/{id}:
+    get:
+      tags:
+      - Problems (Core & Studio)
+      summary: Lấy chi tiết bài toán theo ID hoặc LeetCode ID
+      description: Trả về đầy đủ mô tả, ràng buộc, starter code (Python, Java, C++,
+        JS), test cases mẫu và lời giải tham khảo
+      operationId: getProblemById_1
+      parameters:
+      - name: id
+        in: path
+        description: ID hoặc LeetCode ID của bài toán
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ProblemDetailDto'
+components:
+  schemas:
+    UpdateProblemRequestDto:
+      type: object
+      properties:
+        leetcodeId:
+          type: integer
+          description: Mã ID LeetCode cập nhật
+          format: int32
+          example: 1
+        title:
+          maxLength: 255
+          minLength: 0
+          type: string
+          description: Tiêu đề mới của bài toán
+          example: Two Sum (Updated)
+        slug:
+          maxLength: 255
+          minLength: 0
+          type: string
+          description: Slug mới (nếu để trống hệ thống tự cập nhật từ tiêu đề mới)
+          example: two-sum-updated
+        difficulty:
+          type: string
+          description: Mức độ khó cập nhật (EASY, MEDIUM, HARD)
+          example: EASY
+          enum:
+          - Easy
+          - Medium
+          - Hard
+        description:
+          type: string
+          description: Nội dung mô tả đề bài mới (định dạng Markdown)
+        patternTags:
+          type: array
+          description: Danh sách các tags thuật toán mới
+          items:
+            type: string
+            description: Danh sách các tags thuật toán mới
+      description: Đối tượng chứa dữ liệu yêu cầu cập nhật bài toán thuật toán
+    ApiResponseProblemDetailDto:
+      type: object
+      properties:
+        status:
+          type: integer
+          format: int32
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/ProblemDetailDto'
+        timestamp:
+          type: string
+          format: date-time
+    ProblemDetailDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID bài toán
+          format: int64
+          example: 1
+        leetcodeId:
+          type: integer
+          description: ID LeetCode
+          format: int32
+          example: 1
+        title:
+          type: string
+          description: Tiêu đề bài toán
+          example: Two Sum
+        slug:
+          type: string
+          description: Slug URL
+          example: two-sum
+        difficulty:
+          type: string
+          description: Mức độ khó
+          example: EASY
+          enum:
+          - Easy
+          - Medium
+          - Hard
+        description:
+          type: string
+          description: Mô tả bài toán (định dạng Markdown)
+        patternTags:
+          type: array
+          description: Danh sách tags thuật toán
+          items:
+            type: string
+            description: Danh sách tags thuật toán
+        solutions:
+          type: array
+          description: Danh sách lời giải tham khảo
+          items:
+            $ref: '#/components/schemas/SolutionResponseDto'
+      description: Đối tượng chứa chi tiết đầy đủ bài toán và danh sách lời giải
+    SolutionResponseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID lời giải
+          format: int64
+          example: 1
+        patternId:
+          type: integer
+          description: ID thuật toán / Pattern liên quan
+          format: int64
+          example: 101
+        codeSnippet:
+          type: string
+          description: Mã nguồn bài giải tham khảo
+        explanation:
+          type: string
+          description: Giải thích chi tiết
+        timeComplexity:
+          type: string
+          description: Độ phức tạp thời gian
+          example: O(N)
+        spaceComplexity:
+          type: string
+          description: Độ phức tạp bộ nhớ
+          example: O(N)
+        language:
+          type: string
+          description: Ngôn ngữ lập trình
+          example: Java
+      description: Đối tượng chứa thông tin bài giải tham khảo
+    UserDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        username:
+          type: string
+        email:
+          type: string
+        fullName:
+          type: string
+        avatarUrl:
+          type: string
+        role:
+          type: string
+        points:
+          type: integer
+          format: int32
+        solvedProblemsCount:
+          type: integer
+          format: int32
+    CreateProblemRequestDto:
+      required:
+      - difficulty
+      - title
+      type: object
+      properties:
+        leetcodeId:
+          type: integer
+          description: Mã ID bài toán tương ứng trên LeetCode (nếu có)
+          format: int32
+          example: 1
+        title:
+          maxLength: 255
+          minLength: 0
+          type: string
+          description: Tiêu đề chính của bài toán
+          example: Two Sum
+        slug:
+          maxLength: 255
+          minLength: 0
+          type: string
+          description: Đường dẫn Slug (nếu để trống hệ thống tự tạo từ tiêu đề)
+          example: two-sum
+        difficulty:
+          type: string
+          description: Mức độ khó của bài toán (EASY, MEDIUM, HARD)
+          example: EASY
+          enum:
+          - Easy
+          - Medium
+          - Hard
+        description:
+          type: string
+          description: Nội dung mô tả đề bài đầy đủ (định dạng Markdown)
+          example: Given an array of integers nums...
+        patternTags:
+          type: array
+          description: Danh sách các tags thuật toán liên quan
+          example:
+          - Array
+          - Hash Table
+          items:
+            type: string
+            description: Danh sách các tags thuật toán liên quan
+            example: '["Array","Hash Table"]'
+        solutions:
+          type: array
+          description: Danh sách các bài giải mẫu kèm theo bài toán
+          items:
+            $ref: '#/components/schemas/CreateSolutionRequestDto'
+      description: Đối tượng chứa dữ liệu yêu cầu tạo mới bài toán thuật toán
+    CreateSolutionRequestDto:
+      required:
+      - codeSnippet
+      type: object
+      properties:
+        patternId:
+          type: integer
+          description: ID thuật toán / Pattern liên quan
+          format: int64
+          example: 101
+        codeSnippet:
+          type: string
+          description: Mã nguồn bài giải tham khảo
+          example: class Solution { public int[] twoSum(...) }
+        explanation:
+          type: string
+          description: Giải thích thuật toán chi tiết
+          example: Sử dụng HashMap để tìm cặp số có tổng bằng target
+        timeComplexity:
+          type: string
+          description: Độ phức tạp thời gian
+          example: O(N)
+        spaceComplexity:
+          type: string
+          description: Độ phức tạp không gian bộ nhớ
+          example: O(N)
+        language:
+          type: string
+          description: Ngôn ngữ lập trình
+          example: Java
+      description: Đối tượng chứa dữ liệu yêu cầu tạo bài giải mẫu cho bài toán
+    ApiResponseSolutionResponseDto:
+      type: object
+      properties:
+        status:
+          type: integer
+          format: int32
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/SolutionResponseDto'
+        timestamp:
+          type: string
+          format: date-time
+    SubmissionRequest:
+      required:
+      - code
+      - language
+      - problemId
+      type: object
+      properties:
+        problemId:
+          type: integer
+          format: int64
+        language:
+          type: string
+        code:
+          type: string
+    SubmissionResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        problemId:
+          type: integer
+          format: int64
+        problemTitle:
+          type: string
+        username:
+          type: string
+        language:
+          type: string
+        code:
+          type: string
+        status:
+          type: string
+        executionTimeMs:
+          type: number
+          format: double
+        memoryUsageMb:
+          type: number
+          format: double
+        passedTestCases:
+          type: integer
+          format: int32
+        totalTestCases:
+          type: integer
+          format: int32
+        errorMessage:
+          type: string
+        submittedAt:
+          type: string
+          format: date-time
+    RunCodeRequest:
+      required:
+      - code
+      - language
+      type: object
+      properties:
+        language:
+          type: string
+        code:
+          type: string
+        customInput:
+          type: string
+    ExecutionResultDto:
+      type: object
+      properties:
+        status:
+          type: string
+        output:
+          type: string
+        expectedOutput:
+          type: string
+        executionTimeMs:
+          type: number
+          format: double
+        memoryUsageMb:
+          type: number
+          format: double
+        passedTestCases:
+          type: integer
+          format: int32
+        totalTestCases:
+          type: integer
+          format: int32
+        errorMessage:
+          type: string
+    RegisterRequest:
+      required:
+      - email
+      - password
+      - username
+      type: object
+      properties:
+        username:
+          maxLength: 30
+          minLength: 3
+          type: string
+        email:
+          type: string
+        password:
+          maxLength: 100
+          minLength: 6
+          type: string
+        fullName:
+          type: string
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        refreshToken:
+          type: string
+        tokenType:
+          type: string
+        user:
+          $ref: '#/components/schemas/UserDto'
+    RefreshTokenRequest:
+      required:
+      - refreshToken
+      type: object
+      properties:
+        refreshToken:
+          type: string
+    LoginRequest:
+      required:
+      - password
+      - usernameOrEmail
+      type: object
+      properties:
+        usernameOrEmail:
+          type: string
+        password:
+          type: string
+    AiAnalysisRequest:
+      required:
+      - code
+      type: object
+      properties:
+        code:
+          type: string
+        language:
+          type: string
+        problemContext:
+          type: string
+    AiAnalysisResponse:
+      type: object
+      properties:
+        timeComplexity:
+          type: string
+        spaceComplexity:
+          type: string
+        summary:
+          type: string
+        optimizationSuggestions:
+          type: array
+          items:
+            type: string
+        potentialBugs:
+          type: array
+          items:
+            type: string
+        refactoredCode:
+          type: string
+    ProblemFilterRequest:
+      type: object
+      properties:
+        page:
+          minimum: 0
+          type: integer
+          format: int32
+        size:
+          maximum: 100
+          minimum: 1
+          type: integer
+          format: int32
+        difficulty:
+          type: string
+          enum:
+          - Easy
+          - Medium
+          - Hard
+        tag:
+          type: string
+        search:
+          type: string
+        sortBy:
+          type: string
+        sortDirection:
+          type: string
+        sanitizedSortBy:
+          type: string
+    ApiResponsePageResponseProblemSummaryDto:
+      type: object
+      properties:
+        status:
+          type: integer
+          format: int32
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/PageResponseProblemSummaryDto'
+        timestamp:
+          type: string
+          format: date-time
+    PageResponseProblemSummaryDto:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProblemSummaryDto'
+        pageNumber:
+          type: integer
+          format: int32
+        pageSize:
+          type: integer
+          format: int32
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int32
+        hasNext:
+          type: boolean
+        hasPrevious:
+          type: boolean
+        first:
+          type: boolean
+        last:
+          type: boolean
+    ProblemSummaryDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID bài toán trong hệ thống
+          format: int64
+          example: 1
+        leetcodeId:
+          type: integer
+          description: ID LeetCode tương ứng
+          format: int32
+          example: 1
+        title:
+          type: string
+          description: Tiêu đề bài toán
+          example: Two Sum
+        slug:
+          type: string
+          description: Slug URL bài toán
+          example: two-sum
+        difficulty:
+          type: string
+          description: Mức độ khó của bài toán
+          example: EASY
+          enum:
+          - Easy
+          - Medium
+          - Hard
+        patternTags:
+          type: array
+          description: Danh sách tags thuật toán
+          example:
+          - Array
+          - Hash Table
+          items:
+            type: string
+            description: Danh sách tags thuật toán
+            example: '["Array","Hash Table"]'
+      description: Đối tượng chứa thông tin tóm tắt bài toán trong danh sách
+    ApiResponseVoid:
+      type: object
+      properties:
+        status:
+          type: integer
+          format: int32
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+        data:
+          type: object
+        timestamp:
+          type: string
+          format: date-time
+  securitySchemes:
+    bearerAuth:
+      type: http
+      description: 'Nhập Bearer Token theo định dạng: `Bearer <access_token>`'
+      name: bearerAuth
+      scheme: bearer
+      bearerFormat: JWT

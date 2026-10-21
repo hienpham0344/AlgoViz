@@ -24,6 +24,9 @@ public class LegacyProblem {
     @Column(nullable = false)
     private String title;
 
+    @Column(name = "leetcode_id")
+    private Integer leetcodeId;
+
     private String category; // e.g. "Arrays", "Dynamic Programming", "Graphs", "Sorting"
 
     private String difficulty; // "Easy", "Medium", "Hard"

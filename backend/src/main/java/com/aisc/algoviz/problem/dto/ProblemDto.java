@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ProblemDto {
     private Long id;
+    private Integer leetcodeId;
     private String title;
     private String category;
     private String difficulty;
