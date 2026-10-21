@@ -19,16 +19,14 @@ public class ReferenceSolutionSeeder {
     @Transactional
     public void seed(List<LegacyProblem> practiceProblems) {
         for (LegacyProblem problem : practiceProblems) {
-            if (!solutions.findByProblemId(problem.getId()).isEmpty()) continue;
             Reference reference = switch (problem.getTitle()) {
                 case "Two Sum" -> new Reference(TWO_SUM, "Try each pair of indices until their values sum to target. Return those two indices.", "O(n²)", "O(1)");
                 case "Valid Anagram" -> new Reference(ANAGRAM, "Count each lowercase letter in s and subtract each letter in t. The strings are anagrams when every count is zero.", "O(n)", "O(1)");
                 case "Binary Search" -> new Reference(BINARY_SEARCH, "Compare target to the middle element, then keep only the half that can contain it. Return its index or -1.", "O(log n)", "O(1)");
                 default -> null;
             };
-            // These executable examples correspond to the built-in sample input only.
-            // Other datasets supply their own editorial rather than receiving an unrelated example.
             if (reference == null || !sampleMatches(problem)) continue;
+            if (!solutions.findByProblemId(problem.getId()).isEmpty()) continue;
             solutions.save(Solution.builder()
                     .problem(problems.getReferenceById(problem.getId()))
                     .codeSnippet(reference.code()).explanation(reference.explanation())

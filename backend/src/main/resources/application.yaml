@@ -10,19 +10,25 @@ spring:
     url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:algovizdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
     username: ${SPRING_DATASOURCE_USERNAME:sa}
     password: ${SPRING_DATASOURCE_PASSWORD:}
-    driver-class-name: ${SPRING_DATASOURCE_DRIVER:org.h2.Driver}
+    driver-class-name: ${SPRING_DATASOURCE_DRIVER:}
+    hikari:
+      data-source-properties:
+        prepareThreshold: 0
+        preparedStatementCacheQueries: 0
   h2:
     console:
       enabled: true
       path: /h2-console
   jpa:
     open-in-view: false
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     show-sql: false
     properties:
       hibernate:
         format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
 springdoc:
   api-docs:
@@ -34,7 +40,7 @@ springdoc:
 
 algoviz:
   execution:
-    python-command: ${ALGOVIZ_PYTHON_COMMAND:python}
+    python-command: ${ALGOVIZ_PYTHON_COMMAND:python3}
     cpp-command: ${ALGOVIZ_CPP_COMMAND:g++}
     timeout-seconds: ${ALGOVIZ_EXECUTION_TIMEOUT_SECONDS:5}
   sandbox:
