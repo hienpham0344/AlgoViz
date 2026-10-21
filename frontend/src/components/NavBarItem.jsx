@@ -1,6 +1,6 @@
 import "./components.css";
 
-const links = ["Dashboard", "Problems", "Analyze", "Learn", "History"];
+const links = ["Dashboard", "Problems", "Visualize", "Learn", "History"];
 
 function NavBarItem({ className = "" }) {
   return (

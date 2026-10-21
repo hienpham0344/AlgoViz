@@ -1,0 +1,193 @@
+/* ==========================================================================
+   ProgressView - Unified Accessible Progress Indicators
+   Variants:
+     1. Indeterminate Spinner: remaining work unknown
+     2. Determinate Progress Ring: compact circular arc
+     3. HTML <progress> Linear Bar: track with readable horizontal progress
+   ========================================================================== */
+
+/* Screen reader only utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* --------------------------------------------------------------------------
+   1. Indeterminate Spinner
+   -------------------------------------------------------------------------- */
+.progress-view-spinner {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+.progress-spinner-svg {
+  display: inline-block;
+  animation: progressSpin 0.75s linear infinite;
+  transform-origin: center center;
+  flex-shrink: 0;
+}
+
+.progress-view-spinner--sm .progress-spinner-svg {
+  width: 16px;
+  height: 16px;
+}
+
+.progress-view-spinner--md .progress-spinner-svg {
+  width: 22px;
+  height: 22px;
+}
+
+.progress-view-spinner--lg .progress-spinner-svg {
+  width: 32px;
+  height: 32px;
+}
+
+.progress-spinner-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: inherit;
+}
+
+@keyframes progressSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   2. Determinate Progress Ring (Circular Arc)
+   -------------------------------------------------------------------------- */
+.progress-view-ring {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  vertical-align: middle;
+}
+
+.progress-ring-svg {
+  display: block;
+}
+
+.progress-ring-track {
+  transition: stroke 200ms cubic-bezier(.4, 0, .2, 1);
+}
+
+.progress-ring-fill {
+  transition: stroke-dashoffset 280ms cubic-bezier(.4, 0, .2, 1);
+  stroke-linecap: round;
+}
+
+.progress-ring-text {
+  font-family: 'Google Sans', 'Inter', -apple-system, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  fill: #202124;
+  user-select: none;
+}
+
+/* --------------------------------------------------------------------------
+   3. HTML <progress> Linear Bar
+   -------------------------------------------------------------------------- */
+.progress-view-linear-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.progress-view-linear-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: #5f6368;
+}
+
+.progress-view-linear-label {
+  font-weight: 500;
+}
+
+.progress-view-linear-value {
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  color: #202124;
+}
+
+progress.progress-view-bar {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  display: block;
+  width: 100%;
+  height: 6px;
+  border: none;
+  border-radius: 9999px;
+  background-color: var(--progress-track, #e8eaed);
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+progress.progress-view-bar::-webkit-progress-bar {
+  background-color: var(--progress-track, #e8eaed);
+  border-radius: 9999px;
+}
+
+progress.progress-view-bar::-webkit-progress-value {
+  background-color: var(--progress-fill, #0083bf);
+  border-radius: 9999px;
+  transition: width 260ms cubic-bezier(.4, 0, .2, 1);
+}
+
+progress.progress-view-bar::-moz-progress-bar {
+  background-color: var(--progress-fill, #0083bf);
+  border-radius: 9999px;
+  transition: width 260ms cubic-bezier(.4, 0, .2, 1);
+}
+
+/* Thin variant for cards */
+progress.progress-view-bar--thin {
+  height: 4px;
+}
+
+/* Thick variant for major milestones */
+progress.progress-view-bar--thick {
+  height: 10px;
+}
+
+/* Tone modifiers */
+progress.progress-view-bar--green {
+  --progress-fill: #1e8e3e;
+}
+
+progress.progress-view-bar--purple {
+  --progress-fill: #7c3aed;
+}
+
+/* --------------------------------------------------------------------------
+   Reduced Motion: Respect prefers-reduced-motion
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .progress-spinner-svg {
+    animation-duration: 2s;
+  }
+  .progress-ring-fill,
+  progress.progress-view-bar::-webkit-progress-value,
+  progress.progress-view-bar::-moz-progress-bar {
+    transition: none !important;
+  }
+}

@@ -75,9 +75,9 @@ export function generateTwoSumTrace(initialNums = [3, 2, 9, 4, 7], target = 9) {
     matchedIndices: [],
     pointers: {},
     activeLine: 55,
-    comparison: "Khởi tạo mảng dữ liệu",
-    annotation: `Line 55: Khởi tạo mảng nums gồm ${nums.length} phần tử: [${nums.join(", ")}].`,
-    context: `Khởi tạo mảng nums = [${nums.join(", ")}]`,
+    comparison: "Initialize data array",
+    annotation: `Line 55: Initialize mảng nums gồm ${nums.length} phần tử: [${nums.join(", ")}].`,
+    context: `Initialize mảng nums = [${nums.join(", ")}]`,
     operationCount: 0,
     scalarVars: [],
     resultData: { label: "result", value: null, status: "pending" },
@@ -99,7 +99,7 @@ export function generateTwoSumTrace(initialNums = [3, 2, 9, 4, 7], target = 9) {
     matchedIndices: [],
     pointers: {},
     activeLine: 56,
-    comparison: `Khởi tạo mục tiêu: target = ${target}`,
+    comparison: `Target value: target = ${target}`,
     annotation: `Line 56: Thiết lập giá trị mục tiêu target = ${target}. Thuật toán cần tìm 2 phần tử có tổng đúng bằng ${target}.`,
     context: `Thiết lập giá trị mục tiêu target = ${target}`,
     operationCount: 0,
@@ -122,7 +122,7 @@ export function generateTwoSumTrace(initialNums = [3, 2, 9, 4, 7], target = 9) {
     matchedIndices: [],
     pointers: {},
     activeLine: 57,
-    comparison: "Bắt đầu gọi hàm twoSum()",
+    comparison: "Begin twoSum() execution",
     annotation: `Line 57: Bắt đầu gọi phương thức twoSum(nums, target) để tìm kiếm cặp nghiệm thỏa mãn.`,
     context: `Gọi hàm twoSum(nums, target)`,
     operationCount: 0,
@@ -149,7 +149,7 @@ export function generateTwoSumTrace(initialNums = [3, 2, 9, 4, 7], target = 9) {
       matchedIndices: [],
       pointers: { i },
       activeLine: 62,
-      comparison: `Xét phần tử thứ nhất: nums[${i}] = ${valI}`,
+      comparison: `Outer loop: nums[${i}] = ${valI}`,
       annotation: `Line 62: Vòng lặp ngoài: Chọn phần tử thứ nhất tại chỉ số i = ${i} có giá trị ${valI} (sáng Xanh Cyan).`,
       context: `Duyệt con trỏ i = ${i} (nums[${i}] = ${valI})`,
       operationCount: opCount,
@@ -192,7 +192,7 @@ export function generateTwoSumTrace(initialNums = [3, 2, 9, 4, 7], target = 9) {
         activePair: pairInfo,
         pointers: { i, j },
         activeLine: 63,
-        comparison: `Xét phần tử thứ hai: nums[${j}] = ${valJ}`,
+        comparison: `Inner loop: nums[${j}] = ${valJ}`,
         annotation: `Line 63: Vòng lặp trong: Chọn phần tử thứ hai tại chỉ số j = ${j} có giá trị ${valJ} (sáng Tím Purple).`,
         context: `Duyệt con trỏ j = ${j} (nums[${j}] = ${valJ})`,
         operationCount: opCount,
@@ -306,9 +306,9 @@ export function generateTwoSumTrace(initialNums = [3, 2, 9, 4, 7], target = 9) {
           activePair: pairInfo,
           pointers: { i, j },
           activeLine: 66,
-          comparison: `Tìm thấy cặp nghiệm tại vị trí [${i}, ${j}]!`,
-          annotation: `Line 66: Hai phần tử nums[${i}] (${valI}) và nums[${j}] (${valJ}) phát sáng Xanh Lá Neon! Trả về mảng nghiệm new int[] {${i}, ${j}}.`,
-          context: `Trả về kết quả cặp chỉ số [${i}, ${j}]`,
+          comparison: `Solution pair located at [${i}, ${j}]!`,
+          annotation: `Line 66: Hai phần tử nums[${i}] (${valI}) và nums[${j}] (${valJ}) phát sáng Xanh Lá Neon! Return mảng nghiệm new int[] {${i}, ${j}}.`,
+          context: `Return kết quả cặp chỉ số [${i}, ${j}]`,
           operationCount: opCount,
           scalarVars: [
             { name: "target", value: target },
@@ -412,9 +412,9 @@ export function generateTwoSumTrace(initialNums = [3, 2, 9, 4, 7], target = 9) {
       matchedIndices: [],
       pointers: {},
       activeLine: 70,
-      comparison: "Không tìm thấy cặp nghiệm",
-      annotation: `Line 70: Đã duyệt hết tất cả các cặp phần tử mà không tìm thấy tổng bằng ${target}. Trả về [-1, -1].`,
-      context: `Không tìm thấy cặp thỏa mãn, trả về [-1, -1]`,
+      comparison: "No matching pair found",
+      annotation: `Line 70: Exhausted all elements without finding sum equal to ${target}. Return [-1, -1].`,
+      context: `No valid pair found, returning [-1, -1]`,
       operationCount: opCount,
       scalarVars: [
         { name: "target", value: target },
@@ -454,7 +454,7 @@ export function generateBinarySearchTrace(initialNums = [-1, 0, 3, 5, 9, 12], ta
     dimmedIndices: [],
     pointers: { left, right },
     activeLine: 55,
-    comparison: "Khởi tạo",
+    comparison: "Initialize",
     annotation: `Mảng đã sắp xếp: [${nums.join(", ")}], tìm target = ${target}. Khoảng tìm kiếm: [0..${right}].`,
     context: `Line 55: int target = ${target}; binarySearch(nums, target);`,
     operationCount: 0,
@@ -530,8 +530,8 @@ export function generateBinarySearchTrace(initialNums = [-1, 0, 3, 5, 9, 12], ta
         pointers: { mid },
         activeLine: 66,
         comparison: `🎯 TÌM THẤY TẠI VỊ TRÍ [${mid}]`,
-        annotation: `🎯 nums[${mid}] = ${valMid} bằng đúng target = ${target}! Trả về chỉ số vị trí tìm thấy là ${mid}.`,
-        context: `Line 66: return mid; // Tìm thấy target tại index ${mid}`,
+        annotation: `🎯 nums[${mid}] = ${valMid} bằng đúng target = ${target}! Return chỉ số vị trí tìm thấy là ${mid}.`,
+        context: `Line 66: return mid; // Target found at index ${mid}`,
         operationCount: opCount,
         scalarVars: [
           { name: "target", value: target },
@@ -554,7 +554,7 @@ export function generateBinarySearchTrace(initialNums = [-1, 0, 3, 5, 9, 12], ta
         pointers: { mid },
         activeLine: 67,
         comparison: `Hoàn tất: index = ${mid}`,
-        annotation: `Tìm kiếm nhị phân thành công sau ${opCount} bước chia đôi. Kết quả vị trí: ${mid}.`,
+        annotation: `Tìm kiếm nhị phân thành công sau ${opCount} binary search iterations. Kết quả vị trí: ${mid}.`,
         context: `Line 67: Kết thúc tìm kiếm nhị phân.`,
         operationCount: opCount,
         scalarVars: [
@@ -638,8 +638,8 @@ export function generateBinarySearchTrace(initialNums = [-1, 0, 3, 5, 9, 12], ta
     dimmedIndices: nums.map((_, i) => i),
     pointers: { left, right },
     activeLine: 75,
-    comparison: "Không tìm thấy (-1)",
-    annotation: `Không tìm thấy giá trị ${target} trong mảng sau ${opCount} bước chia đôi. Trả về -1.`,
+    comparison: "Target not found (-1)",
+    annotation: `Value not found: ${target} in array after ${opCount} binary search iterations. Return -1.`,
     context: `Line 75: return -1;`,
     operationCount: opCount,
     scalarVars: [
@@ -662,7 +662,7 @@ export function generateTwoSumHashMapTrace(initialNums = [2, 7, 11, 15], target 
   const steps = [];
   const mapEntries = []; // [{ key, value, state }]
 
-  // Step 1: Khởi tạo mảng và HashMap
+  // Step 1: Initialize Array & HashMap
   steps.push({
     stepIndex: 0,
     items: cloneItems(),
@@ -673,9 +673,9 @@ export function generateTwoSumHashMapTrace(initialNums = [2, 7, 11, 15], target 
     matchedIndices: [],
     pointers: {},
     activeLine: 55,
-    comparison: "Khởi tạo mảng và Map",
-    annotation: `Khởi tạo mảng nums gồm ${nums.length} phần tử và bảng băm Map<Integer, Integer> map = new HashMap<>().`,
-    context: `Map<Integer, Integer> map = new HashMap<>();`,
+    comparison: "Initialize Array & Hash Map",
+    annotation: `Initialize array nums with ${nums.length} elements and allocate empty hash map seen = {}.`,
+    context: `seen = {}`,
     operationCount: 0,
     scalarVars: [{ name: "target", value: target }],
     hashMapData: [],
@@ -685,7 +685,7 @@ export function generateTwoSumHashMapTrace(initialNums = [2, 7, 11, 15], target 
     const val = nums[i];
     const complement = target - val;
 
-    // Step: Đang xét nums[i]
+    // Step: Inspecting nums[i]
     steps.push({
       stepIndex: steps.length,
       items: cloneItems(),
@@ -696,9 +696,9 @@ export function generateTwoSumHashMapTrace(initialNums = [2, 7, 11, 15], target 
       matchedIndices: [],
       pointers: { i },
       activeLine: 62,
-      comparison: `i = ${i} (nums[${i}] = ${val})`,
-      annotation: `Line 62: Xét phần tử thứ i = ${i} (nums[${i}] = ${val}). Ô [${i}] sáng lên (Xanh Cyan).`,
-      context: `for (int i = 0; i < nums.length; i++) // i = ${i}, val = ${val}`,
+      comparison: `Inspect nums[${i}] = ${val}`,
+      annotation: `Inspect element at index i = ${i} (nums[${i}] = ${val}).`,
+      context: `for i, num in enumerate(nums): // i = ${i}, num = ${val}`,
       operationCount: i + 1,
       scalarVars: [
         { name: "target", value: target },
@@ -708,7 +708,7 @@ export function generateTwoSumHashMapTrace(initialNums = [2, 7, 11, 15], target 
       hashMapData: mapEntries.map((e) => ({ ...e, state: "default" })),
     });
 
-    // Step: Tính complement
+    // Step: Calculate diff = target - num
     steps.push({
       stepIndex: steps.length,
       items: cloneItems(),
@@ -719,9 +719,9 @@ export function generateTwoSumHashMapTrace(initialNums = [2, 7, 11, 15], target 
       matchedIndices: [],
       pointers: { i },
       activeLine: 63,
-      comparison: `complement = ${target} - ${val} = ${complement}`,
-      annotation: `Line 63: Tính số bù complement = target (${target}) - nums[${i}] (${val}) = ${complement}.`,
-      context: `int complement = target - nums[i]; // complement = ${complement}`,
+      comparison: `diff = ${target} - ${val} = ${complement}`,
+      annotation: `Calculate complement diff = target (${target}) - nums[${i}] (${val}) = ${complement}.`,
+      context: `diff = target - num // diff = ${complement}`,
       operationCount: i + 1,
       scalarVars: [
         { name: "target", value: target },
@@ -731,7 +731,7 @@ export function generateTwoSumHashMapTrace(initialNums = [2, 7, 11, 15], target 
       hashMapData: mapEntries.map((e) => ({ ...e, state: "default" })),
     });
 
-    // Step: Tra cứu map.containsKey(complement)
+    // Step: Check seen hash map
     const foundEntry = mapEntries.find((e) => e.key === complement);
     if (foundEntry) {
       // Map lookup MATCHED!
@@ -745,9 +745,9 @@ export function generateTwoSumHashMapTrace(initialNums = [2, 7, 11, 15], target 
         matchedIndices: [],
         pointers: { i },
         activeLine: 64,
-        comparison: `map.containsKey(${complement}) == true`,
-        annotation: `Line 64: Tra cứu Hash Map thấy khóa ${complement} (vàng) đã tồn tại với chỉ số index = ${foundEntry.value}!`,
-        context: `if (map.containsKey(complement)) // Tìm thấy key ${complement}!`,
+        comparison: `diff ${complement} found in seen hash map!`,
+        annotation: `Found complement ${complement} in seen hash map at index ${foundEntry.value}! Solution pair is [${foundEntry.value}, ${i}].`,
+        context: `if diff in seen: // Found key ${complement} at index ${foundEntry.value}!`,
         operationCount: i + 1,
         scalarVars: [
           { name: "target", value: target },
@@ -759,7 +759,7 @@ export function generateTwoSumHashMapTrace(initialNums = [2, 7, 11, 15], target 
         })),
       });
 
-      // Step: Trả về kết quả
+      // Step: Return solution indices
       const resIndices = [foundEntry.value, i];
       steps.push({
         stepIndex: steps.length,
@@ -771,9 +771,9 @@ export function generateTwoSumHashMapTrace(initialNums = [2, 7, 11, 15], target 
         matchedIndices: resIndices,
         pointers: {},
         activeLine: 65,
-        comparison: `✓ return new int[] {${foundEntry.value}, ${i}}`,
-        annotation: `Line 65: Hai ô nghiệm [${foundEntry.value}] và [${i}] sáng Xanh Lá Neon! Tìm thấy nghiệm [${foundEntry.value}, ${i}].`,
-        context: `return new int[] { map.get(complement), i }; // [${foundEntry.value}, ${i}]`,
+        comparison: `✓ Return indices [${foundEntry.value}, ${i}]`,
+        annotation: `Pair matched: nums[${foundEntry.value}] (${complement}) + nums[${i}] (${val}) == ${target}. Return [${foundEntry.value}, ${i}].`,
+        context: `return [seen[diff], i] // [${foundEntry.value}, ${i}]`,
         operationCount: i + 1,
         scalarVars: [
           { name: "target", value: target },
@@ -788,7 +788,7 @@ export function generateTwoSumHashMapTrace(initialNums = [2, 7, 11, 15], target 
 
       return steps;
     } else {
-      // Chưa có trong map
+      // Complement not yet in map
       steps.push({
         stepIndex: steps.length,
         items: cloneItems(),
@@ -799,9 +799,9 @@ export function generateTwoSumHashMapTrace(initialNums = [2, 7, 11, 15], target 
         matchedIndices: [],
         pointers: { i },
         activeLine: 64,
-        comparison: `map.containsKey(${complement}) == false`,
-        annotation: `Line 64: Khóa ${complement} chưa có trong Hash Map. Chuẩn bị đưa nums[${i}] = ${val} vào Map.`,
-        context: `if (map.containsKey(complement)) // Chưa có key ${complement}`,
+        comparison: `diff ${complement} not in seen map`,
+        annotation: `Complement diff = ${complement} is not yet in seen hash map. Store current number.`,
+        context: `if diff in seen: // Not found, continue`,
         operationCount: i + 1,
         scalarVars: [
           { name: "target", value: target },
@@ -810,7 +810,7 @@ export function generateTwoSumHashMapTrace(initialNums = [2, 7, 11, 15], target 
         hashMapData: mapEntries.map((e) => ({ ...e, state: "default" })),
       });
 
-      // Step: map.put(nums[i], i)
+      // Step: seen[num] = i
       mapEntries.push({ key: val, value: i, state: "added" });
       steps.push({
         stepIndex: steps.length,
@@ -822,9 +822,9 @@ export function generateTwoSumHashMapTrace(initialNums = [2, 7, 11, 15], target 
         matchedIndices: [],
         pointers: { i },
         activeLine: 67,
-        comparison: `map.put(${val}, ${i})`,
-        annotation: `Line 67: Thêm cặp { Khóa: ${val} → Giá trị: ${i} } vào Hash Map (sáng Xanh Lá).`,
-        context: `map.put(nums[i], i); // map[${val}] = ${i}`,
+        comparison: `seen[${val}] = ${i}`,
+        annotation: `Insert seen[${val}] = ${i} into hash map for subsequent lookups.`,
+        context: `seen[num] = i // seen[${val}] = ${i}`,
         operationCount: i + 1,
         scalarVars: [
           { name: "target", value: target },
@@ -840,6 +840,110 @@ export function generateTwoSumHashMapTrace(initialNums = [2, 7, 11, 15], target 
 
   return steps;
 }
+
+/**
+ * Generate visual trace for Two-Pass Hash Table approach:
+ * Pass 1: populate entire map. Pass 2: check if complement exists.
+ */
+export function generateTwoSumTwoPassTrace(initialNums = [2, 7, 11, 15], target = 9) {
+  const nums = Array.isArray(initialNums) && initialNums.length ? initialNums : [2, 7, 11, 15];
+  const items = nums.map((val, idx) => ({ id: idx, value: val, pos: idx }));
+  const cloneItems = () => items.map((it) => ({ ...it }));
+  const steps = [];
+  const mapEntries = [];
+
+  // Pass 1: Build map
+  steps.push({
+    stepIndex: 0,
+    items: cloneItems(),
+    nums: [...nums],
+    type: "IDLE",
+    status: "idle",
+    activeIndices: [],
+    matchedIndices: [],
+    pointers: {},
+    activeLine: 3,
+    comparison: "Pass 1: Initialize Hash Map",
+    annotation: `Pass 1: Khởi tạo hash map để lưu toàn bộ các phần tử và chỉ số của chúng.`,
+    context: `hashmap = {}`,
+    operationCount: 0,
+    scalarVars: [{ name: "target", value: target }],
+    hashMapData: [],
+  });
+
+  for (let i = 0; i < nums.length; i++) {
+    const val = nums[i];
+    mapEntries.push({ key: val, value: i, state: "added" });
+    steps.push({
+      stepIndex: steps.length,
+      items: cloneItems(),
+      nums: [...nums],
+      type: "MAP_PUT",
+      status: "update",
+      activeIndices: [i],
+      matchedIndices: [],
+      pointers: { i },
+      activeLine: 5,
+      comparison: `Pass 1: hashmap[${val}] = ${i}`,
+      annotation: `Pass 1 (i = ${i}): Lưu phần tử nums[${i}] = ${val} vào hash map với chỉ số ${i}.`,
+      context: `hashmap[nums[i]] = i; // map[${val}] = ${i}`,
+      operationCount: i + 1,
+      scalarVars: [{ name: "target", value: target }, { name: "i", value: i }],
+      hashMapData: mapEntries.map((e) => ({ ...e, state: e.key === val ? "added" : "default" })),
+    });
+  }
+
+  // Pass 2: Search for complement
+  for (let i = 0; i < nums.length; i++) {
+    const val = nums[i];
+    const complement = target - val;
+
+    steps.push({
+      stepIndex: steps.length,
+      items: cloneItems(),
+      nums: [...nums],
+      type: "COMPARE",
+      status: "compare",
+      activeIndices: [i],
+      matchedIndices: [],
+      pointers: { i },
+      activeLine: 7,
+      comparison: `Pass 2: complement = ${target} - ${val} = ${complement}`,
+      annotation: `Pass 2 (i = ${i}): Tìm số bù complement = ${target} - nums[${i}] (${val}) = ${complement}.`,
+      context: `complement = target - nums[i]; // ${complement}`,
+      operationCount: nums.length + i + 1,
+      scalarVars: [{ name: "target", value: target }, { name: "i", value: i }, { name: "complement", value: complement }],
+      hashMapData: mapEntries.map((e) => ({ ...e, state: e.key === complement ? "active" : "default" })),
+    });
+
+    const foundEntry = mapEntries.find((e) => e.key === complement && e.value !== i);
+    if (foundEntry) {
+      const res = [i, foundEntry.value];
+      steps.push({
+        stepIndex: steps.length,
+        items: cloneItems(),
+        nums: [...nums],
+        type: "RESULT_PRODUCE",
+        status: "matched",
+        activeIndices: res,
+        matchedIndices: res,
+        pointers: {},
+        activeLine: 9,
+        comparison: `✓ return [${i}, ${foundEntry.value}]`,
+        annotation: `Pass 2: Tìm thấy complement ${complement} tại chỉ số ${foundEntry.value} khác i = ${i}. Nghiệm là [${i}, ${foundEntry.value}].`,
+        context: `return [i, hashmap[complement]]; // [${i}, ${foundEntry.value}]`,
+        operationCount: nums.length + i + 2,
+        scalarVars: [{ name: "target", value: target }, { name: "result", value: `[${i}, ${foundEntry.value}]` }],
+        hashMapData: mapEntries.map((e) => ({ ...e, state: e.key === complement ? "matched" : "default" })),
+        resultData: { label: "result", value: `[${i}, ${foundEntry.value}]` },
+      });
+      return steps;
+    }
+  }
+
+  return steps;
+}
+
 
 /**
  * Generate high-fidelity visual trace for Valid Anagram using Frequency Table (Bảng đếm tần suất).
@@ -874,8 +978,8 @@ export function generateAnagramTrace(s = "anagram", t = "nagaram") {
     matchedIndices: [],
     pointers: {},
     activeLine: 88,
-    comparison: "Khởi tạo bảng đếm tần suất",
-    annotation: `Khởi tạo chuỗi s="${s}", t="${t}" và bảng đếm tần suất counts cho các ký tự [${uniqueChars.join(", ")}].`,
+    comparison: "Initialize frequency table",
+    annotation: `Initialize chuỗi s="${s}", t="${t}" and character frequency table counts cho các ký tự [${uniqueChars.join(", ")}].`,
     context: `int[] counts = new int[26];`,
     operationCount: 0,
     scalarVars: [
@@ -987,8 +1091,8 @@ export function generateAstExplanation(step, rawCode = "", variables = [], point
   // 2. Array initialization
   if (code.includes("int[] nums") || (code.includes("nums") && code.includes("{"))) {
     return {
-      title: "Khởi tạo mảng dữ liệu",
-      explanation: `Khởi tạo mảng số nguyên đầu vào nums để chuẩn bị thực hiện giải thuật.`,
+      title: "Initialize data array",
+      explanation: `Initialize mảng số nguyên đầu vào nums để chuẩn bị thực hiện giải thuật.`,
       type: "IDLE",
       operatorInfo: null,
     };
@@ -999,7 +1103,7 @@ export function generateAstExplanation(step, rawCode = "", variables = [], point
     const targetVar = variables.find((v) => v.variableName === "target" || v.name === "target");
     const tVal = targetVar ? (targetVar.visualValue ?? targetVar.runtimeValue) : "target";
     return {
-      title: `Khởi tạo mục tiêu target = ${tVal}`,
+      title: `Initialize mục tiêu target = ${tVal}`,
       explanation: `Thiết lập giá trị mục tiêu target = ${tVal}. Thuật toán cần tìm nghiệm thỏa mãn giá trị này.`,
       type: "IDLE",
       operatorInfo: null,
@@ -1011,13 +1115,13 @@ export function generateAstExplanation(step, rawCode = "", variables = [], point
     if (code.includes("-1")) {
       return {
         title: "Không tìm thấy nghiệm",
-        explanation: `Đã duyệt hết các trường hợp mà không tìm thấy kết quả thỏa mãn. Trả về [-1, -1].`,
+        explanation: `Đã duyệt hết các trường hợp mà không tìm thấy kết quả thỏa mãn. Return [-1, -1].`,
         type: "COMPLETE",
         operatorInfo: null,
       };
     }
     return {
-      title: "Trả về kết quả tìm được",
+      title: "Return kết quả tìm được",
       explanation: `Đã tìm thấy nghiệm thỏa mãn điều kiện bài toán! Hàm trả về kết quả.`,
       type: "MATCHED",
       operatorInfo: null,
