@@ -1,0 +1,352 @@
+/* Submission Celebration Modal & Confetti Effects */
+
+.celebration-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 280ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.celebration-overlay.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Fullscreen Confetti Canvas */
+.celebration-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Celebration Card */
+.celebration-card {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 480px;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 20px;
+  padding: 32px 28px 24px;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transform: scale(0.85) translateY(20px);
+  opacity: 0;
+  transition: transform 380ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 300ms ease;
+}
+
+.celebration-card.is-entered {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
+
+.celebration-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+
+.celebration-close-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+/* Animated Hero Checkmark */
+.celebration-hero-icon {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.celebration-glow-ring {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.35) 0%, rgba(16, 185, 129, 0) 70%);
+  animation: pulseGlow 2s infinite ease-in-out;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}
+
+.celebration-icon-circle {
+  position: relative;
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.45), 0 0 0 4px #ecfdf5;
+  animation: popIn 450ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes popIn {
+  0% {
+    transform: scale(0);
+  }
+  70% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.celebration-svg-check {
+  animation: drawCheck 400ms 200ms ease forwards;
+}
+
+/* Accepted Pill */
+.celebration-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 14px;
+  background: #ecfdf5;
+  border: 1.5px solid #10b981;
+  border-radius: 999px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 800;
+  color: #047857;
+  letter-spacing: 0.08em;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.12);
+  margin-bottom: 12px;
+}
+
+.sparkle-glyph {
+  font-size: 12px;
+  color: #059669;
+}
+
+.celebration-heading {
+  margin: 0 0 6px;
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.celebration-subtext {
+  margin: 0 0 20px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #475569;
+}
+
+.celebration-subtext strong {
+  color: #0f172a;
+}
+
+/* Metrics Grid */
+.celebration-metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.celebration-metric-box {
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  text-align: left;
+}
+
+.celebration-metric-box--runtime {
+  border-left: 4px solid #10b981;
+}
+
+.celebration-metric-box--memory {
+  border-left: 4px solid #2563eb;
+}
+
+.metric-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.metric-label-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.metric-icon {
+  font-size: 13px;
+}
+
+.metric-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.metric-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: #0f172a;
+}
+
+.metric-val strong {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.metric-progress-wrapper {
+  width: 100%;
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.metric-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.metric-progress-fill--runtime {
+  background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+}
+
+.metric-progress-fill--memory {
+  background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+}
+
+.metric-footer-text {
+  font-size: 11.5px;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.metric-footer-text strong {
+  color: #0f172a;
+}
+
+/* Actions */
+.celebration-actions-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.celebration-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 180ms ease;
+  border: none;
+}
+
+.celebration-btn--solution {
+  background: #10b981;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+
+.celebration-btn--solution:hover {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
+}
+
+.celebration-btn--submissions {
+  background: #ffffff;
+  color: #1e293b;
+  border: 1.5px solid #cbd5e1;
+}
+
+.celebration-btn--submissions:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #0f172a;
+  transform: translateY(-1px);
+}
+
+.celebration-continue-btn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: color 150ms ease;
+}
+
+.celebration-continue-btn:hover {
+  color: #0f172a;
+  text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  .celebration-card {
+    padding: 24px 18px 20px;
+  }
+  .celebration-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+}

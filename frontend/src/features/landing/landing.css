@@ -1,0 +1,1129 @@
+/* ==========================================================================
+   AlgoViz Landing Page - Kaggle Authentic Light Architecture
+   Enhanced with 60 FPS Living Animations:
+   1. Monospace Kicker Vertical Slot-Machine Rotator
+   2. 3D Mousemove Parallax on Mountain Layers via CSS Custom Properties
+   3. Algorithmic Constellation Pulse Nodes & Dash Signal Traversal
+   4. Auto-Cycling Live Floating Preview Card with Solid Background & Inner Content Sliding
+   5. Infinite Continuous Marquee Slider for Partner Logos
+   ========================================================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;600&display=swap");
+
+.kaggle-landing {
+  min-height: 100vh;
+  width: 100%;
+  background-color: #ffffff;
+  color: #202124;
+  font-family: 'Google Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+.kaggle-landing *,
+.kaggle-landing *::before,
+.kaggle-landing *::after {
+  box-sizing: border-box;
+}
+
+/* ==========================================================================
+   1. TOP NAVIGATION BAR (KAGGLE STYLE)
+   ========================================================================== */
+.kaggle-header {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 68px;
+  background-color: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid #dadce0;
+  z-index: 120;
+  box-shadow: 0 1px 3px rgba(32, 33, 36, 0.04);
+  animation: fadeInDown 0.4s ease-out;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.kaggle-header-inner {
+  max-width: 1440px;
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kaggle-header-left {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+/* Lowercase heavy brand logo: "algoviz" */
+.kaggle-brand {
+  font-size: 26px;
+  font-weight: 700;
+  color: #202124;
+  text-decoration: none;
+  letter-spacing: -0.6px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  transition: opacity 180ms cubic-bezier(.4, 0, .2, 1), transform 180ms cubic-bezier(.4, 0, .2, 1);
+}
+
+.kaggle-brand:hover {
+  opacity: 0.85;
+  transform: scale(0.98);
+}
+
+.kaggle-nav-menu {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.kaggle-nav-link {
+  font-size: 14px;
+  font-weight: 500;
+  color: #3c4043;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 4px;
+  position: relative;
+  transition: color 180ms cubic-bezier(.4, 0, .2, 1);
+}
+
+.kaggle-nav-link::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 4px;
+  right: 4px;
+  height: 2px;
+  background-color: #202124;
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 200ms cubic-bezier(.4, 0, .2, 1);
+}
+
+.kaggle-nav-link:hover {
+  color: #202124;
+}
+
+.kaggle-nav-link:hover::after {
+  transform: scaleX(1);
+}
+
+.kaggle-chevron-down {
+  stroke: #5f6368;
+  margin-top: 1px;
+  transition: transform 180ms cubic-bezier(.4, 0, .2, 1), stroke 180ms cubic-bezier(.4, 0, .2, 1);
+}
+
+.kaggle-nav-dropdown-trigger:hover .kaggle-chevron-down {
+  stroke: #202124;
+  transform: translateY(2px);
+}
+
+.kaggle-nav-more {
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  font-weight: 700;
+  color: #5f6368;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  line-height: 1;
+  letter-spacing: 1px;
+  transition: background-color 180ms cubic-bezier(.4, 0, .2, 1), color 180ms cubic-bezier(.4, 0, .2, 1);
+}
+
+.kaggle-nav-more:hover {
+  color: #202124;
+  background-color: #f1f3f4;
+}
+
+.kaggle-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Circular search icon button */
+.kaggle-search-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid #dadce0;
+  background: #ffffff;
+  color: #5f6368;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.kaggle-search-btn:hover {
+  background-color: #f8f9fa;
+  border-color: #c4c7c5;
+  color: #202124;
+  transform: scale(1.05);
+}
+
+/* Clean text Login button */
+.kaggle-login-btn {
+  font-size: 14px;
+  font-weight: 500;
+  color: #202124;
+  text-decoration: none;
+  padding: 9px 18px;
+  border-radius: 20px;
+  transition: background-color 180ms cubic-bezier(.4, 0, .2, 1), transform 150ms cubic-bezier(.4, 0, .2, 1);
+}
+
+.kaggle-login-btn:hover {
+  background-color: #f1f3f4;
+}
+
+.kaggle-login-btn:active {
+  transform: scale(0.97);
+}
+
+/* Charcoal solid Sign Up pill button */
+.kaggle-signup-btn {
+  font-size: 14px;
+  font-weight: 500;
+  color: #ffffff;
+  background-color: #202124;
+  text-decoration: none;
+  padding: 9px 22px;
+  border-radius: 24px;
+  transition: background-color 180ms cubic-bezier(.4, 0, .2, 1), transform 150ms cubic-bezier(.4, 0, .2, 1), box-shadow 180ms cubic-bezier(.4, 0, .2, 1);
+}
+
+.kaggle-signup-btn:hover {
+  background-color: #3c4043;
+  box-shadow: 0 2px 8px rgba(32, 33, 36, 0.25);
+  transform: translateY(-1px);
+}
+
+.kaggle-signup-btn:active {
+  transform: scale(0.97);
+}
+
+/* ==========================================================================
+   2. HERO DISPLAY SECTION
+   ========================================================================== */
+.kaggle-hero-section {
+  padding-top: 56px;
+  padding-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.kaggle-hero-content {
+  text-align: center;
+  max-width: 920px;
+  padding: 0 24px;
+  margin: 0 auto;
+}
+
+/* Animated Kicker with rolling slot-machine rotator */
+.kaggle-hero-kicker {
+  font-family: 'Roboto Mono', 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 14px;
+  font-weight: 400;
+  color: #5f6368;
+  letter-spacing: 0.2px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  animation: fadeInUp 280ms ease-out 0.04s both;
+}
+
+.kaggle-kicker-rotator {
+  display: inline-block;
+  height: 1.5em;
+  overflow: hidden;
+  vertical-align: top;
+  text-align: left;
+  position: relative;
+}
+
+.kaggle-kicker-track {
+  display: flex;
+  flex-direction: column;
+  transition: transform 300ms cubic-bezier(.4, 0, .2, 1);
+  will-change: transform;
+}
+
+.kaggle-kicker-item {
+  height: 1.5em;
+  line-height: 1.5em;
+  font-weight: 600;
+  color: #202124;
+  opacity: 0.7;
+  transition: opacity 200ms cubic-bezier(.4, 0, .2, 1);
+  white-space: nowrap;
+}
+
+.kaggle-kicker-item.is-active {
+  opacity: 1;
+}
+
+.kaggle-hero-title {
+  font-size: clamp(34px, 4.4vw, 54px);
+  font-weight: 500;
+  color: #202124;
+  letter-spacing: -0.02em;
+  line-height: 1.16;
+  margin: 0 0 20px;
+  animation: fadeInUp 280ms ease-out 0.08s both;
+}
+
+.kaggle-hero-subtitle {
+  font-size: clamp(16px, 1.5vw, 19px);
+  font-weight: 400;
+  color: #5f6368;
+  line-height: 1.55;
+  max-width: 700px;
+  margin: 0 auto 48px;
+  animation: fadeInUp 280ms ease-out 0.14s both;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
+   3. PANORAMIC MOUNTAIN & ANIMATED CONSTELLATION MESH
+   ========================================================================== */
+.kaggle-panorama-container {
+  --mouse-x: 0;
+  --mouse-y: 0;
+  width: 100%;
+  max-width: 100%;
+  position: relative;
+  overflow: hidden;
+  margin: 0 auto;
+  line-height: 0;
+  background-color: #b5b0a5;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.05);
+  cursor: crosshair;
+  animation: fadeInScale 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.22s both;
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.kaggle-panorama-svg {
+  width: 100%;
+  height: clamp(300px, 28vw, 440px);
+  display: block;
+  object-fit: cover;
+  user-select: none;
+}
+
+/* Sun Flare subtle breathing shimmer */
+.kaggle-sun-glow-animated {
+  animation: sunBreath 6s ease-in-out infinite alternate;
+  transform-origin: 90% 40%;
+}
+
+@keyframes sunBreath {
+  0% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Parallax Layer Transitions via CSS Custom Properties */
+.kaggle-parallax-layer-mountain {
+  transform: translate3d(calc(var(--mouse-x, 0) * 6px), calc(var(--mouse-y, 0) * 4px), 0);
+  transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.kaggle-parallax-layer-constellation {
+  transform: translate3d(calc(var(--mouse-x, 0) * 14px), calc(var(--mouse-y, 0) * 8px), 0);
+  transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+/* Constellation Nodes Pulsing Animation */
+.kaggle-pulse-node {
+  animation: nodePulse 3.6s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.node-1 { animation-delay: 0s; }
+.node-peak { animation-delay: 0.5s; }
+.node-2 { animation-delay: 1.1s; }
+.node-3 { animation-delay: 1.7s; }
+.node-4 { animation-delay: 2.3s; }
+.node-5 { animation-delay: 2.8s; }
+.node-gold-1 { animation-delay: 0.8s; }
+.node-gold-2 { animation-delay: 1.9s; }
+
+@keyframes nodePulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 1;
+    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.95));
+  }
+}
+
+/* Animated Flow Signal on Graph Edges (Traversing Algorithm Path) */
+.kaggle-constellation-flow {
+  stroke-dasharray: 8 14;
+  animation: traceFlow 3.5s linear infinite;
+}
+
+.flow-1 { animation-duration: 3.2s; }
+.flow-2 { animation-duration: 4s; animation-direction: reverse; }
+.flow-3 { animation-duration: 3.6s; }
+.flow-4 { animation-duration: 4.8s; }
+
+@keyframes traceFlow {
+  from {
+    stroke-dashoffset: 44;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Vector Arrow Gentle Bounce */
+.kaggle-vector-arrow {
+  animation: arrowGlide 2.8s ease-in-out infinite alternate;
+}
+
+.arrow-1 { animation-delay: 0.2s; }
+.arrow-2 { animation-delay: 1.2s; }
+
+@keyframes arrowGlide {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(2px, -3px);
+  }
+}
+
+/* ==========================================================================
+   FLOATING PREVIEW CARD (SOLID WHITE WITH INNER CONTENT SLIDING)
+   ========================================================================== */
+.kaggle-floating-card {
+  position: absolute;
+  right: clamp(24px, 14vw, 240px);
+  bottom: clamp(20px, 3.5vw, 36px);
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 14px 20px 18px;
+  min-width: 270px;
+  max-width: 350px;
+  text-decoration: none;
+  box-shadow: 0 12px 32px -4px rgba(32, 33, 36, 0.16), 0 4px 12px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(218, 220, 224, 0.7);
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+  opacity: 1;
+  transform: translate3d(
+    calc(var(--mouse-x, 0) * 18px + var(--jitter-x, 0px)),
+    calc(var(--mouse-y, 0) * 10px + var(--jitter-y, 0px)),
+    0
+  ) scale(1);
+  transition:
+    opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.25s ease;
+  line-height: normal;
+  overflow: hidden;
+  will-change: opacity, transform;
+  cursor: pointer;
+}
+
+.kaggle-floating-card.is-spawning {
+  opacity: 0;
+  transform: translate3d(
+    calc(var(--mouse-x, 0) * 18px + var(--jitter-x, 0px)),
+    calc(var(--mouse-y, 0) * 10px + var(--jitter-y, 0px) + 8px),
+    0
+  ) scale(0.92);
+  pointer-events: none;
+}
+
+.kaggle-floating-card.has-spawned {
+  animation: cardSpawnGlow 0.85s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes cardSpawnGlow {
+  0% {
+    box-shadow: 0 0 0 5px rgba(26, 115, 232, 0.28), 0 12px 32px -4px rgba(32, 33, 36, 0.16);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(26, 115, 232, 0), 0 12px 32px -4px rgba(32, 33, 36, 0.16), 0 4px 12px rgba(0, 0, 0, 0.06);
+  }
+}
+
+.kaggle-floating-card:hover {
+  transform: translate3d(
+    calc(var(--mouse-x, 0) * 18px + var(--jitter-x, 0px)),
+    calc(var(--mouse-y, 0) * 10px + var(--jitter-y, 0px) - 4px),
+    0
+  ) scale(1.02) !important;
+  box-shadow: 0 18px 40px -4px rgba(32, 33, 36, 0.24), 0 8px 18px rgba(0, 0, 0, 0.08);
+}
+
+.kaggle-floating-card:hover .kaggle-card-progress-fill {
+  animation-play-state: paused !important;
+}
+
+.kaggle-card-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.kaggle-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.kaggle-card-tag-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.kaggle-card-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 12px;
+  letter-spacing: 0.1px;
+}
+
+/* Tag Badge color schemes */
+.tag-coral {
+  background-color: #feebe8;
+  color: #c5221f;
+}
+
+.tag-green {
+  background-color: #e6f4ea;
+  color: #137333;
+}
+
+.tag-blue {
+  background-color: #e8f0fe;
+  color: #1a73e8;
+}
+
+.tag-amber {
+  background-color: #fef7e0;
+  color: #b06000;
+}
+
+/* Pulsing Emerald Live Indicator Dot */
+.kaggle-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: currentColor;
+  position: relative;
+  display: inline-block;
+}
+
+.kaggle-live-dot::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background-color: currentColor;
+  opacity: 0.5;
+  animation: liveRipple 2s infinite cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+@keyframes liveRipple {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2.8);
+    opacity: 0;
+  }
+}
+
+.kaggle-card-meta {
+  font-size: 12px;
+  color: #80868b;
+  font-weight: 400;
+}
+
+.kaggle-card-title {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #202124;
+  line-height: 1.35;
+  transition: color 0.15s ease;
+}
+
+.kaggle-floating-card:hover .kaggle-card-title {
+  color: #0083bf;
+}
+
+/* Hairline Progress Fill indicating time until next featured item */
+.kaggle-card-progress-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2.5px;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.kaggle-card-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1a73e8, #0083bf);
+  width: 0%;
+  animation: cardProgress 4.5s linear forwards;
+}
+
+@keyframes cardProgress {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+/* ==========================================================================
+   4. "TRUSTED BY TEAMS AT" INFINITE CONTINUOUS MARQUEE BAR
+   ========================================================================== */
+.kaggle-trusted-bar {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 48px 0 64px;
+  text-align: center;
+  overflow: hidden;
+}
+
+.kaggle-trusted-caption {
+  font-family: 'Roboto Mono', 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 13px;
+  font-weight: 400;
+  color: #5f6368;
+  letter-spacing: 0.3px;
+  margin-bottom: 28px;
+}
+
+/* Infinite Marquee Wrapper with soft lateral gradient fade masks */
+.kaggle-marquee-wrapper {
+  overflow: hidden;
+  width: 100%;
+  position: relative;
+  mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+}
+
+.kaggle-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marqueeContinuous 38s linear infinite;
+  will-change: transform;
+}
+
+.kaggle-marquee-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes marqueeContinuous {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(calc(-100% / 3));
+  }
+}
+
+.kaggle-partner-set {
+  display: flex;
+  align-items: center;
+  gap: clamp(32px, 5vw, 64px);
+  padding: 0 clamp(16px, 2.5vw, 32px);
+}
+
+.kaggle-partner-logo {
+  height: 28px;
+  width: auto;
+  color: #80868b;
+  opacity: 0.85;
+  transition: color 0.2s ease, opacity 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.kaggle-partner-logo:hover {
+  color: #202124;
+  opacity: 1;
+  transform: translateY(-2px) scale(1.05);
+}
+
+/* ==========================================================================
+   5. THREE PILLARS / FEATURES SECTION
+   ========================================================================== */
+.kaggle-pillars-section {
+  background-color: #f8f9fa;
+  border-top: 1px solid #dadce0;
+  border-bottom: 1px solid #dadce0;
+  padding: 80px 24px;
+}
+
+.kaggle-section-container {
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+.kaggle-pillars-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 32px;
+}
+
+.kaggle-pillar-card {
+  background-color: #ffffff;
+  border: 1px solid #dadce0;
+  border-radius: 16px;
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 220ms cubic-bezier(.4, 0, .2, 1), box-shadow 220ms cubic-bezier(.4, 0, .2, 1), border-color 180ms cubic-bezier(.4, 0, .2, 1);
+  animation: avSlideUp 280ms ease-out backwards;
+}
+
+.kaggle-pillar-card:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+.kaggle-pillar-card:nth-child(2) {
+  animation-delay: 0.10s;
+}
+
+.kaggle-pillar-card:nth-child(3) {
+  animation-delay: 0.15s;
+}
+
+.kaggle-pillar-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 14px 30px rgba(32, 33, 36, 0.08);
+  border-color: #bdc1c6;
+}
+
+.kaggle-pillar-icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.kaggle-pillar-card:hover .kaggle-pillar-icon-box {
+  transform: scale(1.08) rotate(2deg);
+}
+
+.kaggle-pillar-icon--visualizer {
+  background-color: #e8f0fe;
+  color: #1a73e8;
+}
+
+.kaggle-pillar-icon--benchmark {
+  background-color: #e6f4ea;
+  color: #137333;
+}
+
+.kaggle-pillar-icon--learn {
+  background-color: #fef7e0;
+  color: #b06000;
+}
+
+.kaggle-pillar-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #202124;
+  margin: 0 0 12px;
+  letter-spacing: -0.3px;
+}
+
+.kaggle-pillar-desc {
+  font-size: 14.5px;
+  color: #5f6368;
+  line-height: 1.6;
+  margin: 0 0 24px;
+  flex-grow: 1;
+}
+
+.kaggle-pillar-link {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0083bf;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.15s ease, gap 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.kaggle-pillar-link:hover {
+  color: #00608c;
+  gap: 10px;
+}
+
+.kaggle-arrow {
+  font-size: 16px;
+  line-height: 1;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.kaggle-pillar-link:hover .kaggle-arrow {
+  transform: translateX(3px);
+}
+
+/* ==========================================================================
+   6. CALL TO ACTION SECTION
+   ========================================================================== */
+.kaggle-cta-section {
+  padding: 80px 24px;
+  background-color: #ffffff;
+}
+
+.kaggle-cta-card {
+  max-width: 900px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.kaggle-cta-heading {
+  font-size: clamp(26px, 3.2vw, 38px);
+  font-weight: 500;
+  color: #202124;
+  letter-spacing: -0.5px;
+  margin: 0 0 28px;
+  line-height: 1.25;
+}
+
+.kaggle-cta-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.kaggle-btn-dark {
+  background-color: #202124;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 12px 28px;
+  border-radius: 28px;
+  text-decoration: none;
+  transition: background-color 0.15s ease, transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s ease;
+}
+
+.kaggle-btn-dark:hover {
+  background-color: #3c4043;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(32, 33, 36, 0.2);
+}
+
+.kaggle-btn-dark:active {
+  transform: scale(0.98);
+}
+
+.kaggle-btn-outline {
+  background-color: #ffffff;
+  color: #202124;
+  border: 1px solid #dadce0;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 12px 28px;
+  border-radius: 28px;
+  text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.kaggle-btn-outline:hover {
+  background-color: #f8f9fa;
+  border-color: #c4c7c5;
+  transform: translateY(-2px);
+}
+
+/* ==========================================================================
+   7. FOOTER
+   ========================================================================== */
+.kaggle-footer {
+  border-top: 1px solid #dadce0;
+  padding: 32px 24px;
+  background-color: #ffffff;
+}
+
+.kaggle-footer-inner {
+  max-width: 1440px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.kaggle-footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.kaggle-footer-logo {
+  font-size: 18px;
+  font-weight: 700;
+  color: #202124;
+  letter-spacing: -0.4px;
+}
+
+.kaggle-footer-copy {
+  font-size: 13px;
+  color: #80868b;
+}
+
+.kaggle-footer-links {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.kaggle-footer-links a {
+  font-size: 13px;
+  color: #5f6368;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.kaggle-footer-links a:hover {
+  color: #202124;
+}
+
+/* ==========================================================================
+   8. COOKIE CONSENT BANNER (PINNED AT BOTTOM)
+   ========================================================================== */
+.kaggle-cookie-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  background-color: #202124;
+  color: #e8eaed;
+  z-index: 999;
+  padding: 12px 24px;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.18);
+  animation: slideUpCookie 0.3s ease-out;
+}
+
+@keyframes slideUpCookie {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.kaggle-cookie-content {
+  max-width: 1440px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.kaggle-cookie-text {
+  font-size: 12.5px;
+  color: #e8eaed;
+  margin: 0;
+  line-height: 1.45;
+  flex: 1;
+  min-width: 280px;
+}
+
+.kaggle-cookie-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.kaggle-cookie-link {
+  font-size: 12.5px;
+  color: #8ab4f8;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.kaggle-cookie-link:hover {
+  text-decoration: underline;
+}
+
+.kaggle-cookie-dismiss {
+  background-color: #3c4043;
+  color: #ffffff;
+  border: 1px solid #5f6368;
+  font-size: 12.5px;
+  font-weight: 500;
+  border-radius: 16px;
+  padding: 6px 16px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.kaggle-cookie-dismiss:hover {
+  background-color: #4f5358;
+}
+
+/* ==========================================================================
+   9. RESPONSIVE MEDIA QUERIES
+   ========================================================================== */
+@media (max-width: 900px) {
+  .kaggle-header-inner {
+    padding: 0 16px;
+  }
+
+  .kaggle-nav-menu {
+    display: none;
+  }
+
+  .kaggle-hero-section {
+    padding-top: 40px;
+  }
+
+  .kaggle-floating-card {
+    right: 20px;
+    bottom: 20px;
+    min-width: 230px;
+    padding: 12px 16px 14px;
+  }
+
+  .kaggle-trusted-bar {
+    padding: 36px 0 48px;
+  }
+}
+
+@media (max-width: 600px) {
+  .kaggle-header {
+    height: 60px;
+  }
+
+  .kaggle-login-btn {
+    padding: 6px 12px;
+  }
+
+  .kaggle-signup-btn {
+    padding: 6px 16px;
+  }
+
+  .kaggle-hero-title {
+    font-size: 28px;
+  }
+
+  .kaggle-hero-subtitle {
+    font-size: 15px;
+    margin-bottom: 32px;
+  }
+
+  .kaggle-floating-card {
+    position: static !important;
+    margin: 16px auto 0 !important;
+    width: 90% !important;
+    transform: none !important;
+  }
+
+  .kaggle-footer-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .kaggle-marquee-track,
+  .kaggle-pulse-node,
+  .kaggle-constellation-flow,
+  .kaggle-sun-glow-animated,
+  .kaggle-vector-arrow,
+  .kaggle-live-dot::after {
+    animation: none !important;
+  }
+  .kaggle-parallax-layer-mountain,
+  .kaggle-parallax-layer-constellation,
+  .kaggle-floating-card,
+  .kaggle-kicker-track {
+    transition: none !important;
+  }
+}
