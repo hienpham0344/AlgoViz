@@ -1,22 +1,68 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
+@import "tailwindcss";
 @import "./components/scroll-panes.css";
 
 :root {
-  --palette-deep: #051923;
-  --palette-deep-rgb: 22 66 91;
-  --palette-blue: #00a6fb;
-  --palette-blue-rgb: 47 102 144;
-  --palette-steel: #3a7ca5;
-  --palette-steel-rgb: 58 124 165;
-  --palette-surface: #d9dcd6;
-  --palette-surface-rgb: 217 220 214;
-  --palette-sky: #81c3d7;
-  --palette-sky-rgb: 129 195 215;
-  --palette-danger: #bf0603;
-  --palette-danger-rgb: 191 6 3;
+  /* Surface & Background (Kaggle Light Theme) */
+  --bg-app: #ffffff;
+  --bg-surface: #f8f9fa;
+  --bg-surface-raised: #ffffff;
+  --bg-surface-active: #f1f3f4;
+  
+  /* Borders & Dividers (Clean Hairlines) */
+  --border-subtle: #e8eaed;
+  --border-muted: #dadce0;
+  --border-strong: #bdc1c6;
+
+  /* Typography (High Contrast Charcoal & Muted Slate) */
+  --text-primary: #202124;
+  --text-secondary: #5f6368;
+  --text-muted: #9aa0a6;
+  --text-inverse: #ffffff;
+
+  /* Accent & Action (Kaggle Blue) */
+  --accent-primary: #20beff;
+  --accent-primary-hover: #0083bf;
+  --accent-cyan: #20beff;
+  --accent-purple: #7c3aed;
+
+  /* Algorithmic Severity (Soft Pastel Badges with High-Contrast Text) */
+  --diff-easy: #1e8e3e;
+  --diff-easy-bg: #e6f4ea;
+  --diff-medium: #e37400;
+  --diff-medium-bg: #fef7e0;
+  --diff-hard: #d93025;
+  --diff-hard-bg: #fce8e6;
+
+  /* Status Colors */
+  --status-success: #1e8e3e;
+  --status-warning: #e37400;
+  --status-error: #d93025;
+  --status-info: #1a73e8;
+
+  /* Legacy variable mappings to maintain stability */
+  --palette-deep: var(--bg-app);
+  --palette-deep-rgb: 255 255 255;
+  --palette-blue: var(--accent-primary);
+  --palette-blue-rgb: 32 190 255;
+  --palette-steel: var(--border-muted);
+  --palette-steel-rgb: 218 220 224;
+  --palette-surface: var(--bg-surface);
+  --palette-surface-rgb: 248 249 250;
+  --palette-sky: var(--accent-primary);
+  --palette-sky-rgb: 32 190 255;
+  --palette-danger: var(--status-error);
+  --palette-danger-rgb: 217 48 37;
+
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+code, pre, .font-mono, .code-editor, textarea.code-area {
+  font-family: 'JetBrains Mono', monospace !important;
 }
 
 *,
@@ -29,8 +75,9 @@ html {
   min-width: 320px;
   max-width: 100%;
   overflow-x: hidden;
-  background: var(--palette-deep);
-  scroll-behavior: smooth;
+  background: var(--bg-app);
+  color: var(--text-primary);
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -39,7 +86,8 @@ body {
   min-height: 100vh;
   margin: 0;
   overflow-x: hidden;
-  background: var(--palette-deep);
+  background: var(--bg-app);
+  color: var(--text-primary);
 }
 
 button,
@@ -56,35 +104,160 @@ img {
   max-width: 100%;
 }
 
-#root {
-  --font-size-content: 12px;
-  --font-size-title: 20px;
-  --font-size-subtitle: 16px;
-  --font-size-caption: 8px;
+/* ==========================================================================
+   ALGOVIZ GLOBAL ANIMATION SYSTEM
+   Standardized Motion Tokens, Page Transitions & Micro-Interactions
+   ========================================================================== */
+
+:root {
+  /* Explicit Easing Curves */
+  --ease-ui-move: cubic-bezier(0.4, 0, 0.2, 1);    /* Fast start, soft landing for UI moves & shifts */
+  --ease-enter: cubic-bezier(0, 0, 0.2, 1);       /* ease-out for things entering */
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);        /* ease-in for things leaving */
+
+  /* Standardized Curve Aliases */
+  --ease-out-smooth: cubic-bezier(0, 0, 0.2, 1);
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Standard Interface Durations (Strictly 150ms – 300ms) */
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-moderate: 240ms;
+  --duration-deliberate: 280ms;
 }
 
-#root * {
-  font-size: var(--font-size-content) !important;
+/* App Shell & Page Transition Container */
+.algoviz-app-shell {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-#root
-  :is(
-    small,
-    time,
-    figcaption,
-    [class*="label"],
-    [class*="caption"],
-    [class*="eyebrow"],
-    [class*="badge"],
-    [class*="status"]
-  ) {
-  font-size: var(--font-size-caption) !important;
+.algoviz-app-shell:has(.ide-problem-details),
+.algoviz-app-shell:has(.analyze-page) {
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
 }
 
-#root :is(h1, .av-brand, .dusk-brand, .auth-brand) {
-  font-size: var(--font-size-title) !important;
+.algoviz-page-transition {
+  width: 100%;
+  min-height: calc(100vh - 54px);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  will-change: opacity, transform;
 }
 
-#root :is(h2, h3, h4, h5, h6) {
-  font-size: var(--font-size-subtitle) !important;
+/* Special IDE layout container override to prevent scrolling/clipping */
+.algoviz-page-transition:has(.ide-problem-details),
+.algoviz-page-transition:has(.analyze-page) {
+  height: calc(100vh - 54px);
+  max-height: calc(100vh - 54px);
+  min-height: calc(100vh - 54px);
+  overflow: hidden;
+}
+
+@keyframes avFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes avSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes avSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes avScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes avPulseGlow {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes avShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Universal Button Tactile Micro-interaction (150-180ms UI move) */
+button:not(:disabled),
+.av-btn {
+  transition: transform 150ms var(--ease-ui-move), box-shadow 180ms var(--ease-ui-move), background-color 180ms var(--ease-ui-move), border-color 180ms var(--ease-ui-move);
+}
+
+button:not(:disabled):active,
+.av-btn:not(:disabled):active {
+  transform: scale(0.97) !important;
+}
+
+/* Universal Card Hover Elevation (200ms UI move) */
+.av-card-hover {
+  transition: transform 200ms var(--ease-ui-move), box-shadow 200ms var(--ease-ui-move), border-color 180ms var(--ease-ui-move);
+}
+
+.av-card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(60, 64, 67, 0.08);
+}
+
+/* Accessibility: Respect Reduced Motion globally */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .algoviz-page-transition {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
