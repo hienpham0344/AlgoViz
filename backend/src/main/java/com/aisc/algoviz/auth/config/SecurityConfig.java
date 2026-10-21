@@ -60,7 +60,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/problems/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/problems/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
-                        .requestMatchers("/api/analyze/**").permitAll()
+                        .requestMatchers("/api/analyze/**", "/api/ai/analyze/**").permitAll()
                         .requestMatchers("/api/submissions/run").permitAll()
                         .anyRequest().authenticated()
                 );

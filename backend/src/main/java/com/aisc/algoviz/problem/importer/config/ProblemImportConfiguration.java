@@ -27,7 +27,8 @@ public class ProblemImportConfiguration {
     public ProblemDataSource problemDataSource(JsonProblemDataReader reader) {
         // Chọn nguồn dữ liệu từ cấu hình để dữ liệu thật và fixture dùng chung một luồng import,
         // đồng thời không phải nhúng dữ liệu fixture vào code production.
-        return switch (properties.getSource()) {
+        ProblemImportProperties.Source source = properties.getSource() != null ? properties.getSource() : ProblemImportProperties.Source.MOCK;
+        return switch (source) {
             case FILE -> new FileProblemDataSource(properties, reader);
             case MOCK -> new MockProblemDataSource(properties, reader);
         };

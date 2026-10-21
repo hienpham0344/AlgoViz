@@ -19,8 +19,8 @@ public class CodeExecutionService {
 
     @Value("${algoviz.execution.timeout-seconds:5}")
     private long timeoutSeconds = 5;
-    @Value("${algoviz.execution.python-command:python}")
-    private String pythonCommand = "python";
+    @Value("${algoviz.execution.python-command:python3}")
+    private String pythonCommand = "python3";
     @Value("${algoviz.execution.cpp-command:g++}")
     private String cppCommand = "g++";
 
@@ -165,7 +165,7 @@ public class CodeExecutionService {
                 sourceFileName = "script.py";
                 Path source = tempDir.resolve(sourceFileName);
                 Files.writeString(source, runnableCode);
-                command = new String[]{pythonCommand, source.toString()};
+                command = new String[]{resolvePythonCommand(), source.toString()};
             } else if (lang.equals("javascript") || lang.equals("js")) {
                 sourceFileName = "script.js";
                 Path source = tempDir.resolve(sourceFileName);
@@ -236,6 +236,16 @@ public class CodeExecutionService {
             return new ProcessResult(true, 1, "", "Time Limit Exceeded", elapsed, 0);
         }
         return new ProcessResult(false, process.exitValue(), Files.readString(stdout), Files.readString(stderr), elapsed, 0);
+    }
+
+    private String resolvePythonCommand() {
+        String cmd = pythonCommand != null ? pythonCommand : "python3";
+        try {
+            if (new ProcessBuilder(cmd, "--version").start().waitFor() == 0) {
+                return cmd;
+            }
+        } catch (Exception ignored) {}
+        return "python3";
     }
 
     private String prepareCodeWithDriver(String language, String code) {
@@ -367,10 +377,64 @@ public class CodeExecutionService {
                         "        except Exception:\n" +
                         "            res = binary_search(nums, target)\n" +
                         "        print(res if res is not None else -1)\n";
+            } else if (code.contains("class Solution") || code.contains("def ")) {
+                return code + "\n\n" + PYTHON_UNIVERSAL_RUNNER;
             }
         }
         return code;
     }
+
+    private static final String PYTHON_UNIVERSAL_RUNNER = """
+            if __name__ == '__main__':
+                import sys, json, inspect, ast, re
+                raw = sys.stdin.read().strip()
+                if not raw:
+                    sys.exit(0)
+                target_func = None
+                if 'Solution' in globals() and isinstance(globals()['Solution'], type):
+                    sol = globals()['Solution']()
+                    methods = [getattr(sol, m) for m in dir(sol) if not m.startswith('_') and callable(getattr(sol, m))]
+                    if methods:
+                        target_func = methods[0]
+                if not target_func:
+                    import types
+                    funcs = [v for k, v in globals().items() if isinstance(v, types.FunctionType) and not k.startswith('_')]
+                    if funcs:
+                        target_func = funcs[0]
+                if not target_func:
+                    sys.exit(0)
+                parts = re.split(r',\\s*(?=[a-zA-Z_]\\w*\\s*=)', raw)
+                if len(parts) == 1:
+                    parts = [l.strip() for l in raw.splitlines() if l.strip()]
+                args = []
+                for part in parts:
+                    val_str = part.split('=', 1)[1].strip() if ('=' in part and not part.startswith('{')) else part
+                    try:
+                        val_norm = val_str.replace('true', 'True').replace('false', 'False').replace('null', 'None')
+                        args.append(ast.literal_eval(val_norm))
+                    except Exception:
+                        int_candidates = re.findall(r'-?\\d+', val_str)
+                        if int_candidates and (val_str.startswith('[') or ' ' in val_str):
+                            args.append([int(x) for x in int_candidates])
+                        elif len(int_candidates) == 1 and val_str.strip() == int_candidates[0]:
+                            args.append(int(int_candidates[0]))
+                        else:
+                            args.append(val_str.strip(' \\"\\''))
+                res = None
+                try:
+                    res = target_func(*args)
+                except Exception:
+                    try:
+                        res = target_func(*args[::-1])
+                    except Exception as e:
+                        raise e
+                if isinstance(res, bool):
+                    print(str(res).lower())
+                elif isinstance(res, (list, tuple, dict)):
+                    print(json.dumps(res))
+                elif res is not None:
+                    print(res)
+            """;
 
     private void cleanupDirectory(Path dir) {
         try (var paths = Files.walk(dir)) {

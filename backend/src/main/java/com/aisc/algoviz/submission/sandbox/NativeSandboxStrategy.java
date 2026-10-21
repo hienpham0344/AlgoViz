@@ -51,10 +51,12 @@ public class NativeSandboxStrategy implements SandboxStrategy {
         String[] command = request.getCommand();
         if (command == null || command.length == 0) {
             if ("java".equalsIgnoreCase(request.getLanguage())) {
-                command = new String[]{"java", request.getSourceFileName()};
+                command = new String[]{resolveJavaCommand("java"), request.getSourceFileName()};
             } else {
                 throw new IllegalArgumentException("No execution command specified for language: " + request.getLanguage());
             }
+        } else if (command.length > 0 && "java".equals(command[0])) {
+            command[0] = resolveJavaCommand(command[0]);
         }
 
         ProcessBuilder builder = new ProcessBuilder(command)
@@ -108,5 +110,16 @@ public class NativeSandboxStrategy implements SandboxStrategy {
                 .executionTimeMs(elapsedMs)
                 .memoryUsageMb(0.0)
                 .build();
+    }
+
+    private String resolveJavaCommand(String fallback) {
+        String javaHome = System.getProperty("java.home");
+        if (javaHome != null) {
+            Path javaBin = Path.of(javaHome, "bin", "java");
+            if (Files.isExecutable(javaBin)) {
+                return javaBin.toString();
+            }
+        }
+        return fallback;
     }
 }
