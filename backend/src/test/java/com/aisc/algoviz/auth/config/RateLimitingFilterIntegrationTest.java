@@ -28,6 +28,9 @@ class RateLimitingFilterIntegrationTest {
     @Autowired
     private RateLimiterService rateLimiterService;
 
+    @org.springframework.boot.test.mock.mockito.MockBean
+    private com.aisc.algoviz.auth.service.AuthService authService;
+
     @BeforeEach
     void setUp() {
         rateLimiterService.reset();
