@@ -13,6 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 public class ProblemDetailDto {
     private Long id;
+    private Integer leetcodeId;
     private String title;
     private String category;
     private String difficulty;
