@@ -67,6 +67,22 @@ class LegacyProblemServiceTest {
     }
 
     @Test
+    void publicIdsUseLeetcodeIdsConsistently() {
+        sampleProblem.setId(3L);
+        sampleProblem.setLeetcodeId(704);
+        when(legacyProblemRepository.findAll()).thenReturn(List.of(sampleProblem));
+        assertEquals(704L, legacyProblemService.getAllProblems(null, null).get(0).getId());
+    }
+
+    @Test
+    void canonicalIdWinsOverCollidingInternalId() {
+        sampleProblem.setLeetcodeId(704);
+        when(legacyProblemRepository.findByLeetcodeId(704)).thenReturn(Optional.of(sampleProblem));
+        assertEquals("Two Sum", legacyProblemService.getProblemById(704L).getTitle());
+        verify(legacyProblemRepository, never()).findById(704L);
+    }
+
+    @Test
     @DisplayName("Should return all problems when no filter is provided and compute acceptance in O(1)")
     void testGetAllProblemsNoFilter() {
         when(legacyProblemRepository.findAll()).thenReturn(List.of(sampleProblem));

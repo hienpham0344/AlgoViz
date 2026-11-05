@@ -79,8 +79,8 @@ public class LegacyProblemService {
     @Transactional(readOnly = true)
     @org.springframework.cache.annotation.Cacheable(value = com.aisc.algoviz.config.CacheConfig.LEGACY_PROBLEM_DETAIL_CACHE, key = "#id")
     public ProblemDetailDto getProblemById(Long id) {
-        LegacyProblem problem = legacyProblemRepository.findById(id)
-                .or(() -> legacyProblemRepository.findByLeetcodeId(id.intValue()))
+        LegacyProblem problem = legacyProblemRepository.findByLeetcodeId(id.intValue())
+                .or(() -> legacyProblemRepository.findById(id))
                 .orElseThrow(() -> new AppException(ProblemErrorCode.PROBLEM_NOT_FOUND));
         return mapToDetailDto(problem);
     }
@@ -104,20 +104,17 @@ public class LegacyProblemService {
                 ? problem.getDescription().substring(0, 100) + "..."
                 : problem.getDescription();
 
-        double acceptance;
+        Double acceptance;
         if (stats != null && stats.getTotalCount() != null && stats.getTotalCount() > 0) {
             long totalSubs = stats.getTotalCount();
             long acceptedSubs = stats.getAcceptedCount() != null ? stats.getAcceptedCount() : 0L;
             acceptance = Math.round((acceptedSubs * 1000.0) / totalSubs) / 10.0;
         } else {
-            // Realistic baseline based on problem ID & difficulty
-            double base = "Easy".equalsIgnoreCase(problem.getDifficulty()) ? 54.2
-                        : "Hard".equalsIgnoreCase(problem.getDifficulty()) ? 35.8 : 46.5;
-            acceptance = Math.round((base + (problem.getId() % 7) * 2.3) * 10.0) / 10.0;
+            acceptance = null;
         }
 
         return ProblemDto.builder()
-                .id(problem.getId())
+                .id(problem.getLeetcodeId() != null ? problem.getLeetcodeId().longValue() : problem.getId())
                 .leetcodeId(problem.getLeetcodeId())
                 .title(problem.getTitle())
                 .category(problem.getCategory())
@@ -134,7 +131,7 @@ public class LegacyProblemService {
                 .collect(Collectors.toList());
 
         return ProblemDetailDto.builder()
-                .id(problem.getId())
+                .id(problem.getLeetcodeId() != null ? problem.getLeetcodeId().longValue() : problem.getId())
                 .leetcodeId(problem.getLeetcodeId())
                 .title(problem.getTitle())
                 .category(problem.getCategory())

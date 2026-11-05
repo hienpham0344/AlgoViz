@@ -85,4 +85,11 @@ public class SubmissionController {
             @PathVariable Long problemId) {
         return ResponseEntity.ok(submissionService.getUserSubmissionsForProblem(problemId));
     }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Xóa một lần nộp bài của người dùng hiện tại", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<Void> deleteSubmission(@PathVariable Long id) {
+        submissionService.deleteSubmission(id);
+        return ResponseEntity.noContent().build();
+    }
 }

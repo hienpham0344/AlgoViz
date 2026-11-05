@@ -9,6 +9,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.aisc.algoviz.user.dto.UpdateProfileRequest;
+import com.aisc.algoviz.user.dto.ChangePasswordRequest;
+import jakarta.validation.Valid;
+import com.aisc.algoviz.user.dto.LearningProgressRequest;
+import com.aisc.algoviz.user.service.LearningProgressService;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -18,6 +24,7 @@ import java.util.Map;
 public class UserController {
 
     private final UserService userService;
+    private final LearningProgressService learningProgressService;
 
     @GetMapping("/me")
     @Operation(
@@ -35,9 +42,27 @@ public class UserController {
             description = "Cập nhật họ tên hiển thị và URL avatar của người dùng",
             security = @SecurityRequirement(name = "bearerAuth")
     )
-    public ResponseEntity<UserDto> updateProfile(@RequestBody Map<String, String> body) {
-        String fullName = body.get("fullName");
-        String avatarUrl = body.get("avatarUrl");
-        return ResponseEntity.ok(userService.updateProfile(fullName, avatarUrl));
+    public ResponseEntity<UserDto> updateProfile(@Valid @RequestBody UpdateProfileRequest body) {
+        return ResponseEntity.ok(userService.updateProfile(body));
+    }
+
+    @PutMapping("/password")
+    @Operation(summary = "Đổi mật khẩu và thu hồi refresh token", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<Void> changePassword(@Valid @RequestBody ChangePasswordRequest body) {
+        userService.changePassword(body);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/learning-progress")
+    @Operation(summary = "Lấy các bài học đã hoàn thành", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<List<Map<String, Object>>> getLearningProgress() {
+        return ResponseEntity.ok(learningProgressService.getProgress());
+    }
+
+    @PutMapping("/learning-progress")
+    @Operation(summary = "Lưu tiến độ bài học", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<Void> saveLearningProgress(@Valid @RequestBody LearningProgressRequest body) {
+        learningProgressService.saveProgress(body);
+        return ResponseEntity.noContent().build();
     }
 }

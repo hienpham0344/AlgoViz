@@ -73,6 +73,10 @@ public class CodeExecutionService {
     }
 
     public ExecutionResultDto evaluateTestCases(String language, String code, List<TestCase> testCases) {
+        if (testCases == null || testCases.isEmpty()) {
+            return ExecutionResultDto.builder().status("Not Judged").passedTestCases(0).totalTestCases(0)
+                    .errorMessage("No test cases are configured for this problem.").build();
+        }
         int passed = 0;
         int total = testCases.size();
         double maxTimeMs = 0.0;

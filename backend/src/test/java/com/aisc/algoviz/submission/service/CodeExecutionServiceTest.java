@@ -10,6 +10,14 @@ class CodeExecutionServiceTest {
     private final CodeExecutionService service = new CodeExecutionService();
 
     @Test
+    void cannotAcceptSolutionsWithoutTestCases() {
+        var result = service.evaluateTestCases("python", "print(1)", java.util.List.of());
+        assertEquals("Not Judged", result.getStatus());
+        assertEquals(0, result.getTotalTestCases());
+        assertNotNull(result.getErrorMessage());
+    }
+
+    @Test
     void emptyInputClosesStdinInsteadOfHanging() {
         var result = service.runCodeCustomInput("java", "class Main { public static void main(String[] args) { System.out.println(new java.util.Scanner(System.in).hasNextLine() ? \"input\" : \"EOF\"); } }", "");
         assertEquals("Success", result.getStatus(), result.getErrorMessage());

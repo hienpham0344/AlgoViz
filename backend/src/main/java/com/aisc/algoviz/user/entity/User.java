@@ -29,7 +29,13 @@ public class User {
 
     private String fullName;
 
+    @Column(length = 2048)
     private String avatarUrl;
+    private String roleTitle;
+    @Column(length = 2000)
+    private String bio;
+    private String location;
+    private String target;
 
     @Builder.Default
     private String role = "ROLE_USER";

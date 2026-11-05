@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface SubmissionRepository extends JpaRepository<Submission, Long> {
@@ -28,6 +29,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     Page<Submission> findByUserIdAndProblemIdOrderBySubmittedAtDesc(@Param("userId") Long userId, @Param("problemId") Long problemId, Pageable pageable);
 
     List<Submission> findByProblemIdOrderBySubmittedAtDesc(Long problemId);
+
+    Optional<Submission> findByIdAndUserId(Long id, Long userId);
 
     Boolean existsByUserIdAndProblemIdAndStatus(Long userId, Long problemId, String status);
 
