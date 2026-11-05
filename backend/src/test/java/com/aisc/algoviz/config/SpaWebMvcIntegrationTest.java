@@ -8,6 +8,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -53,6 +56,25 @@ class SpaWebMvcIntegrationTest {
         mockMvc.perform(get("/favicon.svg"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("<svg")));
+    }
+
+    @Test
+    @DisplayName("Vite JavaScript and CSS load with an Origin header while API CORS remains restricted")
+    void testViteAssetsWithOrigin() throws Exception {
+        String html = mockMvc.perform(get("/"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        String origin = "https://algoviz.example.com";
+
+        for (String extension : new String[] {"js", "css"}) {
+            Matcher matcher = Pattern.compile("/assets/[^\" ]+\\." + extension).matcher(html);
+            org.junit.jupiter.api.Assertions.assertTrue(matcher.find(), "Missing " + extension + " asset in index.html");
+            mockMvc.perform(get(matcher.group()).header("Origin", origin))
+                    .andExpect(status().isOk());
+        }
+
+        mockMvc.perform(get("/api/ast/health").header("Origin", origin))
+                .andExpect(status().isForbidden());
     }
 
     @Test
