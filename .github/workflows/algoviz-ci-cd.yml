@@ -31,12 +31,24 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run build
+      - name: Upload frontend build for backend tests
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+          if-no-files-found: error
 
   backend_ci:
     name: Backend - test and package
+    needs: frontend_ci
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Download frontend build
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
       - uses: actions/setup-java@v4
         with:
           distribution: temurin

@@ -3,7 +3,7 @@
 The workflow `.github/workflows/algoviz-ci-cd.yml` runs checks on Pull Requests and pushes to `main`:
 
 - Frontend (Node 22): `npm ci`, `npm run lint`, `npm run build`
-- Backend (Java 17): `mvn -B -ntp verify`
+- Backend (Java 17): download the frontend build artifact, then run `mvn -B -ntp verify` (SPA integration tests need `frontend/dist`)
 - Backend image: build `backend/Dockerfile` and probe `/api/ast/health` in a container
 
 ## Deployment is disabled by default
