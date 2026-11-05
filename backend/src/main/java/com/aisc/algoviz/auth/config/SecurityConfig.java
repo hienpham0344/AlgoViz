@@ -99,7 +99,9 @@ public class SecurityConfig {
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
+        // CORS is only needed for API calls. Vite's crossorigin module assets are
+        // same-origin requests and must not be rejected by the API origin allowlist.
+        source.registerCorsConfiguration("/api/**", configuration);
         return source;
     }
 }
