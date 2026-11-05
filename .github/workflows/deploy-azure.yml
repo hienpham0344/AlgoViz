@@ -1,0 +1,133 @@
+# Deploy AlgoViz to Azure App Service (Linux container) on every push to main.
+#
+# Repository variables (Settings > Secrets and variables > Actions > Variables):
+#   AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID
+#   AZURE_RESOURCE_GROUP, AZURE_WEBAPP_NAME, AZURE_CONTAINER_REGISTRY
+# Repository secrets:
+#   APP_ALGOVIZ_JWT_SECRET, APP_SPRING_DATASOURCE_URL,
+#   APP_SPRING_DATASOURCE_USERNAME, APP_SPRING_DATASOURCE_PASSWORD
+#
+# One-time Azure/GitHub setup (federated credential, role assignments, ACR pull
+# permission) is documented in docs/DEPLOY_AZURE.md.
+
+name: Deploy to Azure
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: azure-deploy-main
+  cancel-in-progress: false
+
+env:
+  IMAGE_NAME: algoviz
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  deploy:
+    name: Build, smoke test and deploy
+    # Skipped until the repository is configured for Azure (AZURE_WEBAPP_NAME set).
+    if: ${{ vars.AZURE_WEBAPP_NAME != '' }}
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate configuration
+        env:
+          AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+          AZURE_WEBAPP_NAME: ${{ vars.AZURE_WEBAPP_NAME }}
+          AZURE_CONTAINER_REGISTRY: ${{ vars.AZURE_CONTAINER_REGISTRY }}
+          APP_ALGOVIZ_JWT_SECRET: ${{ secrets.APP_ALGOVIZ_JWT_SECRET }}
+          APP_SPRING_DATASOURCE_URL: ${{ secrets.APP_SPRING_DATASOURCE_URL }}
+          APP_SPRING_DATASOURCE_USERNAME: ${{ secrets.APP_SPRING_DATASOURCE_USERNAME }}
+          APP_SPRING_DATASOURCE_PASSWORD: ${{ secrets.APP_SPRING_DATASOURCE_PASSWORD }}
+        run: |
+          missing=0
+          for name in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID AZURE_RESOURCE_GROUP AZURE_WEBAPP_NAME AZURE_CONTAINER_REGISTRY \
+                      APP_ALGOVIZ_JWT_SECRET APP_SPRING_DATASOURCE_URL APP_SPRING_DATASOURCE_USERNAME APP_SPRING_DATASOURCE_PASSWORD; do
+            if [ -z "${!name}" ]; then echo "::error::Missing configuration value ${name}"; missing=1; fi
+          done
+          if [ "${#APP_ALGOVIZ_JWT_SECRET}" -lt 32 ]; then
+            echo "::error::APP_ALGOVIZ_JWT_SECRET must be at least 32 characters"; missing=1
+          fi
+          exit "$missing"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke test image
+        run: |
+          docker run -d --name algoviz-smoke -p 8080:8080 \
+            -e ALGOVIZ_JWT_SECRET="$(openssl rand -hex 32)" \
+            "$IMAGE_NAME:$IMAGE_TAG"
+          ok=0
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8080/api/ast/health; then ok=1; break; fi
+            sleep 5
+          done
+          docker logs algoviz-smoke || true
+          docker rm -f algoviz-smoke >/dev/null
+          [ "$ok" = "1" ] || { echo "::error::Built image did not become healthy"; exit 1; }
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Push image to Azure Container Registry
+        run: |
+          az acr login --name "${AZURE_CONTAINER_REGISTRY%%.*}"
+          image="$AZURE_CONTAINER_REGISTRY/$IMAGE_NAME:$IMAGE_TAG"
+          docker tag "$IMAGE_NAME:$IMAGE_TAG" "$image"
+          docker push "$image"
+        env:
+          AZURE_CONTAINER_REGISTRY: ${{ vars.AZURE_CONTAINER_REGISTRY }}
+
+      - name: Deploy image to App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME }}
+          images: ${{ vars.AZURE_CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+
+      - name: Apply application settings and restart
+        env:
+          APP_ALGOVIZ_JWT_SECRET: ${{ secrets.APP_ALGOVIZ_JWT_SECRET }}
+          APP_SPRING_DATASOURCE_URL: ${{ secrets.APP_SPRING_DATASOURCE_URL }}
+          APP_SPRING_DATASOURCE_USERNAME: ${{ secrets.APP_SPRING_DATASOURCE_USERNAME }}
+          APP_SPRING_DATASOURCE_PASSWORD: ${{ secrets.APP_SPRING_DATASOURCE_PASSWORD }}
+          AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+          AZURE_WEBAPP_NAME: ${{ vars.AZURE_WEBAPP_NAME }}
+        run: |
+          az webapp config appsettings set \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --name "$AZURE_WEBAPP_NAME" \
+            --settings \
+              WEBSITES_PORT=8080 \
+              ALGOVIZ_JWT_SECRET="$APP_ALGOVIZ_JWT_SECRET" \
+              SPRING_DATASOURCE_URL="$APP_SPRING_DATASOURCE_URL" \
+              SPRING_DATASOURCE_DRIVER=org.postgresql.Driver \
+              SPRING_DATASOURCE_USERNAME="$APP_SPRING_DATASOURCE_USERNAME" \
+              SPRING_DATASOURCE_PASSWORD="$APP_SPRING_DATASOURCE_PASSWORD" \
+              ALGOVIZ_CORS_ALLOWED_ORIGINS="https://$AZURE_WEBAPP_NAME.azurewebsites.net" \
+            --output none
+          echo "Deployed https://$AZURE_WEBAPP_NAME.azurewebsites.net"
