@@ -1,0 +1,20 @@
+{
+  "name": "algoviz",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AlgoViz - Unified Algorithm Visualizer & Competitive Programming Platform",
+  "scripts": {
+    "build:frontend": "npm --prefix frontend run build",
+    "build:backend": "bash scripts/build-unified.sh",
+    "build": "bash scripts/build-unified.sh",
+    "test:frontend": "npm --prefix frontend test",
+    "test:backend": "bash scripts/test-backend.sh",
+    "test": "npm --prefix frontend test && bash scripts/test-backend.sh",
+    "lint:frontend": "npm --prefix frontend run lint",
+    "lint": "npm --prefix frontend run lint",
+    "start": "bash scripts/run-unified.sh",
+    "start:offline": "bash scripts/run-unified.sh --offline",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:backend": "bash scripts/run-backend.sh"
+  }
+}
