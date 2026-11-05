@@ -1,85 +1,61 @@
-# Multi-Stack Engineering, Security & UI/UX Guidelines
+# Multi-Stack Engineering, Security & Agent Workflow Guidelines
 
-This workspace is equipped with advanced UI/UX intelligence, anti-slop art direction, multi-stack subagents (Frontend, Java/JVM, Python, Security), and strict token-saving protocols.
-
----
-
-## 1. Available Skills
-
-### Design & Taste (Anti-Slop)
-- **`design-taste-frontend` (`taste-skill`)**: Art direction, anti-generic aesthetic enforcement, distinctive typography, authentic color palettes, real-browser inspection.
-- **`minimalist-skill` / `brutalist-skill` / `soft-skill`**: Targeted aesthetic directions.
-- **`brandkit` / `redesign-skill`**: Brand identity creation and page redesign procedures.
-
-### UI/UX Intelligence (UI/UX Pro Max)
-- **`ui-ux-pro-max`**: Design intelligence engine covering 79 styles, 192 palettes, 74 font pairings, 119 UX guidelines, and 25 chart types.
-  - Query command: `python3 /home/hien/.gemini/vendor/ui-ux-pro-max-skill/.claude/skills/ui-ux-pro-max/scripts/search.py "<query>" --domain <domain>`
-- **`design-system`**: Design token architecture (colors, typography, spacing, elevation).
-- **`ui-styling`**: Stack-specific styling best practices (Tailwind CSS, CSS modules).
-
-### Engineering & Subagent Workflows (Superpowers)
-- **`subagent-driven-development`**: Dispatch specialized implementer and reviewer subagents per task.
-- **`dispatching-parallel-agents`**: Concurrent subagent task orchestration.
-- **`test-driven-development`**: Strict test-first engineering workflow.
-- **`verification-before-completion`**: Pre-delivery QA and validation checklists.
-- **`systematic-debugging`**: Root-cause analysis and bug diagnosis.
-- **`code-review-excellence`** & **`error-handling-patterns`**: Code quality and fault-tolerance patterns.
-
-### Backend & Language Engineering (Java & Python)
-- **Java/JVM**: Work with actual project build tools (`pom.xml`, `build.gradle`), framework standards, and test suites.
-- **Python**: `pydantic-v2`, `python-type-safety`, `python-testing-patterns`, `python-code-style`, `python-project-structure`, `python-monorepo-architecture`.
-
-### Application Security & Threat Modeling
-- **`stride-analysis-patterns`**: STRIDE methodology for threat modeling.
-- **`attack-tree-construction`**: Attack scenario visualization and defense gap identification.
-- **`security-requirement-extraction`**: Translating threats into actionable security requirements.
-- **`threat-mitigation-mapping`**: Mapping threats to security controls.
-- **`sast-configuration`** & **`external-content-sanitizer`**: Automated SAST and prompt injection / untrusted content defense.
+> Single Source of Truth for Autonomous AI Coding Agents, Subagents, and Multi-Stack Engineering.
 
 ---
 
-## 2. Configured Subagents (`agents.toml`)
+## 1. The Complete End-to-End SDLC Lifecycle
 
-Subagents are defined in [`.agents/agents.toml`](file:///home/hien/Project/AlgoViz/.agents/agents.toml) and registered live in Antigravity:
+Every software initiative managed in this workspace follows a deterministic 6-stage lifecycle:
 
-| Subagent Name | Role | Core Skills & Focus |
-| :--- | :--- | :--- |
-| **`frontend_architect`** | Frontend Architect & System Planner | Component architecture, state design, plan drafting (`writing-plans`, `ui-ux-pro-max`) |
-| **`ui_ux_designer`** | UI/UX Intelligence & Design Specialist | Color harmony, typography, accessibility (WCAG AA), UI tokens (`ui-ux-pro-max`, `design-system`) |
-| **`taste_craftsman`** | Anti-Slop Art Director & Visual Polish | Distinctive character, editorial typography, anti-AI-slop styling (`design-taste-frontend`) |
-| **`frontend_developer`** | Frontend Component Implementer | Clean React/TypeScript/Tailwind implementation, test-first code (`test-driven-development`) |
-| **`qa_reviewer`** | QA, Accessibility & Code Reviewer | Automated validation, accessibility audit, code review (`verification-before-completion`) |
-| **`java_pro`** | Java & JVM Engineering Specialist | Java/Spring Boot development, testing, build tools, performance (`debugging-strategies`, `code-review-excellence`) |
-| **`python_backend`** | Python Architecture & Backend Implementer | Pydantic v2, strict typing, clean architecture, pytest suites (`pydantic-v2`, `python-testing-patterns`) |
-| **`security_auditor`** | Application Security & Threat Modeling | Threat modeling (STRIDE), attack trees, SAST, content sanitization (`stride-analysis-patterns`, `attack-tree-construction`) |
+```mermaid
+flowchart LR
+    A["1. Ideation & Concept"] --> B["2. SRS Specification"]
+    B --> C["3. Database & Architecture"]
+    C --> D["4. TDD Implementation"]
+    D --> E["5. QA, Performance & Review"]
+    E --> F["6. Deploy & Git Release"]
+```
 
 ---
 
-## 3. Strict Token Optimization Protocol for All Subagents
+## 2. The 22 Subagents Roster (`agents.toml`)
 
-All subagents and parent orchestrators MUST strictly adhere to token hygiene to minimize context consumption:
-
-1. **Think-in-Code via `context-mode` (MCP)**:
-   - When inspecting logs, test suites, or large datasets, use `ctx_execute`, `ctx_search`, or bounded shell pipes (`grep`, `head`, `awk`).
-   - The bytes processed in the sandbox NEVER enter conversation memory; only the concise printed result enters context.
-2. **Precision Slicing (`view_file`)**:
-   - Never read whole source files if only specific sections or functions are needed. Always specify `StartLine` and `EndLine`.
-3. **Surgical File Edits (`replace_file_content`)**:
-   - Prefer targeted single-chunk replacements rather than rewriting entire files for minor changes.
-4. **Targeted Intelligence Queries (`search.py`)**:
-   - Query UI/UX Pro Max using specific `--domain` or `--design-system` flags. Never dump or view the raw reference CSV files into context.
-5. **Zero-Fluff High-Signal Communication**:
-   - Omit conversational preamble, pleasantries, re-quoting user instructions, and repeating full files in markdown responses. Deliver only direct, actionable information.
+1. **`system_coordinator`**: High-level orchestrator, SRS author, ticket creator.
+2. **`database_architect`**: ERD modeler, DDL designer, zero-downtime migration planner.
+3. **`devops_engineer`**: Docker containerization, CI/CD pipelines, Git conflict resolution.
+4. **`frontend_architect`**: Component hierarchy, state design, execution planning.
+5. **`ui_ux_designer`**: Color harmony, typography, accessibility (WCAG AA), UI tokens.
+6. **`taste_craftsman`**: Anti-slop visual art direction, typography, distinctive character.
+7. **`frontend_developer`**: Production React/TypeScript/Tailwind implementation.
+8. **`qa_reviewer`**: Two-axis code review, accessibility audit, pre-completion verification.
+9. **`web_performance_auditor`**: Core Web Vitals, bundle optimization, runtime profiling.
+10. **`java_pro`**: Java/Spring Boot development, Maven/Gradle, JVM performance.
+11. **`python_backend`**: Python clean architecture, Pydantic v2, pytest suites.
+12. **`security_auditor`**: Threat modeling (STRIDE), attack trees, SAST, content sanitization.
+13. **`ai_engineer`**: RAG pipelines, LLM prompt regression evals, vector DB ops.
+14. **`cloud_architect`**: Terraform IaC, Cloudflare edge compute, Supabase, Kubernetes.
+15. **`sre_specialist`**: Datadog APM tracing, Prometheus metrics, SLO error budgets, postmortems.
+16. **`mobile_dev`**: React Native, Expo Router v3, EAS CI/CD, offline synchronization.
+17. **`load_tester`**: k6 concurrency benchmarks, Locust load clusters, chaos resilience.
+18. **`data_scientist`**: DuckDB, Polars lazy frames, dbt data modeling, PyTorch training.
+19. **`redteam_security`**: Penetration testing, OWASP Top 10 mitigation, container escape defense.
+20. **`systems_engineer`**: Rust, WebAssembly, modern C/C++ memory safety, Linux eBPF tracing.
+21. **`graphics_web_dev`**: Three.js WebGL 3D, WebRTC real-time media, Framer Motion, Tauri.
+22. **`cloud_platform_lead`**: Multi-cloud AWS/GCP/Azure architecture, Karpenter, BigQuery.
 
 ---
 
-## 4. Multi-Stack Execution Workflows
+## 3. 21 Curated Skill Domains (285 Skills Total)
+Includes Planning & YC Product Workflows, Clean Architecture, TDD, Design-Taste, Security Threat, Full Stacks, Ops Guardrails, Documents & Media, AI/LLM, Cloud & Serverless (Neon, Cloudflare, Supabase), Testing & Concurrency (k6, Browserbase), Mobile, Streaming Data, SRE, Data/ML Analytics (Hugging Face, DuckDB, Polars), 3D Web & Desktop (Remotion, Three.js), Offensive Red Team, Low-Level Systems, Enterprise AWS/GCP/Azure, Developer Productivity (Google Workspace, Git internals), and Advanced Frontend Mastery (Angular Signals, React 19, Resend).
 
-1. **Frontend Workflow**:
-   - Ideation (`ui_ux_designer`, `taste_craftsman`) -> Architecture (`frontend_architect`) -> Implementation (`frontend_developer`) -> Verification (`qa_reviewer`).
-2. **Java / JVM Workflow**:
-   - Inspect build toolchain & version -> Implement surgical changes (`java_pro`) -> Run targeted tests -> Review (`qa_reviewer`).
-3. **Python Backend Workflow**:
-   - Model schemas (`python_backend` with Pydantic v2) -> Type-safe implementation -> Write pytest cases -> Run via `ctx_execute`.
-4. **Security Audit Workflow**:
-   - Run threat modeling & attack tree analysis (`security_auditor`) -> Review SAST & sanitize external content inputs.
+---
+
+## 4. Central References & Cookbooks Hub (`references/`)
+Provides authoritative technical cheat sheets accessible via `agents-kit reference <topic>`:
+- `references/frontend/modern-css-cheat-sheet.md` (Subgrid, Container Queries, clamp(), dvh/svh/lvh, @layer)
+- `references/frontend/react-19-and-nextjs15-reference.md` (use() hook, useActionState, useOptimistic, slots)
+- `references/frontend/tanstack-query-v5-cookbook.md` (Query key factory, optimistic mutations, SSR hydration)
+- `references/frontend/wcag-accessibility-audit-checklist.md` (WCAG 2.2 AA audit checklist & ARIA 1.2)
+- `references/frontend/design-tokens-and-color-palettes.md` (Oklch color scales, 8pt spacing, shadows)
+- `references/frontend/state-management-matrix.md` (Zustand, Jotai, React Context, Signals decision tree)
