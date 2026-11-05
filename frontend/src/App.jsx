@@ -1,68 +1,115 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import AnalyzePage from "./features/analyze/analyze.jsx";
-import AuthPage from "./features/auth/auth.jsx";
-import HistoryPage from "./features/history/history.jsx";
-import LearnPage from "./features/learn/learn.jsx";
-import LessonPage from "./features/learn/LessonPage.jsx";
-import LandingPage from "./features/landing/landing.jsx";
-import ProfilePage from "./features/profile/profile.jsx";
-import ProblemsPage from "./features/problems/problems.jsx";
-import ProblemDetailsPage from "./features/problems/problemDetails.jsx";
+const AnalyzePage = lazy(() => import("./features/analyze/analyze.jsx"));
+const AuthPage = lazy(() => import("./features/auth/auth.jsx"));
+const HistoryPage = lazy(() => import("./features/history/history.jsx"));
+const LearnPage = lazy(() => import("./features/learn/learn.jsx"));
+const LessonPage = lazy(() => import("./features/learn/LessonPage.jsx"));
+const LandingPage = lazy(() => import("./features/landing/landing.jsx"));
+const ProfilePage = lazy(() => import("./features/profile/profile.jsx"));
+const ProblemsPage = lazy(() => import("./features/problems/problems.jsx"));
+const ProblemDetailsPage = lazy(() => import("./features/problems/problemDetails.jsx"));
+import ApiState from "./components/ApiState.jsx";
 import { NavigationBar } from "./components/index.js";
 
-import { getToken } from "./services/api.js";
+import { clearAuthData, getToken } from "./services/api.js";
 
 const AUTH_STORAGE_KEY = "algoviz-auth";
 const USER_NAME_STORAGE_KEY = "algoviz-user-name";
+function getRoutePath() {
+  const hash = window.location.hash || "";
+  const pathname = window.location.pathname || "/";
+
+  // If hash has an explicit route (not empty, not just '#' or '#top')
+  if (hash && hash !== "#" && hash !== "#top") {
+    const cleaned = hash.replace(/^#\/?/, "").split("?")[0].trim().toLowerCase();
+    if (cleaned) {
+      return cleaned;
+    }
+  }
+
+  // Otherwise, use pathname: e.g. "/visualizer/sorting" -> "visualizer/sorting"
+  return pathname.replace(/^\/+|\/+$/g, "").split("?")[0].trim().toLowerCase();
+}
+
+function getQueryParam(key) {
+  const hash = window.location.hash || "";
+  const searchSource = hash.includes("?")
+    ? hash.slice(hash.indexOf("?"))
+    : window.location.search || "";
+  return new URLSearchParams(searchSource).get(key);
+}
+
+function getProblemId() {
+  const hash = window.location.hash || "";
+  const searchSource = hash.includes("?")
+    ? hash.slice(hash.indexOf("?"))
+    : window.location.search || "";
+  const match = searchSource.match(/[?&]id=(\d+)/);
+  if (match) return Number(match[1]);
+  const pathMatch = (hash || window.location.pathname).match(/problem-details\/(\d+)/);
+  if (pathMatch) return Number(pathMatch[1]);
+  return 1;
+}
+
 function App() {
-  const [hash, setHash] = useState(() => window.location.hash);
+  const [, setLocationKey] = useState(
+    () => window.location.pathname + window.location.search + window.location.hash,
+  );
   const [isAuthenticated, setIsAuthenticated] = useState(
     () => localStorage.getItem(AUTH_STORAGE_KEY) === "true" && Boolean(getToken()),
   );
   const [userName, setUserName] = useState(
-    () => localStorage.getItem(USER_NAME_STORAGE_KEY) || "Your name",
+    () => getToken() ? localStorage.getItem(USER_NAME_STORAGE_KEY) || "Developer" : "Guest",
   );
 
   useEffect(() => {
-    const handleHashChange = () => setHash(window.location.hash);
+    const handleLocationChange = () => {
+      setLocationKey(window.location.pathname + window.location.search + window.location.hash);
+    };
     const handleLogout = () => {
-      localStorage.removeItem("algoviz-token");
-      localStorage.removeItem("algoviz-user");
-      localStorage.setItem(AUTH_STORAGE_KEY, "false");
-      localStorage.removeItem(USER_NAME_STORAGE_KEY);
+      clearAuthData();
       setIsAuthenticated(false);
       setUserName("Your name");
+      if (window.location.pathname !== "/") {
+        window.history.pushState(null, "", "/");
+      }
       window.location.hash = "#landing";
-      setHash("#landing");
+      setLocationKey("/#landing");
     };
-    window.addEventListener("hashchange", handleHashChange);
+    window.addEventListener("hashchange", handleLocationChange);
+    window.addEventListener("popstate", handleLocationChange);
     window.addEventListener("algoviz:logout", handleLogout);
+    const handleProfileUpdate = () => setUserName(localStorage.getItem(USER_NAME_STORAGE_KEY) || "Your name");
+    const handleStorage = (event) => {
+      if (event.key === "algoviz-token" || event.key === AUTH_STORAGE_KEY || event.key === null) {
+        setIsAuthenticated(Boolean(getToken()));
+        handleProfileUpdate();
+      }
+    };
+    window.addEventListener("algoviz:profile-updated", handleProfileUpdate);
+    window.addEventListener("storage", handleStorage);
     return () => {
-      window.removeEventListener("hashchange", handleHashChange);
+      window.removeEventListener("hashchange", handleLocationChange);
+      window.removeEventListener("popstate", handleLocationChange);
       window.removeEventListener("algoviz:logout", handleLogout);
+      window.removeEventListener("algoviz:profile-updated", handleProfileUpdate);
+      window.removeEventListener("storage", handleStorage);
     };
   }, []);
 
   const handleAuthenticated = (name, token) => {
+    if (!token || !getToken()) return;
     localStorage.setItem(AUTH_STORAGE_KEY, "true");
     localStorage.setItem(USER_NAME_STORAGE_KEY, name);
-    if (!getToken()) {
-      localStorage.setItem("algoviz-token", token || ("offline-session-" + Date.now()));
-    }
     setIsAuthenticated(true);
     setUserName(name);
-    window.location.hash = "#problems";
-  };
-
-  const getProblemIdFromHash = () => {
-    const match = hash.match(/[?&]id=(\d+)/);
-    return match ? Number(match[1]) : 1;
-  };
-
-  const getHashParam = (key) => {
-    const match = hash.match(new RegExp(`[?&]${key}=([^&#]+)`));
-    return match ? decodeURIComponent(match[1]) : null;
+    if (window.location.pathname === "/login" || window.location.pathname === "/register") {
+      window.history.pushState(null, "", "/problems");
+    } else {
+      window.location.hash = "#problems";
+    }
+    setLocationKey(window.location.pathname + window.location.search + window.location.hash);
   };
 
   const handleOpenProblem = (problem) => {
@@ -104,26 +151,34 @@ function App() {
         },
       };
 
+  const route = getRoutePath();
   let pageContent;
   let pageKey;
   let activeNav = null;
 
-  if (hash === "#login" || hash === "#register") {
-    pageKey = hash;
-    pageContent = <AuthPage mode={hash.slice(1)} onAuthenticated={handleAuthenticated} />;
-  } else if (hash === "#landing" || (!hash && !isAuthenticated) || (hash === "#" && !isAuthenticated)) {
+  if (route === "login" || route === "register") {
+    pageKey = route;
+    pageContent = <AuthPage mode={route} onAuthenticated={handleAuthenticated} />;
+  } else if (route === "landing" || (!route && !isAuthenticated)) {
     pageKey = "landing";
     pageContent = <LandingPage isAuthenticated={isAuthenticated} userName={userName} />;
-  } else if (hash.startsWith("#visualize") || hash.startsWith("#analyze")) {
+  } else if (
+    route === "visualize" ||
+    route === "visualizer" ||
+    route === "visualizer/sorting" ||
+    route.startsWith("visualizer/") ||
+    route === "analyze" ||
+    route.startsWith("analyze/")
+  ) {
     pageKey = "visualize";
     activeNav = "Visualize";
     pageContent = <AnalyzePage userName={userName} isAuthenticated={isAuthenticated} />;
-  } else if (hash.startsWith("#problem-details") || hash === "#visualizer") {
+  } else if (route === "problem-details" || route.startsWith("problem-details/")) {
     if (!isAuthenticated) {
       pageKey = "login";
       pageContent = <AuthPage mode="login" onAuthenticated={handleAuthenticated} />;
     } else {
-      const pId = hash === "#visualizer" ? 1 : getProblemIdFromHash();
+      const pId = getProblemId();
       pageKey = `problem-details-${pId}`;
       pageContent = (
         <ProblemDetailsPage
@@ -134,13 +189,16 @@ function App() {
         />
       );
     }
-  } else if (hash.startsWith("#history")) {
+  } else if (!isAuthenticated && (route === "history" || route.startsWith("history/") || route === "profile" || route.startsWith("profile/"))) {
+    pageKey = "login";
+    pageContent = <AuthPage mode="login" onAuthenticated={handleAuthenticated} />;
+  } else if (route === "history" || route.startsWith("history/")) {
     pageKey = "history";
     activeNav = "History";
     pageContent = <HistoryPage userName={userName} isAuthenticated={isAuthenticated} />;
-  } else if (hash.startsWith("#lesson") || hash.startsWith("#learn-lesson")) {
-    const courseId = getHashParam("courseId") || "sorting-masterclass";
-    const lessonId = parseInt(getHashParam("lessonId") || "1", 10);
+  } else if (route === "lesson" || route.startsWith("lesson/") || route.startsWith("learn-lesson")) {
+    const courseId = getQueryParam("courseId") || "sorting-masterclass";
+    const lessonId = parseInt(getQueryParam("lessonId") || "1", 10);
     pageKey = `lesson-${courseId}-${lessonId}`;
     activeNav = "Learn";
     pageContent = (
@@ -151,11 +209,11 @@ function App() {
         isAuthenticated={isAuthenticated}
       />
     );
-  } else if (hash.startsWith("#learn")) {
+  } else if (route === "learn" || route.startsWith("learn/")) {
     pageKey = "learn";
     activeNav = "Learn";
     pageContent = <LearnPage userName={userName} isAuthenticated={isAuthenticated} />;
-  } else if (hash.startsWith("#profile")) {
+  } else if (route === "profile" || route.startsWith("profile/")) {
     pageKey = "profile";
     activeNav = "Profile";
     pageContent = <ProfilePage userName={userName} isAuthenticated={isAuthenticated} />;
@@ -184,7 +242,7 @@ function App() {
         mode="wait"
         initial={false}
         onExitComplete={() => {
-          if (!window.location.hash.startsWith("#problem-details")) {
+          if (!getRoutePath().startsWith("problem-details")) {
             window.scrollTo({ top: 0, left: 0, behavior: "instant" });
           }
         }}
@@ -197,7 +255,7 @@ function App() {
           animate="animate"
           exit="exit"
         >
-          {pageContent}
+          <Suspense fallback={<ApiState loading page label="Loading page…" />}>{pageContent}</Suspense>
         </motion.div>
       </AnimatePresence>
     </div>

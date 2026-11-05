@@ -28,3 +28,10 @@ Follow these mandatory rules when generating UI and writing code for this projec
    - **Exact/Near match:** Import existing component and pass relevant props.
    - **Needs variation:** Refactor/extend existing component (add props/variants).
    - **Missing entirely:** Build a new component under `src/components/` using tokens from `src/index.css`.
+
+
+## Loading and progress
+
+Use `ProgressView` for asynchronous work. Unknown completion uses `variant="spinner"`; supply a finite `value` for `variant="ring"` or the default native `<progress>` track. Custom `min`/`max` ranges normalize to the same 0–100 percentage for the visual indicator and accessibility value. Missing or invalid progress stays indeterminate.
+
+Use `ApiState` with a contextual `label` while loading data (`page` centers a full-page state). Render data-dependent statistics and empty states only after loading finishes. Loading takes priority over stale errors; failed requests can expose `onRetry`. Respect reduced motion and use existing theme tokens.

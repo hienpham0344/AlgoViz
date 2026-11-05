@@ -1,1 +1,246 @@
-/* Dark mode disabled per user request */
+/* AlgoViz Dark Theme - Deep Obsidian & High-Contrast Kaggle Tokens */
+
+[data-theme="dark"],
+.dark {
+  /* Surfaces & Backgrounds */
+  --bg-app: #0f1117;
+  --bg-surface: #181b24;
+  --bg-surface-raised: #1f2330;
+  --bg-surface-active: #272c3d;
+
+  /* Borders & Dividers */
+  --border-subtle: #242938;
+  --border-muted: #2f3548;
+  --border-strong: #454d66;
+
+  /* Typography */
+  --text-primary: #f0f3f8;
+  --text-secondary: #9da7bb;
+  --text-muted: #647087;
+  --text-inverse: #0f1117;
+
+  /* Accents */
+  --accent-primary: #38bdf8;
+  --accent-primary-hover: #0284c7;
+  --accent-cyan: #38bdf8;
+  --accent-purple: #a855f7;
+
+  /* Algorithmic Severity */
+  --diff-easy: #4ade80;
+  --diff-easy-bg: rgba(74, 222, 128, 0.14);
+  --diff-medium: #fbbf24;
+  --diff-medium-bg: rgba(251, 191, 36, 0.14);
+  --diff-hard: #f87171;
+  --diff-hard-bg: rgba(248, 113, 113, 0.14);
+
+  /* Status Colors */
+  --status-success: #4ade80;
+  --status-warning: #fbbf24;
+  --status-error: #f87171;
+  --status-info: #60a5fa;
+
+  /* Legacy variable mappings */
+  --palette-deep: var(--bg-app);
+  --palette-deep-rgb: 15 17 23;
+  --palette-blue: var(--accent-primary);
+  --palette-blue-rgb: 56 189 248;
+  --palette-steel: var(--border-muted);
+  --palette-steel-rgb: 47 53 72;
+  --palette-surface: var(--bg-surface);
+  --palette-surface-rgb: 24 27 36;
+  --palette-sky: var(--accent-primary);
+  --palette-sky-rgb: 56 189 248;
+  --palette-danger: var(--status-error);
+  --palette-danger-rgb: 248 113 113;
+}
+
+/* Base Body and Root Dark Overrides */
+[data-theme="dark"] body {
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+}
+
+/* Navigation Bar Dark Mode */
+[data-theme="dark"] .av-navigation-bar {
+  background: #151822;
+  border-bottom: 1px solid #282d3d;
+}
+
+[data-theme="dark"] .av-navigation-bar .av-brand {
+  color: #f0f3f8;
+}
+
+[data-theme="dark"] .av-brand-title {
+  color: #f0f3f8;
+}
+
+[data-theme="dark"] .av-nav-items a {
+  color: #9da7bb;
+}
+
+[data-theme="dark"] .av-nav-items a:hover {
+  color: #f0f3f8;
+}
+
+[data-theme="dark"] .av-nav-items a.is-active {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .av-nav-items a.is-active::after {
+  background-color: #38bdf8;
+}
+
+[data-theme="dark"] .av-user-stats {
+  background: #1f2330;
+  border-color: #2f3548;
+  color: #f0f3f8;
+}
+
+[data-theme="dark"] .av-user-stats__count {
+  color: #f0f3f8;
+}
+
+[data-theme="dark"] .av-user-name {
+  color: #f0f3f8;
+}
+
+[data-theme="dark"] .av-account-menu {
+  background: #181b24;
+  border-color: #2f3548;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .av-account-menu__header {
+  border-bottom-color: #242938;
+}
+
+[data-theme="dark"] .av-account-menu__name {
+  color: #f0f3f8;
+}
+
+[data-theme="dark"] .av-account-menu a {
+  color: #9da7bb;
+}
+
+[data-theme="dark"] .av-account-menu a:hover,
+[data-theme="dark"] .av-account-menu__logout:hover {
+  background: #1f2330;
+  color: #f0f3f8;
+}
+
+[data-theme="dark"] .av-account-menu__logout {
+  border-top-color: #242938;
+}
+
+/* Problems Page Dark Mode */
+[data-theme="dark"] .problemset-layout,
+[data-theme="dark"] .problems-page-container {
+  background-color: var(--bg-app);
+}
+
+[data-theme="dark"] .problem-table-container,
+[data-theme="dark"] .problem-hero-banner,
+[data-theme="dark"] .problems-sidebar-column .sidebar-card,
+[data-theme="dark"] .card-container {
+  background-color: var(--bg-surface);
+  border-color: var(--border-muted);
+}
+
+[data-theme="dark"] .problem-row {
+  border-bottom-color: var(--border-subtle);
+}
+
+[data-theme="dark"] .problem-row:hover {
+  background-color: var(--bg-surface-raised);
+}
+
+[data-theme="dark"] .problem-title-text {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .topic-pill {
+  background: var(--bg-surface-raised);
+  border-color: var(--border-subtle);
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .search-input-field,
+[data-theme="dark"] .custom-select-trigger {
+  background-color: var(--bg-surface-raised);
+  border-color: var(--border-muted);
+  color: var(--text-primary);
+}
+
+/* Visualizer & Studio Dark Mode */
+[data-theme="dark"] .analyze-visualizer-studio,
+[data-theme="dark"] .smooth-sort-visualizer,
+[data-theme="dark"] .code-editor-pane,
+[data-theme="dark"] .editor-workspace-card {
+  background-color: var(--bg-surface);
+  border-color: var(--border-muted);
+}
+
+[data-theme="dark"] .stage-viewport {
+  background: #10121a;
+  border-color: var(--border-subtle);
+}
+
+[data-theme="dark"] .visualizer-controls-bar {
+  background: var(--bg-surface-raised);
+  border-color: var(--border-muted);
+}
+
+[data-theme="dark"] .control-btn {
+  background: var(--bg-surface);
+  border-color: var(--border-muted);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .control-btn:hover {
+  background: var(--bg-surface-active);
+}
+
+/* History Page Dark Mode */
+[data-theme="dark"] .history-table-section,
+[data-theme="dark"] .history-hero,
+[data-theme="dark"] .history-stats-grid .stat-box {
+  background-color: var(--bg-surface);
+  border-color: var(--border-muted);
+}
+
+[data-theme="dark"] .history-table-wrapper table {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .history-table-wrapper tr {
+  border-bottom-color: var(--border-subtle);
+}
+
+[data-theme="dark"] .history-table-wrapper tr:hover {
+  background-color: var(--bg-surface-raised);
+}
+
+/* Profile Page Dark Mode */
+[data-theme="dark"] .profile-card,
+[data-theme="dark"] .profile-metric-card,
+[data-theme="dark"] .profile-contribution-matrix {
+  background-color: var(--bg-surface);
+  border-color: var(--border-muted);
+}
+
+/* Auth Page Dark Mode */
+[data-theme="dark"] .auth-card {
+  background-color: var(--bg-surface);
+  border-color: var(--border-muted);
+}
+
+[data-theme="dark"] .auth-input-group input {
+  background-color: var(--bg-surface-raised);
+  border-color: var(--border-muted);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .auth-card-title,
+[data-theme="dark"] .auth-input-group label {
+  color: var(--text-primary);
+}

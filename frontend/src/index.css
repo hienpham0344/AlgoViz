@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
 @import "tailwindcss";
 @import "./components/scroll-panes.css";
+@import "./dark-theme.css";
 
 :root {
   /* Surface & Background (Kaggle Light Theme) */
@@ -260,4 +261,42 @@ button:not(:disabled):active,
     opacity: 1 !important;
     transform: none !important;
   }
+}
+
+.api-state {
+  padding: 1.5rem;
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+  text-align: center;
+}
+.api-state--page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  min-height: clamp(14rem, 50dvh, 30rem);
+  width: 100%;
+}
+.api-state .progress-view-spinner { color: var(--accent-primary-hover); }
+.api-state .progress-spinner-label { color: var(--text-secondary); line-height: 1.5; }
+.api-state[role="alert"] { color: var(--status-error); }
+.api-state button {
+  padding: 0.5rem 1rem;
+  color: var(--text-primary);
+  background: var(--bg-surface-raised);
+  border: 1px solid var(--border-muted);
+  border-radius: 0.375rem;
+}
+button:disabled { cursor: not-allowed; opacity: 0.55; }
+:focus-visible { outline: 2px solid var(--accent-primary-hover); outline-offset: 3px; }
+
+/* The problem IDE supplies its own header; use the full viewport. */
+.algoviz-page-transition:has(.ide-problem-details) {
+  height: 100dvh;
+  min-height: 100dvh;
+  max-height: 100dvh;
 }

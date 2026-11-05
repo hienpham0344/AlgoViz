@@ -1,6 +1,6 @@
 import { useState } from "react";
 import ProgressView from "../../components/ProgressView.jsx";
-import { api, setAuthData } from "../../services/api.js";
+import { api } from "../../services/api.js";
 import "./auth.css";
 
 function AuthPage({ mode = "login", onAuthenticated }) {
@@ -16,15 +16,7 @@ function AuthPage({ mode = "login", onAuthenticated }) {
   };
 
   const handleGuestLogin = () => {
-    const guestUser = {
-      id: 9999,
-      username: "guest_developer",
-      fullName: "Guest Developer",
-      email: "guest@algoviz.local",
-    };
-    const guestToken = "guest-session-" + Date.now();
-    setAuthData(guestToken, guestUser);
-    onAuthenticated("Guest Developer", guestToken);
+    window.location.hash = "#problems";
   };
 
   const handleSubmit = async (event) => {
@@ -39,7 +31,7 @@ function AuthPage({ mode = "login", onAuthenticated }) {
       return;
     }
 
-    if (form.password.length < 6) {
+    if (isRegistering && form.password.length < 6) {
       setError("Password must be at least 6 characters.");
       return;
     }
@@ -49,7 +41,7 @@ function AuthPage({ mode = "login", onAuthenticated }) {
 
     try {
       if (isRegistering) {
-        const username = form.username.trim().toLowerCase().replace(/[^a-zA-Z0-9_]/g, "");
+        const username = form.username.trim();
         const res = await api.register(username, form.email.trim(), form.password, form.name.trim());
         const displayName = res?.user?.fullName || res?.user?.username || form.name.trim();
         onAuthenticated(displayName, res?.token);
@@ -60,27 +52,7 @@ function AuthPage({ mode = "login", onAuthenticated }) {
         onAuthenticated(displayName, res?.token);
       }
     } catch (err) {
-      console.error("Auth error:", err);
-      const isNetwork =
-        err.name === "TypeError" ||
-        err.message.includes("Failed to fetch") ||
-        err.message.includes("NetworkError") ||
-        err.message.includes("Load failed");
-
-      if (isNetwork) {
-        const fallbackName = form.name.trim() || form.email.split("@")[0] || "Developer";
-        const fallbackUser = {
-          id: 1,
-          username: fallbackName.toLowerCase().replace(/[^a-z0-9_]/g, ""),
-          fullName: fallbackName,
-          email: form.email.trim(),
-        };
-        const fallbackToken = "offline-session-" + Date.now();
-        setAuthData(fallbackToken, fallbackUser);
-        onAuthenticated(fallbackName, fallbackToken);
-      } else {
-        setError(err.message || "Authentication failed. Please check your credentials.");
-      }
+      setError(err.message || "Authentication failed. Please check your credentials.");
     } finally {
       setLoading(false);
     }
@@ -254,7 +226,7 @@ function AuthPage({ mode = "login", onAuthenticated }) {
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                 <circle cx="12" cy="7" r="4" />
               </svg>
-              <span>Continue as Guest</span>
+              <span>Browse as Guest</span>
             </button>
           </form>
 

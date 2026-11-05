@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { CustomSelect } from "../../components/index.js";
 import { api } from "../../services/api.js";
+import { mapSubmission } from "../../services/submissions.js";
+import ApiState from "../../components/ApiState.jsx";
 import "./history.css";
 
 const HISTORY_LANG_OPTIONS = [
   { value: "All", label: "All Languages" },
   { value: "C++", label: "C++" },
+  { value: "JavaScript", label: "JavaScript" },
   { value: "Java", label: "Java" },
   { value: "Python", label: "Python" },
 ];
@@ -16,128 +19,7 @@ const HISTORY_COMPLETION_OPTIONS = [
   { value: "incomplete", label: "Incomplete", dotColor: "#b06000" },
 ];
 
-const DEFAULT_HISTORY = [
-  {
-    id: "hist-1",
-    algorithm: "Bubble Sort Visualizer",
-    problemId: 912,
-    topic: "Sorting Algorithms",
-    complexity: "O(n²)",
-    language: "C++",
-    date: "Aug 20, 2025",
-    completed: true,
-  },
-  {
-    id: "hist-2",
-    algorithm: "Binary Search Recursive",
-    problemId: 704,
-    topic: "Searching Arrays",
-    complexity: "O(log n)",
-    language: "Java",
-    date: "Aug 19, 2025",
-    completed: true,
-  },
-  {
-    id: "hist-3",
-    algorithm: "Quick Sort (Lomuto Partition)",
-    problemId: 912,
-    topic: "Divide & Conquer",
-    complexity: "O(n log n)",
-    language: "Python",
-    date: "Aug 18, 2025",
-    completed: true,
-  },
-  {
-    id: "hist-4",
-    algorithm: "Merge Sort Recursive",
-    problemId: 912,
-    topic: "Divide & Conquer",
-    complexity: "O(n log n)",
-    language: "C++",
-    date: "Aug 16, 2025",
-    completed: false,
-  },
-  {
-    id: "hist-5",
-    algorithm: "Two Sum Hash Map",
-    problemId: 1,
-    topic: "Hash Tables",
-    complexity: "O(n)",
-    language: "Python",
-    date: "Aug 15, 2025",
-    completed: true,
-  },
-  {
-    id: "hist-6",
-    algorithm: "3Sum Two Pointers",
-    problemId: 15,
-    topic: "Two Pointers",
-    complexity: "O(n²)",
-    language: "Python",
-    date: "Aug 14, 2025",
-    completed: true,
-  },
-  {
-    id: "hist-7",
-    algorithm: "Longest Substring Sliding Window",
-    problemId: 3,
-    topic: "Sliding Window",
-    complexity: "O(n)",
-    language: "Java",
-    date: "Aug 12, 2025",
-    completed: true,
-  },
-  {
-    id: "hist-8",
-    algorithm: "Valid Parentheses Stack",
-    problemId: 20,
-    topic: "Stack",
-    complexity: "O(n)",
-    language: "C++",
-    date: "Aug 10, 2025",
-    completed: true,
-  },
-  {
-    id: "hist-9",
-    algorithm: "LRU Cache Doubly Linked List",
-    problemId: 146,
-    topic: "Design",
-    complexity: "O(1)",
-    language: "Python",
-    date: "Aug 08, 2025",
-    completed: true,
-  },
-  {
-    id: "hist-10",
-    algorithm: "Climbing Stairs DP",
-    problemId: 70,
-    topic: "Dynamic Programming",
-    complexity: "O(n)",
-    language: "Python",
-    date: "Aug 06, 2025",
-    completed: false,
-  },
-  {
-    id: "hist-11",
-    algorithm: "Kth Largest Element (Min-Heap)",
-    problemId: 215,
-    topic: "Heap",
-    complexity: "O(n log k)",
-    language: "Java",
-    date: "Aug 04, 2025",
-    completed: true,
-  },
-  {
-    id: "hist-12",
-    algorithm: "Invert Binary Tree BFS",
-    problemId: 226,
-    topic: "Trees",
-    complexity: "O(n)",
-    language: "C++",
-    date: "Aug 01, 2025",
-    completed: true,
-  },
-];
+
 
 function HistoryHero({ onNewAnalysis, onExport }) {
   return (
@@ -545,56 +427,28 @@ function HistoryPage() {
   const [newestFirst, setNewestFirst] = useState(true);
   const [selected, setSelected] = useState(new Set());
   const [announcement, setAnnouncement] = useState("");
-  const [historyList, setHistoryList] = useState(DEFAULT_HISTORY);
+  const [historyList, setHistoryList] = useState([]);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
+    let active = true;
     async function loadHistory() {
+      setIsLoading(true);
+      setLoadError("");
       try {
-        const historyData = await api.getSubmissionHistory();
-        if (Array.isArray(historyData) && historyData.length > 0) {
-          const formatLanguage = (lang) => {
-            const l = (lang || "").toLowerCase();
-            if (l.includes("py")) return "Python";
-            if (l.includes("js") || l.includes("javascript")) return "JavaScript";
-            if (l.includes("cpp") || l.includes("c++")) return "C++";
-            if (l.includes("java")) return "Java";
-            return lang || "Python";
-          };
-
-          const formatDate = (isoStr) => {
-            if (!isoStr) return "Just now";
-            try {
-              return new Date(isoStr).toLocaleDateString("en-US", {
-                month: "short",
-                day: "2-digit",
-                year: "numeric",
-              });
-            } catch {
-              return "Recent";
-            }
-          };
-
-          const mapped = historyData.map((item, idx) => ({
-            id: item.id || `sub-${idx}`,
-            algorithm: item.problemTitle || `Problem #${item.problemId || 1}`,
-            problemId: item.problemId || 1,
-            topic: item.topic || "Algorithm & Logic",
-            complexity: item.executionTimeMs != null ? `${item.executionTimeMs.toFixed(1)}ms` : "O(n)",
-            language: formatLanguage(item.language),
-            date: formatDate(item.submittedAt),
-            completed: item.status === "Accepted" || item.status === "ACCEPTED",
-            rawStatus: item.status,
-          }));
-          setHistoryList(mapped);
-        }
-      } catch (err) {
-        console.warn("Using default history", err);
-      }
+        const data = await api.getSubmissionHistory();
+        if (!Array.isArray(data)) throw new Error("Invalid history response.");
+        if (active) setHistoryList(data.map(mapSubmission));
+      } catch (error) { if (active) setLoadError(error.message); }
+      finally { if (active) setIsLoading(false); }
     }
     loadHistory();
-  }, []);
+    return () => { active = false; };
+  }, [reloadKey]);
 
   const rows = useMemo(() => {
     const filtered = historyList.filter(
@@ -647,17 +501,24 @@ function HistoryPage() {
     }
   };
 
-  const removeRow = (id) => {
+  const removeRow = async (id) => {
+    try { await api.deleteSubmission(id); }
+    catch (error) { setLoadError(error.message); return; }
     setHistoryList((prev) => prev.filter((item) => item.id !== id));
     setSelected((current) => new Set([...current].filter((item) => item !== id)));
     setAnnouncement("Analysis removed from the selected history.");
   };
 
-  const handleDeleteSelected = () => {
-    if (selected.size === 0) return;
-    setHistoryList((prev) => prev.filter((item) => !selected.has(item.id)));
-    setSelected(new Set());
-    setAnnouncement("Selected analyses deleted.");
+  const handleDeleteSelected = async () => {
+    if (!selected.size) return;
+    const ids = [...selected];
+    const results = await Promise.allSettled(ids.map((id) => api.deleteSubmission(id)));
+    const deleted = new Set(ids.filter((_, index) => results[index].status === "fulfilled"));
+    setHistoryList((prev) => prev.filter((item) => !deleted.has(item.id)));
+    setSelected((prev) => new Set([...prev].filter((id) => !deleted.has(id))));
+    const failed = results.find((result) => result.status === "rejected");
+    if (failed) setLoadError(failed.reason.message);
+    setAnnouncement(`${deleted.size} submissions deleted.`);
   };
 
   const clearSelected = () => {
@@ -690,11 +551,11 @@ function HistoryPage() {
     if (!historyList || historyList.length === 0) {
       return {
         total: 0,
-        successRate: 100,
+        successRate: 0,
         topAlgo: "None",
         topAlgoRuns: 0,
         topTopic: "None",
-        topLang: "Python",
+        topLang: "None",
         topLangPercent: 0,
       };
     }
@@ -742,6 +603,12 @@ function HistoryPage() {
     };
   }, [historyList]);
 
+  if (isLoading || (loadError && historyList.length === 0)) return (
+    <main className="history-page" aria-busy={isLoading}>
+      <ApiState loading={isLoading} error={loadError} onRetry={() => setReloadKey((key) => key + 1)} label="Loading submission history…" page />
+    </main>
+  );
+
   return (
     <main className="history-page" id="top">
       <HistoryHero
@@ -751,6 +618,7 @@ function HistoryPage() {
         onExport={handleExport}
       />
 
+      <ApiState loading={isLoading} error={loadError} onRetry={() => setReloadKey((key) => key + 1)} />
       <HistoryStats
         totalAnalyses={stats.total}
         successRate={stats.successRate}
