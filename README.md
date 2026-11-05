@@ -51,7 +51,7 @@
   <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL">
   <br/>
   <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker">
-  <img src="https://img.shields.io/badge/Azure_App_Service-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white" alt="Azure">
+  <img src="https://img.shields.io/badge/Azure_Container_Apps-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white" alt="Azure">
   <img src="https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white" alt="GitHub Actions">
 </div>
 
@@ -226,7 +226,7 @@ AlgoViz/
 │   └── DEPLOY_AZURE.md
 ├── .github/workflows/
 │   ├── docker.yml           # Build + health-check on PRs
-│   └── deploy-azure.yml     # Build + push ACR + deploy App Service on main
+│   └── deploy-azure.yml     # Build + push ACR + deploy Container Apps on main
 ├── Dockerfile               # Multi-stage: Node → Maven → JDK 21 runtime
 ├── docker-compose.yml       # App + optional PostgreSQL profile
 └── scripts/                 # Local build / run / test helpers
@@ -238,14 +238,14 @@ AlgoViz/
 
 ## ☁️ Deploy to Azure
 
-The workflow `.github/workflows/deploy-azure.yml` runs on every push to `main`: builds the image, smoke-tests `/api/ast/health`, pushes to Azure Container Registry and deploys to App Service via OIDC — no Azure credentials stored in the repo. The job is **skipped** until `AZURE_WEBAPP_NAME` is set.
+The workflow `.github/workflows/deploy-azure.yml` runs on every push to `main`: builds the image, smoke-tests `/api/ast/health`, pushes to Azure Container Registry and deploys to Container App `algoviz-backend` via OIDC — no Azure credentials stored in the repo. The job is **skipped** until `AZURE_CONTAINER_REGISTRY` is set.
 
 **Required GitHub configuration** (Settings → Secrets and variables → Actions):
 
 | Kind | Name |
 |---|---|
 | Variable | `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` |
-| Variable | `AZURE_RESOURCE_GROUP`, `AZURE_WEBAPP_NAME`, `AZURE_CONTAINER_REGISTRY` |
+| Variable | `AZURE_CONTAINER_REGISTRY` |
 | Secret | `APP_ALGOVIZ_JWT_SECRET`, `APP_SPRING_DATASOURCE_URL` |
 | Secret | `APP_SPRING_DATASOURCE_USERNAME`, `APP_SPRING_DATASOURCE_PASSWORD` |
 
@@ -260,7 +260,7 @@ See [docs/DEPLOY_AZURE.md](docs/DEPLOY_AZURE.md) for the `az` commands, federate
 - [x] Live Java execution trace (AST-tool / JavaParser + JDI)
 - [x] Spring Boot backend serving the bundled React frontend
 - [x] Docker Compose stack with optional PostgreSQL
-- [x] Azure App Service CI/CD via GitHub Actions + OIDC
+- [x] Azure Container Apps CI/CD workflow via GitHub Actions + OIDC
 - [ ] Call `/api/algorithms/recognize` from the visualizer UI
 - [ ] Runtime trace support for Python, JavaScript and C++
 - [ ] Isolated sandbox for shared/production environments
