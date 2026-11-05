@@ -1,0 +1,24 @@
+# Keep frontend/dist and frontend/node_modules out of context; the frontend is
+# rebuilt inside the image.
+.git
+.github
+.agents
+.idea
+.dockerignore
+**/target
+.mvn
+**/node_modules
+frontend/dist
+*.md
+docs
+.taste-skill*
+scratch*
+*.docx
+.env
+.env.*
+**/.env
+**/.env.*
+# A publish step may commit the built frontend; the image rebuilds it from
+# frontend/ instead. Vitest fixtures under frontend/src/__tests__ are unrelated.
+backend/src/main/resources/static/
+frontend/src/__tests__/

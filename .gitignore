@@ -11,3 +11,6 @@ AST-tool/
 # Temporary skill artifacts & scratch
 .taste-skill*
 scratch*
+
+# Local environment (Docker Compose)
+.env
