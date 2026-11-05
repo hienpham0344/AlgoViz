@@ -3,14 +3,18 @@ server:
 
 spring:
   config:
-    import: optional:file:./.env[.properties]
+    import:
+      - optional:file:./.env[.properties]
+      - optional:file:./backend/.env[.properties]
   application:
     name: algoViz
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:algovizdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
+    # H2 (PostgreSQL compatibility mode) is the zero-config default. Production
+    # must set all SPRING_DATASOURCE_* values (see docs/DEPLOY_AZURE.md).
+    url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:algovizdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
     username: ${SPRING_DATASOURCE_USERNAME:sa}
     password: ${SPRING_DATASOURCE_PASSWORD:}
-    driver-class-name: ${SPRING_DATASOURCE_DRIVER:}
+    driver-class-name: ${SPRING_DATASOURCE_DRIVER:org.h2.Driver}
     hikari:
       data-source-properties:
         prepareThreshold: 0
@@ -21,14 +25,12 @@ spring:
       path: /h2-console
   jpa:
     open-in-view: false
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: none
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
     show-sql: false
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.PostgreSQLDialect
 
 springdoc:
   api-docs:
@@ -71,7 +73,7 @@ algoviz:
     expiration-ms: ${ALGOVIZ_JWT_EXPIRATION_MS:900000} # 15 minutes
     refresh-expiration-ms: ${ALGOVIZ_JWT_REFRESH_EXPIRATION_MS:604800000} # 7 days
   cors:
-    allowed-origins: ${ALGOVIZ_CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173}
+    allowed-origins: ${ALGOVIZ_CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://localhost:8080}
   import:
     enabled: ${ALGOVIZ_IMPORT_ENABLED:false}
     source: ${ALGOVIZ_IMPORT_SOURCE:mock}
