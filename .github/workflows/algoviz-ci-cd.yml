@@ -1,0 +1,129 @@
+name: AlgoViz CI/CD
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: algoviz-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  frontend_ci:
+    name: Frontend - lint and build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+
+  backend_ci:
+    name: Backend - test and package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+      - name: Maven verify
+        working-directory: backend
+        run: mvn -B -ntp verify
+
+  deploy_frontend:
+    name: CD - Azure Static Web Apps
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name != 'pull_request' &&
+      vars.ALGOVIZ_ENABLE_FRONTEND_DEPLOY == 'true'
+    needs: frontend_ci
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify frontend settings
+        env:
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+          VITE_AST_API_BASE_URL: ${{ vars.VITE_AST_API_BASE_URL }}
+        shell: bash
+        run: |
+          test -n "$VITE_API_BASE_URL" || { echo 'Missing VITE_API_BASE_URL'; exit 1; }
+          test -n "$VITE_AST_API_BASE_URL" || { echo 'Missing VITE_AST_API_BASE_URL'; exit 1; }
+          [[ "$VITE_API_BASE_URL" == https://* ]] || { echo 'VITE_API_BASE_URL must be HTTPS'; exit 1; }
+          [[ "$VITE_AST_API_BASE_URL" == https://* ]] || { echo 'VITE_AST_API_BASE_URL must be HTTPS'; exit 1; }
+      - name: Build and deploy frontend
+        uses: Azure/static-web-apps-deploy@v1
+        env:
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+          VITE_AST_API_BASE_URL: ${{ vars.VITE_AST_API_BASE_URL }}
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          action: upload
+          app_location: frontend
+          api_location: ''
+          output_location: dist
+
+  deploy_backend:
+    name: CD - Azure Container Apps
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name != 'pull_request' &&
+      vars.ALGOVIZ_ENABLE_BACKEND_DEPLOY == 'true'
+    needs: backend_ci
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Docker and registry settings
+        env:
+          ACR_NAME: ${{ vars.AZURE_ACR_NAME }}
+        shell: bash
+        run: |
+          test -f backend/Dockerfile || { echo 'Missing backend/Dockerfile'; exit 1; }
+          test -n "$ACR_NAME" || { echo 'Missing AZURE_ACR_NAME'; exit 1; }
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Build image in Azure Container Registry
+        env:
+          ACR_NAME: ${{ vars.AZURE_ACR_NAME }}
+        shell: bash
+        run: |
+          az acr build \
+            --registry "$ACR_NAME" \
+            --image "algoviz-backend:${GITHUB_SHA}" \
+            --file Dockerfile \
+            backend
+      - name: Update Azure Container App
+        env:
+          ACR_NAME: ${{ vars.AZURE_ACR_NAME }}
+        shell: bash
+        run: |
+          az extension add --name containerapp --upgrade --yes
+          az containerapp update \
+            --resource-group rg-algoviz \
+            --name algoviz-backend \
+            --image "${ACR_NAME}.azurecr.io/algoviz-backend:${GITHUB_SHA}"
