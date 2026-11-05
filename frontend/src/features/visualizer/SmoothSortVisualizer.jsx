@@ -42,6 +42,7 @@ export default function SmoothSortVisualizer({
   useEffect(() => {
     setCurrentArray(initialArray);
     setTrace(generateBubbleSortTrace(initialArray));
+    setTraceIsLive(false);
     setStepIndex(0);
     if (autoPlay) {
       setIsPlaying(true);
@@ -50,6 +51,7 @@ export default function SmoothSortVisualizer({
 
   // AST backend connectivity
   const [isAstOnline, setIsAstOnline] = useState(false);
+  const [traceIsLive, setTraceIsLive] = useState(false);
   const [isFetchingAst, setIsFetchingAst] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
 
@@ -136,6 +138,7 @@ export default function SmoothSortVisualizer({
     const arr = PRESET_ARRAYS[presetKey] || PRESET_ARRAYS.default;
     setCurrentArray(arr);
     setTrace(generateBubbleSortTrace(arr));
+    setTraceIsLive(false);
     setStepIndex(0);
     setIsPlaying(false);
     setCustomInput(arr.join(", "));
@@ -153,6 +156,7 @@ export default function SmoothSortVisualizer({
     if (parsed.length >= 2 && parsed.length <= 15) {
       setCurrentArray(parsed);
       setTrace(generateBubbleSortTrace(parsed));
+      setTraceIsLive(false);
       setStepIndex(0);
       setIsPlaying(false);
       onArrayChange?.(parsed);
@@ -166,21 +170,23 @@ export default function SmoothSortVisualizer({
   // Live AST-tool backend sync
   const handleFetchAstLive = async () => {
     setIsFetchingAst(true);
-    setStatusMessage("Đang gửi Java code đến AST-tool backend (port 8081)...");
+    setStatusMessage("Đang gửi Java code đến AST-tool backend...");
     try {
-      const res = await fetchDebugSteps(BUBBLE_SORT_SAMPLE_JAVA);
+      const source = BUBBLE_SORT_SAMPLE_JAVA.replace("{5, 2, 8, 1, 9, 3}", `{${currentArray.join(", ")}}`);
+      const res = await fetchDebugSteps(source);
       const adapted = adaptStepsForVisualizer(res);
       if (adapted.length > 0) {
         setTrace(adapted);
         setStepIndex(0);
         setIsPlaying(false);
         setIsAstOnline(true);
+        setTraceIsLive(true);
         setStatusMessage("✅ Đã đồng bộ trace trực quan từ AST-tool JDI!");
       }
     } catch (err) {
       console.warn("AST-tool live sync failed:", err);
       setIsAstOnline(false);
-      setStatusMessage("⚠️ Không kết nối được AST-tool (port 8081). Dùng engine mô phỏng.");
+      setStatusMessage("⚠️ Không kết nối được AST-tool. Dùng engine mô phỏng.");
     } finally {
       setIsFetchingAst(false);
       setTimeout(() => setStatusMessage(""), 3500);
@@ -237,12 +243,12 @@ export default function SmoothSortVisualizer({
             }`}
             title={
               isAstOnline
-                ? "AST backend connected on port 8081"
+                ? "AST backend available"
                 : "Simulation Mode: Interactive deterministic execution"
             }
           >
             <span className="smooth-vis-status-dot" />
-            <span>{isAstOnline ? "AST Live" : "Simulation"}</span>
+            <span>{traceIsLive ? "AST Runtime Trace" : "Reference Illustration"}</span>
           </span>
 
           <div className="smooth-vis-dataset-group">
@@ -287,7 +293,7 @@ export default function SmoothSortVisualizer({
             className="smooth-vis-sync-btn"
             onClick={handleFetchAstLive}
             disabled={isFetchingAst}
-            title="Đồng bộ với AST-tool JDI runner (cổng 8081)"
+            title="Tạo trace Java từ dữ liệu hiện tại"
           >
             <svg
               className={isFetchingAst ? "is-spinning" : ""}

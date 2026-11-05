@@ -32,14 +32,9 @@ export default function SubmissionCelebrationModal({
     resize();
     window.addEventListener("resize", resize);
 
-    const colors = [
-      "#10b981", // emerald
-      "#20beff", // cyan
-      "#f59e0b", // gold/amber
-      "#8b5cf6", // violet
-      "#ec4899", // pink
-      "#3b82f6", // blue
-    ];
+    const theme = getComputedStyle(document.documentElement);
+    const colors = ["--status-success", "--accent-primary", "--status-warning", "--accent-purple"]
+      .map((token) => theme.getPropertyValue(token).trim());
 
     const particleCount = 80;
     const particles = [];
@@ -119,10 +114,8 @@ export default function SubmissionCelebrationModal({
 
   if (!isOpen) return null;
 
-  const runtimeMs = data?.runtimeMs ?? 24;
-  const memoryMb = data?.memoryMb ?? 14.8;
-  const runtimePercentile = data?.runtimePercentile ?? "88.6%";
-  const memoryPercentile = data?.memoryPercentile ?? "84.2%";
+  const runtimeMs = data?.runtimeMs ?? "—";
+  const memoryMb = data?.memoryMb ?? "—";
   const problemTitle = data?.problemTitle ?? "Two Sum";
 
   return (
@@ -157,7 +150,7 @@ export default function SubmissionCelebrationModal({
               height="36"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="#ffffff"
+              stroke="var(--text-inverse)"
               strokeWidth="3.2"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -191,14 +184,8 @@ export default function SubmissionCelebrationModal({
               </div>
               <span className="metric-val"><strong>{runtimeMs}</strong> ms</span>
             </div>
-            <div className="metric-progress-wrapper">
-              <div
-                className="metric-progress-fill metric-progress-fill--runtime"
-                style={{ width: runtimePercentile }}
-              />
-            </div>
             <span className="metric-footer-text">
-              Beats <strong>{runtimePercentile}</strong> of {data?.language || "Python"} submissions
+              Runtime measured by the server
             </span>
           </div>
 
@@ -211,14 +198,8 @@ export default function SubmissionCelebrationModal({
               </div>
               <span className="metric-val"><strong>{memoryMb}</strong> MB</span>
             </div>
-            <div className="metric-progress-wrapper">
-              <div
-                className="metric-progress-fill metric-progress-fill--memory"
-                style={{ width: memoryPercentile }}
-              />
-            </div>
             <span className="metric-footer-text">
-              Beats <strong>{memoryPercentile}</strong> of submissions
+              Memory reported by the server
             </span>
           </div>
         </div>

@@ -1,7 +1,7 @@
 /**
  * AST-tool API client & Sort Trace Engine.
  *
- * Talks to the AST-tool backend (default http://localhost:8081) which
+ * Talks to the embedded AST-tool backend on the application origin, which
  * parses Java source with JavaParser, launches it under JDI, and returns
  * per-step execution observations with visual sort states.
  * Also provides a client-side trace generator for smooth animations with
@@ -10,7 +10,8 @@
 
 import { javaFilename } from "./solutionTrace.js";
 
-const AST_API_BASE_URL = "http://localhost:8081";
+const AST_API_BASE_URL = (import.meta.env?.VITE_AST_API_BASE_URL ||
+  (import.meta.env?.VITE_API_BASE_URL || "/api").replace(/\/api\/?$/, "")).replace(/\/$/, "");
 
 export const BUBBLE_SORT_SAMPLE_JAVA = `public class BubbleSortSample {
   public static void main(String[] args) {
@@ -37,71 +38,87 @@ export const BUBBLE_SORT_SAMPLE_JAVA = `public class BubbleSortSample {
  */
 export async function checkAstToolHealth() {
   try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 1200);
-    const response = await fetch(`${AST_API_BASE_URL}/api/ast/parse`, {
-      method: "OPTIONS",
-      signal: controller.signal,
-    }).catch(() => null);
+    const data = await astRequest("/api/ast/health", { method: "GET" }, { timeoutMs: 2500 });
+    return data?.status === "UP" && data?.engine === "AST-tool/JDI";
+  } catch { return false; }
+}
+
+async function astRequest(path, init, options = {}) {
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  if (options.signal?.aborted) controller.abort();
+  options.signal?.addEventListener("abort", abort, { once: true });
+  const timer = setTimeout(abort, options.timeoutMs || 30000);
+  try {
+    const response = await fetch(`${AST_API_BASE_URL}${path}`, { ...init, signal: controller.signal });
+    const data = await response.json().catch(() => null);
+    if (!response.ok) {
+      const message = data?.error?.message || data?.message || `AST request failed (HTTP ${response.status})`;
+      const problems = Array.isArray(data?.problems) ? data.problems : [];
+      const error = new Error(problems.length ? `${message}: ${problems[0]}` : message);
+      error.problems = problems;
+      error.code = data?.error?.code || data?.code;
+      error.status = response.status;
+      throw error;
+    }
+    if (!data) throw new Error("The AST engine returned an invalid response.");
+    return data;
+  } finally {
     clearTimeout(timer);
-    return Boolean(response && response.status < 500);
-  } catch {
-    return false;
+    options.signal?.removeEventListener("abort", abort);
   }
 }
 
-/**
- * POST a Java source string as a multipart file upload.
- *
- * @param {string} path — endpoint path, e.g. "/api/debug/steps"
- * @param {string} javaSource — raw Java source code
- * @param {string} [filename] — filename sent in the multipart body
- * @returns {Promise<object>} parsed JSON response
- */
 async function postJavaSource(path, javaSource, options = {}) {
   if (!javaSource?.trim()) throw new Error("This solution has no executable source code.");
-  const filename = javaFilename(javaSource);
-  const blob = new Blob([javaSource], { type: "text/x-java-source" });
   const formData = new FormData();
-  formData.append("file", blob, filename);
+  formData.append("file", new Blob([javaSource], { type: "text/x-java-source" }), javaFilename(javaSource));
+  if (options.customInput != null) formData.append("customInput", options.customInput);
+  return astRequest(path, { method: "POST", body: formData }, options);
+}
 
-  const response = await fetch(`${AST_API_BASE_URL}${path}`, {
-    method: "POST",
-    body: formData,
-    signal: options.signal,
-  });
-
-  const data = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    const message =
-      data?.error?.message || data?.message || `HTTP ${response.status}`;
-    const err = new Error(message);
-    err.code = data?.error?.code;
-    err.problems = data?.problems || [];
-    throw err;
-  }
-
+function validateTrace(data) {
+  if (!Array.isArray(data?.steps) || data.steps.some(step => !Number.isInteger(step.lineNumber)
+    || step.lineNumber < 1 || !Array.isArray(step.variables))) throw new Error("The AST engine returned no valid trace steps.");
   return data;
 }
 
-/**
- * Fetch step-by-step execution trace with visual sort states.
- */
 export async function fetchDebugSteps(javaSource, options = {}) {
-  return postJavaSource("/api/debug/steps", javaSource, options);
+  return validateTrace(await postJavaSource("/api/debug/steps", javaSource, options));
 }
 
-/**
- * Fetch flat list of variable observations (legacy endpoint).
- */
+export async function fetchExecutionTrace(code, { language = "java", customInput = "", ...options } = {}) {
+  if (!code?.trim()) throw new Error("Enter source code before generating a trace.");
+  return validateTrace(await astRequest("/api/ast/trace", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code, language, customInput }),
+  }, options));
+}
+
 export async function fetchDebugObservations(javaSource = BUBBLE_SORT_SAMPLE_JAVA) {
   return postJavaSource("/api/debug", javaSource);
 }
 
-/**
- * Fetch the structured AST tree.
- */
+let catalogPromise = null;
+
+/** Versioned list of algorithm types the static recognizer supports. Cached per page load. */
+export function fetchAlgorithmCatalog(options = {}) {
+  if (!catalogPromise) {
+    catalogPromise = astRequest("/api/algorithms/catalog", { method: "GET" }, options).then(data => {
+      if (!Array.isArray(data?.algorithms)) throw new Error("The AST engine returned an invalid algorithm catalog.");
+      return data;
+    }).catch(error => { catalogPromise = null; throw error; });
+  }
+  return catalogPromise;
+}
+
+/** Static algorithm recognition (no execution). Returns `{ catalogVersion, algorithmHints }`. */
+export async function recognizeAlgorithms(javaSource, options = {}) {
+  const data = await postJavaSource("/api/algorithms/recognize", javaSource, options);
+  if (!Array.isArray(data?.algorithmHints)) throw new Error("The AST engine returned an invalid recognition result.");
+  return data;
+}
+
 export async function fetchAstParse(javaSource = BUBBLE_SORT_SAMPLE_JAVA) {
   return postJavaSource("/api/ast/parse", javaSource);
 }

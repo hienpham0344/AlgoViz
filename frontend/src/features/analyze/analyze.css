@@ -914,3 +914,6 @@ body.is-resizing-vertical {
     grid-template-columns: 1fr;
   }
 }
+
+.analyze-trace-input { display: grid; gap: .5rem; padding: 1rem; color: var(--text-secondary); font-size: .8125rem; }
+.analyze-trace-input textarea { width: 100%; resize: vertical; min-height: 3.5rem; padding: .75rem; border: 1px solid var(--border-muted); border-radius: .5rem; background: var(--bg-surface); color: var(--text-primary); }

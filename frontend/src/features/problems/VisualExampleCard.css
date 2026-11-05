@@ -1,0 +1,224 @@
+.ma-example-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+  color: var(--text-primary);
+}
+
+.ma-example-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.ma-panel {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.625rem;
+  background: var(--bg-surface-raised);
+}
+
+.ma-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 2.75rem;
+  padding: 0.625rem 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+}
+
+.ma-panel-header-left {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.ma-badge {
+  flex: none;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1.6;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ma-badge--input {
+  color: var(--accent-primary-hover);
+  background: color-mix(in srgb, var(--accent-primary) 12%, var(--bg-surface-raised));
+}
+
+.ma-badge--output {
+  color: var(--diff-easy);
+  background: var(--diff-easy-bg);
+}
+
+.ma-header-code,
+.ma-block-idx,
+.ma-block-box,
+.ma-target-tag,
+.ma-empty-fallback {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+.ma-header-code {
+  min-width: 0;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.ma-panel-actions {
+  display: flex;
+  flex: none;
+  gap: 0.25rem;
+}
+
+.ma-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0.375rem;
+  color: var(--text-secondary);
+  background: transparent;
+}
+
+.ma-action-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-surface-active);
+}
+
+.ma-action-btn:focus-visible {
+  outline: 2px solid var(--accent-primary-hover);
+  outline-offset: 2px;
+}
+
+.ma-panel-body {
+  min-width: 0;
+  padding: 1rem;
+}
+
+.ma-blocks-track {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.625rem;
+  max-width: 100%;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+
+.ma-block-column {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.ma-block-idx {
+  color: var(--text-muted);
+  font-size: 0.625rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.ma-block-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.625rem;
+  height: 2.625rem;
+  padding: 0 0.625rem;
+  border: 1px solid var(--border-muted);
+  border-radius: 0.375rem;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.ma-block-box--input {
+  border-color: color-mix(in srgb, var(--accent-primary) 50%, var(--border-muted));
+  background: color-mix(in srgb, var(--accent-primary) 8%, var(--bg-surface-raised));
+}
+
+.ma-block-box--output {
+  border-color: color-mix(in srgb, var(--diff-easy) 45%, var(--border-muted));
+  background: var(--diff-easy-bg);
+}
+
+.ma-target-indicator {
+  display: flex;
+  flex: none;
+  align-items: center;
+  height: 2.625rem;
+  margin-left: 0.25rem;
+  padding-left: 0.875rem;
+  border-left: 1px solid var(--border-muted);
+}
+
+.ma-target-tag {
+  padding: 0.375rem 0.625rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.375rem;
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.ma-empty-fallback {
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ma-explanation-row {
+  padding: 0.625rem 0.75rem;
+  border-left: 2px solid var(--border-muted);
+  border-radius: 0 0.375rem 0.375rem 0;
+  background: var(--bg-surface);
+  font-size: 0.75rem;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.ma-explain-label {
+  margin-right: 0.375rem;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.ma-explain-text {
+  color: var(--text-secondary);
+}
+
+@media (max-width: 480px) {
+  .ma-panel-header {
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .ma-panel-body {
+    padding: 0.75rem;
+  }
+
+  .ma-blocks-track {
+    gap: 0.5rem;
+  }
+}

@@ -1,6 +1,9 @@
-import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { NavigationBar, CustomSelect, SmoothSortVisualizer } from "../../components/index.js";
+import { useState, useCallback } from "react";
+import { ProgressView, NavigationBar, CustomSelect } from "../../components/index.js";
+import UserCodeVisualizer from "../problems/UserCodeVisualizer.jsx";
+import { fetchExecutionTrace } from "../../services/astApi.js";
 import { api } from "../../services/api.js";
+import { languageKey } from "../../services/submissions.js";
 import "./analyze.css";
 
 const CODE_SNIPPETS = {
@@ -67,6 +70,46 @@ const CODE_SNIPPETS = {
     "}",
   ].join("\n"),
 };
+
+// Runnable examples read the same array supplied by the visualizer.
+CODE_SNIPPETS["Java 21"] = CODE_SNIPPETS["Java 21"].replace(/}$/, `
+    public static void main(String[] args) {
+        java.util.Scanner scanner = new java.util.Scanner(System.in).useDelimiter("[^0-9-]+");
+        java.util.List<Integer> values = new java.util.ArrayList<>();
+        while (scanner.hasNextInt()) values.add(scanner.nextInt());
+        int[] arr = values.stream().mapToInt(Integer::intValue).toArray();
+        bubbleSort(arr);
+        System.out.println(java.util.Arrays.toString(arr));
+    }
+}`);
+CODE_SNIPPETS["Python 3"] += `
+
+import json, sys
+if __name__ == "__main__":
+    print(json.dumps(bubble_sort(json.load(sys.stdin))))
+`;
+CODE_SNIPPETS.JavaScript += `
+
+console.log(JSON.stringify(bubbleSort(JSON.parse(require("fs").readFileSync(0, "utf8")))));
+`;
+CODE_SNIPPETS["C++ 20"] += `
+
+#include <iostream>
+#include <sstream>
+#include <string>
+int main() {
+    std::string raw((std::istreambuf_iterator<char>(std::cin)), std::istreambuf_iterator<char>());
+    for (char& c : raw) if ((c < '0' || c > '9') && c != '-') c = ' ';
+    std::stringstream input(raw);
+    std::vector<int> arr;
+    int value;
+    while (input >> value) arr.push_back(value);
+    bubbleSort(arr);
+    std::cout << "[";
+    for (size_t i = 0; i < arr.size(); i++) { if (i) std::cout << ","; std::cout << arr[i]; }
+    std::cout << "]";
+}
+`;
 
 const DEFAULT_ARRAY = [5, 2, 8, 1, 9, 3];
 
@@ -235,10 +278,11 @@ function EditorToolbar({
           disabled={executionState === "running"}
           title="Bắt đầu chạy mã và trực quan hóa (Ctrl + Enter)"
         >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M8 5v14l11-7z" />
-          </svg>
-          <span>{executionState === "running" ? "Đang chạy..." : "Bắt đầu"}</span>
+          {executionState === "running" ? <ProgressView size="sm" label="Đang chạy…" /> : <>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M8 5v14l11-7z" />
+            </svg><span>Bắt đầu</span>
+          </>}
           <kbd className="analyze-toolbar-kbd">Ctrl ↵</kbd>
         </button>
       </div>
@@ -306,9 +350,9 @@ function RuntimeStats({ executionState }) {
   return (
     <div className="analyze-runtime-pill" aria-live="polite">
       <span className="analyze-runtime-dot" aria-hidden="true" />
-      <span>RAM: 14.2 MB</span>
+      <span>RAM: —</span>
       <b>•</b>
-      <span>Exec: {executionState === "running" ? "—" : "0.18ms"}</span>
+      <span>Exec: —</span>
       <b>•</b>
       <span className={`analyze-runtime-state analyze-runtime-state--${executionState}`}>
         {statusLabels[executionState] || "Ready"}
@@ -562,11 +606,13 @@ function ExecutionConsole({ logs, isOpen, onToggle, onClear }) {
 
 function ExecutionVisualizerStudio({
   executionState,
-  runKey,
-  currentArray,
-  isAutoPlay,
+  code,
+  language,
+  input,
+  onInputChange,
+  executionResult,
+  onRun,
   onStepChange,
-  onArrayChange,
   consoleLogs,
   isConsoleOpen,
   onToggleConsole,
@@ -596,21 +642,21 @@ function ExecutionVisualizerStudio({
             <span className="analyze-vis-status-dot" aria-hidden="true" />
             {executionState === "running"
               ? "Running Code..."
-              : executionState === "passed"
-              ? "Visual Trace Active"
-              : "Ready to Execute"}
+              : executionResult?.trace ? executionResult.trace.partial ? "Partial Runtime Trace" : "Runtime Trace Available"
+              : executionState === "failed" ? "Execution Failed" : "Ready to Execute"}
           </span>
         </div>
       </header>
 
       <div className="analyze-vis-stage-wrapper">
-        <SmoothSortVisualizer
-          key={runKey}
-          initialArray={currentArray}
-          autoPlay={isAutoPlay}
-          onStepChange={onStepChange}
-          onArrayChange={onArrayChange}
-        />
+        <label className="analyze-trace-input">
+          Testcase / standard input
+          <textarea value={input} onChange={event => onInputChange(event.target.value)}
+            disabled={executionState === "running"} rows={2} spellCheck="false" />
+        </label>
+        <UserCodeVisualizer code={code} language={language} testCase={{ input }}
+          executionResult={executionResult} onRunCode={onRun}
+          loading={executionState === "running"} onStepChange={onStepChange} />
       </div>
 
       <ExecutionConsole
@@ -672,109 +718,53 @@ function AnalyzePage({ userName = "Your name", isAuthenticated }) {
   const [code, setCode] = useState(CODE_SNIPPETS["Java 21"]);
   const [executionState, setExecutionState] = useState("ready");
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [currentArray, setCurrentArray] = useState(DEFAULT_ARRAY);
-  const [runKey, setRunKey] = useState(1);
-  const [isAutoPlay, setIsAutoPlay] = useState(false);
+  const [input, setInput] = useState(JSON.stringify(DEFAULT_ARRAY));
+  const [executionResult, setExecutionResult] = useState(null);
   const [activeStep, setActiveStep] = useState(null);
   const [announcement, setAnnouncement] = useState("");
   const [isConsoleOpen, setIsConsoleOpen] = useState(true);
   const [consoleLogs, setConsoleLogs] = useState([
     { tag: "System", text: "Compiler workspace initialized (Java 21 standard sandbox).", type: "system" },
-    { tag: "Visualizer", text: "Interactive trace engine loaded. Click 'Run Code & Visualize' to execute.", type: "info" },
+    { tag: "Visualizer", text: "Java source and testcase run through the embedded AST/JDI engine. Other languages provide server output without a runtime trace.", type: "info" },
   ]);
-
-  const executionTimerRef = useRef(null);
-
-  useEffect(() => () => window.clearTimeout(executionTimerRef.current), []);
 
   const announce = (message) => setAnnouncement(message);
 
-  // Synchronize active code editor line with the step currently executing in the visualizer
-  const activeLineIndex = useMemo(() => {
-    if (!activeStep) return -1;
-    const type = activeStep.type;
-
-    if (language === "Java 21") {
-      if (type === "IDLE") return 3; // for (int i = 0; ...
-      if (type === "COMPARE") return 5; // if (arr[j] > arr[j + 1])
-      if (type === "SWAPPING") return 7; // int temp = arr[j];
-      if (type === "SWAP_SETTLED") return 9; // arr[j + 1] = temp;
-      if (type === "PASS_END") return 4; // for (int j = 0; ...
-      if (type === "SORTED") return 1; // public static void bubbleSort
-    } else if (language === "Python 3") {
-      if (type === "IDLE") return 2; // for i in range(n - 1):
-      if (type === "COMPARE") return 4; // if arr[j] > arr[j + 1]:
-      if (type === "SWAPPING" || type === "SWAP_SETTLED") return 6; // arr[j], arr[j + 1] = ...
-      if (type === "PASS_END") return 3; // for j in range(n - i - 1):
-      if (type === "SORTED") return 7; // return arr
-    } else if (language === "JavaScript") {
-      if (type === "IDLE") return 2; // for (let i = 0; ...
-      if (type === "COMPARE") return 4; // if (arr[j] > arr[j + 1])
-      if (type === "SWAPPING") return 6; // const temp = arr[j];
-      if (type === "SWAP_SETTLED") return 8; // arr[j + 1] = temp;
-      if (type === "PASS_END") return 3; // for (let j = 0; ...
-      if (type === "SORTED") return 12; // return arr;
-    } else if (language === "C++ 20") {
-      if (type === "IDLE") return 5; // for (int i = 0; ...
-      if (type === "COMPARE") return 7; // if (arr[j] > arr[j + 1])
-      if (type === "SWAPPING" || type === "SWAP_SETTLED") return 9; // std::swap(...)
-      if (type === "PASS_END") return 6; // for (let j = 0; ...
-      if (type === "SORTED") return 3; // void bubbleSort(...)
-    }
-    return -1;
-  }, [activeStep, language]);
+  const activeLineIndex = activeStep?.line ? activeStep.line - 1 : -1;
 
   const handleRun = useCallback(async () => {
     if (executionState === "running") return;
     setExecutionState("running");
-    announce("Executing code and generating algorithm trace...");
-
-    const sortedCopy = [...currentArray].sort((a, b) => a - b);
-    const timeStr = new Date().toLocaleTimeString();
-
-    setConsoleLogs((prev) => [
-      ...prev,
-      { tag: "Compiler", text: `[${timeStr}] Compiling ${language} source code...`, type: "system" },
-      { tag: "Sandbox", text: "Allocated live execution environment. Memory: 14.2 MB.", type: "info" },
+    setExecutionResult(null);
+    setIsConsoleOpen(true);
+    announce("Executing code on the server…");
+    setConsoleLogs((previous) => [...previous,
+      { tag: "Compiler", text: `Running ${language}…`, type: "system" },
     ]);
-
     try {
-      const langKey = language.toLowerCase().includes("java")
-        ? "java"
-        : language.toLowerCase().includes("python")
-        ? "python"
-        : "cpp";
-      // Optional call to backend runCode API
-      await api.runCode(langKey, code, JSON.stringify(currentArray)).catch(() => null);
-    } catch {
-      // Fallback to local simulation
+      const trace = languageKey(language) === "java" ? await fetchExecutionTrace(code, { customInput: input }) : null;
+      const result = trace || await api.runCode(languageKey(language), code, input);
+      setExecutionResult({ ...result, trace });
+      if (!result?.status) throw new Error("The server returned no execution result.");
+      const failed = /error|exceeded|unsupported|failed|limit/i.test(result.status) || Boolean(result.errorMessage);
+      setExecutionState(failed ? "failed" : "passed");
+      setConsoleLogs((previous) => [...previous, {
+        tag: failed ? "Error" : "Output", text: result.errorMessage || result.output || "(No output)",
+        type: failed ? "error" : "success",
+      }, { tag: "Sandbox", text: `${result.status} · Runtime: ${result.executionTimeMs ?? "—"} ms · Memory: ${result.memoryUsageMb ?? "—"} MB`, type: "info" }]);
+      announce(failed ? result.errorMessage || result.status : "Execution complete. The console shows server output.");
+    } catch (error) {
+      setExecutionState("failed");
+      setExecutionResult({ traceError: error.message });
+      setConsoleLogs((previous) => [...previous, { tag: "Error", text: error.message, type: "error" }]);
+      announce(error.message);
     }
-
-    window.clearTimeout(executionTimerRef.current);
-    executionTimerRef.current = window.setTimeout(() => {
-      setExecutionState("passed");
-      setRunKey((prev) => prev + 1);
-      setIsAutoPlay(true);
-      announce("Execution complete. Interactive visualizer started.");
-
-      setConsoleLogs((prev) => [
-        ...prev,
-        {
-          tag: "Output",
-          text: `Input array: [${currentArray.join(", ")}] → Sorted output: [${sortedCopy.join(", ")}]`,
-          type: "success",
-        },
-        {
-          tag: "Visualizer",
-          text: `State machine ready with ${currentArray.length} items. Animated playback in progress.`,
-          type: "success",
-        },
-      ]);
-    }, 280);
-  }, [executionState, currentArray, language, code]);
+  }, [executionState, input, language, code]);
 
   const handleLanguageChange = (nextLanguage) => {
+    if (executionState === "running") return;
     setLanguage(nextLanguage);
+    setExecutionResult(null);
     if (CODE_SNIPPETS[nextLanguage]) {
       setCode(CODE_SNIPPETS[nextLanguage]);
     }
@@ -800,6 +790,8 @@ function AnalyzePage({ userName = "Your name", isAuthenticated }) {
   };
 
   const handleReset = () => {
+    if (executionState === "running") return;
+    setExecutionResult(null);
     setCode(CODE_SNIPPETS[language] || CODE_SNIPPETS["Java 21"]);
     setExecutionState("ready");
     announce(`Code reset to ${language} starter solution.`);
@@ -815,7 +807,7 @@ function AnalyzePage({ userName = "Your name", isAuthenticated }) {
           </div>
           <div className="analyze-studio-pill">
             <span className="analyze-studio-pill-dot" aria-hidden="true" />
-            <span>Live Interactive Engine Active</span>
+            <span>Java AST / JDI Engine</span>
           </div>
         </header>
 
@@ -828,7 +820,9 @@ function AnalyzePage({ userName = "Your name", isAuthenticated }) {
             activeLineIndex={activeLineIndex}
             onLanguageChange={handleLanguageChange}
             onCodeChange={(nextCode) => {
+              if (executionState === "running") return;
               setCode(nextCode);
+              setExecutionResult(null);
               setExecutionState("ready");
             }}
             onCopy={handleCopy}
@@ -839,11 +833,13 @@ function AnalyzePage({ userName = "Your name", isAuthenticated }) {
 
           <ExecutionVisualizerStudio
             executionState={executionState}
-            runKey={runKey}
-            currentArray={currentArray}
-            isAutoPlay={isAutoPlay}
+            code={code}
+            language={language}
+            input={input}
+            onInputChange={(value) => { setInput(value); setExecutionResult(null); setExecutionState("ready"); }}
+            executionResult={executionResult}
+            onRun={handleRun}
             onStepChange={setActiveStep}
-            onArrayChange={setCurrentArray}
             consoleLogs={consoleLogs}
             isConsoleOpen={isConsoleOpen}
             onToggleConsole={() => setIsConsoleOpen((curr) => !curr)}

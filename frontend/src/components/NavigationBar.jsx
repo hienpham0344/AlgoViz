@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api, clearAuthData, getToken } from "../services/api.js";
+import { api, getToken } from "../services/api.js";
 import ThemeToggle from "./ThemeToggle.jsx";
 import "./components.css";
 
@@ -84,12 +84,7 @@ function NavigationBar({
       <div className="av-nav-right">
         {isAuthenticated ? (
           <>
-            <div className="av-user-stats" title="3-day solving streak">
-              <span className="av-user-stats__streak">
-                <span className="av-user-stats__icon" aria-label="Streak">🔥</span>
-                <span className="av-user-stats__count">3</span>
-              </span>
-            </div>
+
 
             <div className={`av-user ${isAccountMenuOpen ? "is-account-menu-open" : ""}`}>
               <button
@@ -149,7 +144,7 @@ function NavigationBar({
                     onClick={() => {
                       closeMenu();
                       window.location.hash = "#landing";
-                      api.logout();
+                      api.logout().catch(() => {});
                     }}
                   >
                     Logout
@@ -168,6 +163,8 @@ function NavigationBar({
             </a>
           </div>
         )}
+
+        <ThemeToggle className="av-theme-toggle--compact" />
 
         <button
           className="av-menu-toggle"

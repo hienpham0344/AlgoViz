@@ -4,8 +4,15 @@ import {
   generateTwoSumTwoPassTrace,
   generateTwoSumTrace,
   generateBinarySearchTrace,
+  adaptAstStepsToRichVisualizer,
 } from "../../services/solutionTrace.js";
 import "./AlgoMasterVisualizer.css";
+import { fetchExecutionTrace } from "../../services/astApi.js";
+import { languageKey } from "../../services/submissions.js";
+import ApiState from "../../components/ApiState.jsx";
+import AlgorithmHints from "./AlgorithmHints.jsx";
+
+const EMPTY_STEP = {};
 
 const TWO_SUM_PRESETS = [
   { id: "p1", label: "Example 1: nums = [2, 7, 11, 15], target = 9", nums: [2, 7, 11, 15], target: 9 },
@@ -388,8 +395,28 @@ export default function AlgoMasterVisualizer({
   const timerRef = useRef(null);
   const containerRef = useRef(null);
 
-  // Trace Generation
-  const trace = useMemo(() => {
+  const activeCodeSnippet = useMemo(() => {
+    const codes = APPROACH_CODES[problemId]?.[activeApproach];
+    if (codes) return codes[language] || "";
+    return problem?.solutions?.find(solution => languageKey(solution.language) === languageKey(language))?.codeSnippet || "";
+  }, [problemId, activeApproach, language, problem?.solutions]);
+
+  const isJava = languageKey(language) === "java";
+  const input = [1, 704].includes(problemId)
+    ? `${currentPreset.target}\n${currentPreset.nums.join(" ")}` : problem?.sampleTestCases?.[0]?.input || "";
+  const [retryKey, setRetryKey] = useState(0);
+  const traceKey = `${activeCodeSnippet}\0${input}\0${retryKey}`;
+  const [runtime, setRuntime] = useState(null);
+  useEffect(() => {
+    if (!isJava || !activeCodeSnippet) return;
+    const controller = new AbortController();
+    fetchExecutionTrace(activeCodeSnippet, { customInput: input, signal: controller.signal })
+      .then(data => { if (!controller.signal.aborted) setRuntime({ key: traceKey, data }); })
+      .catch(error => { if (!controller.signal.aborted) setRuntime({ key: traceKey, error: error.message }); });
+    return () => controller.abort();
+  }, [isJava, activeCodeSnippet, input, traceKey, retryKey]);
+
+  const simulatedTrace = useMemo(() => {
     if (problemId === 1) {
       const { nums, target } = currentPreset;
       if (activeApproach === "hash-map") {
@@ -406,14 +433,17 @@ export default function AlgoMasterVisualizer({
       const { nums, target } = currentPreset;
       return generateBinarySearchTrace(nums, target);
     }
-    return generateTwoSumHashMapTrace([2, 7, 11, 15], 9);
+    return [];
   }, [problemId, activeApproach, currentPreset]);
+  const trace = useMemo(() => isJava
+    ? runtime?.key === traceKey && runtime.data ? adaptAstStepsToRichVisualizer(runtime.data.steps, activeCodeSnippet) : []
+    : simulatedTrace, [isJava, runtime, traceKey, activeCodeSnippet, simulatedTrace]);
 
   // Reset step index when approach or preset changes
   useEffect(() => {
     setStepIndex(0);
     setIsPlaying(false);
-  }, [activeApproach, selectedPresetId]);
+  }, [activeApproach, selectedPresetId, language, runtime?.data]);
 
   // Autoplay ticker
   useEffect(() => {
@@ -438,13 +468,13 @@ export default function AlgoMasterVisualizer({
   }, [isPlaying, stepIndex, trace.length, speedKey]);
 
   // Current Step
-  const currentStep = trace[stepIndex] || trace[0] || {};
+  const currentStep = trace[stepIndex] || trace[0] || EMPTY_STEP;
   const isComplete = stepIndex >= trace.length - 1;
 
   // Active line calculation
   const activeLine = useMemo(() => {
-    return getSynchronizedLineNumber(currentStep, activeApproach, language);
-  }, [currentStep, activeApproach, language]);
+    return isJava ? currentStep.activeLine : getSynchronizedLineNumber(currentStep, activeApproach, language);
+  }, [currentStep, activeApproach, language, isJava]);
 
   // Announce step
   useEffect(() => {
@@ -495,12 +525,6 @@ export default function AlgoMasterVisualizer({
     return () => window.removeEventListener("keydown", onKey);
   }, [isFullscreen]);
 
-  // Active code snippet
-  const activeCodeSnippet = useMemo(() => {
-    const codes = APPROACH_CODES[problemId]?.[activeApproach] || APPROACH_CODES[1]["hash-map"];
-    return codes[language] || codes["Python 3"] || "";
-  }, [problemId, activeApproach, language]);
-
   const codeLines = useMemo(() => {
     return activeCodeSnippet.split("\n");
   }, [activeCodeSnippet]);
@@ -522,6 +546,13 @@ export default function AlgoMasterVisualizer({
   const activeIndices = currentStep.activeIndices || [];
   const hashMapData = currentStep.hashMapData || [];
 
+  if (isJava && !activeCodeSnippet) return <ApiState error="No Java reference source is available for this problem." />;
+  if (isJava && (runtime?.key !== traceKey || runtime.loading || runtime.error)) return (
+    <ApiState loading={runtime?.key !== traceKey || runtime.loading} error={runtime?.error}
+      onRetry={() => setRetryKey(key => key + 1)} label="Generating Java reference trace…" page />
+  );
+  if (!trace.length) return <ApiState error="No observable trace is available for this reference source." />;
+
   return (
     <div
       ref={containerRef}
@@ -529,12 +560,13 @@ export default function AlgoMasterVisualizer({
       tabIndex={0}
       aria-label="AlgoMaster Visualizer"
     >
+      {isJava && runtime.data.partial && <ApiState error={`Partial trace: ${runtime.data.warnings.join(" ")}`} />}
       {/* 1. TOP HEADER & APPROACH TABS (AlgoMaster style) */}
       <div className="algomaster-header">
         <div className="algomaster-header__title-row">
           <div className="algomaster-badge">
             <span className="algomaster-badge__icon">⚡</span>
-            <span className="algomaster-badge__text">Visualization and Code</span>
+            <span className="algomaster-badge__text">{isJava ? "Java Runtime Trace" : "Reference Illustration"}</span>
           </div>
 
           <div className="algomaster-header__actions">
@@ -672,6 +704,8 @@ export default function AlgoMasterVisualizer({
             </div>
           )}
         </div>
+
+        {isJava && <AlgorithmHints hints={runtime.data.algorithmHints} />}
 
         {/* 3. STEP EXPLANATION BANNER (Emerald Green Box like AlgoMaster) */}
         <div className="algomaster-step-banner">

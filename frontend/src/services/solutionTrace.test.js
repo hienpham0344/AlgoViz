@@ -19,8 +19,8 @@ test("each request submits the selected solution verbatim with its own Java file
       const request = requests.at(-1);
       assert.equal(request.filename, `${name}.java`);
       assert.equal(request.source, source);
-      assert.equal(request.signal, controller.signal);
-      assert.equal(request.url, "http://localhost:8081/api/debug/steps");
+      assert.equal(request.signal.aborted, false);
+      assert.equal(request.url, "/api/debug/steps");
     }
     await assert.rejects(fetchDebugSteps(), /no executable source/);
     assert.equal(requests.length, 2, "missing source must never run the Bubble Sort sample");

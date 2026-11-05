@@ -1,26 +1,15 @@
-import React from "react";
 import "./ProgressView.css";
 
-/**
- * ProgressView
- * 
- * Standard progress and loading indicator inspired by SwiftUI's ProgressView
- * and WAI-ARIA 1.2 progressbar guidelines.
- * 
- * Supports:
- * 1. Indeterminate Spinner: when remaining work is unknown (role="status", aria-live="polite").
- * 2. Determinate Progress Ring: compact circular arc filling toward completion (role="progressbar", aria-valuenow).
- * 3. HTML <progress> Linear Bar: track for horizontal linear completion.
- */
+/** Unknown work uses a spinner; known completion uses a ring or native track. */
 export default function ProgressView({
   value,
   max = 100,
   min = 0,
-  variant, // "spinner" | "ring" | "linear"
-  size = "md", // for spinner: "sm" | "md" | "lg" (or number px); for ring: diameter in px (e.g. 56)
-  strokeWidth = 3.5, // for ring
-  color = "#0083bf",
-  trackColor = "#dadce0",
+  variant,
+  size = "md",
+  strokeWidth = 3.5,
+  color,
+  trackColor,
   label,
   showLabel = false,
   showValue = false,
@@ -28,157 +17,96 @@ export default function ProgressView({
   style = {},
   ...props
 }) {
-  // Determine variant automatically if not specified
-  const resolvedVariant = variant || (value == null ? "spinner" : "linear");
+  const range = max - min;
+  const determinate = Number.isFinite(value) && Number.isFinite(min) &&
+    Number.isFinite(max) && Number.isFinite(range) && range > 0;
+  const resolvedVariant = variant === "spinner" || !determinate ? "spinner" : variant || "linear";
+  const percent = determinate
+    ? Math.round(((Math.min(max, Math.max(min, value)) - min) / range) * 100)
+    : undefined;
+  const accessibleLabel = props["aria-label"] || label;
 
-  // Normalized percentage calculation
-  const numValue = typeof value === "number" ? value : 0;
-  const range = max - min > 0 ? max - min : 100;
-  const percent = Math.min(100, Math.max(0, Math.round(((numValue - min) / range) * 100)));
-
-  // -------------------------------------------------------------------------
-  // 1. INDETERMINATE SPINNER (work remaining unknown)
-  // -------------------------------------------------------------------------
   if (resolvedVariant === "spinner") {
     const sizeMap = { sm: 16, md: 22, lg: 32 };
-    const pixelSize = typeof size === "number" ? size : sizeMap[size] || 22;
-    const sizeClass = typeof size === "string" ? `progress-view-spinner--${size}` : "";
-
+    const pixelSize = Number.isFinite(size) && size > 0 ? size : sizeMap[size] || 22;
     return (
       <span
-        className={`progress-view-spinner ${sizeClass} ${className}`.trim()}
-        role="status"
-        aria-live="polite"
-        aria-label={label || "Loading"}
-        style={style}
         {...props}
+        className={`progress-view-spinner ${className}`.trim()}
+        role="progressbar"
+        aria-label={accessibleLabel || "Loading"}
+        aria-live="polite"
+        aria-valuenow={undefined}
+        aria-valuemin={undefined}
+        aria-valuemax={undefined}
+        aria-valuetext={undefined}
+        style={{ ...(color ? { color } : {}), ...style }}
       >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="progress-spinner-svg"
-          width={pixelSize}
-          height={pixelSize}
-          aria-hidden="true"
-        >
-          <circle
-            cx="12"
-            cy="12"
-            r="9.5"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeOpacity="0.2"
-          />
-          <path
-            d="M12 2.5C17.2467 2.5 21.5 6.75329 21.5 12"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-          />
+        <svg viewBox="0 0 24 24" fill="none" className="progress-spinner-svg"
+          width={pixelSize} height={pixelSize} aria-hidden="true">
+          <circle cx="12" cy="12" r="9.5" stroke="currentColor" strokeWidth="2.5" strokeOpacity="0.2" />
+          <path d="M12 2.5C17.2467 2.5 21.5 6.75329 21.5 12"
+            stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
         </svg>
-        {label && <span className="progress-spinner-label">{label}</span>}
-        <span className="sr-only">{label || "Loading..."}</span>
+        {label && <span className="progress-spinner-label" aria-hidden="true">{label}</span>}
       </span>
     );
   }
 
-  // -------------------------------------------------------------------------
-  // 2. DETERMINATE PROGRESS RING (compact circular arc)
-  // -------------------------------------------------------------------------
   if (resolvedVariant === "ring") {
-    const diameter = typeof size === "number" ? size : 56;
-    const radius = (diameter - strokeWidth) / 2;
+    const diameter = Number.isFinite(size) && size > 0 ? size : 56;
+    const stroke = Number.isFinite(strokeWidth) && strokeWidth > 0
+      ? Math.min(strokeWidth, diameter / 2) : Math.min(3.5, diameter / 2);
+    const radius = (diameter - stroke) / 2;
     const center = diameter / 2;
     const circumference = 2 * Math.PI * radius;
-    const strokeDashoffset = circumference - (percent / 100) * circumference;
-
     return (
       <div
+        {...props}
         className={`progress-view-ring ${className}`.trim()}
         role="progressbar"
         aria-valuenow={percent}
-        aria-valuemin={min}
-        aria-valuemax={max}
+        aria-valuemin={0}
+        aria-valuemax={100}
         aria-valuetext={`${percent}%`}
-        aria-label={label || "Progress ring"}
+        aria-label={accessibleLabel || "Progress"}
         style={{ width: diameter, height: diameter, ...style }}
-        {...props}
       >
-        <svg
-          width={diameter}
-          height={diameter}
-          viewBox={`0 0 ${diameter} ${diameter}`}
-          className="progress-ring-svg"
-          aria-hidden="true"
-        >
-          {/* Background track circle */}
-          <circle
-            cx={center}
-            cy={center}
-            r={radius}
-            fill="none"
-            stroke={trackColor}
-            strokeWidth={strokeWidth}
-            className="progress-ring-track"
-          />
-          {/* Filling progress arc */}
-          <circle
-            cx={center}
-            cy={center}
-            r={radius}
-            fill="none"
-            stroke={color}
-            strokeWidth={strokeWidth}
-            strokeDasharray={circumference}
-            strokeDashoffset={strokeDashoffset}
-            strokeLinecap="round"
-            transform={`rotate(-90 ${center} ${center})`}
-            className="progress-ring-fill"
-          />
-          {/* Centered visible percentage */}
-          {showValue && (
-            <text
-              x={center}
-              y={center + 4}
-              textAnchor="middle"
-              className="progress-ring-text"
-            >
-              {percent}%
-            </text>
-          )}
+        <svg width={diameter} height={diameter} viewBox={`0 0 ${diameter} ${diameter}`}
+          className="progress-ring-svg" aria-hidden="true">
+          <circle cx={center} cy={center} r={radius} fill="none"
+            stroke={trackColor || "var(--border-muted)"} strokeWidth={stroke} className="progress-ring-track" />
+          <circle cx={center} cy={center} r={radius} fill="none"
+            stroke={color || "var(--accent-primary-hover)"} strokeWidth={stroke}
+            strokeDasharray={circumference} strokeDashoffset={circumference * (1 - percent / 100)}
+            strokeLinecap="round" transform={`rotate(-90 ${center} ${center})`} className="progress-ring-fill" />
+          {showValue && <text x={center} y={center + 4} textAnchor="middle" className="progress-ring-text">{percent}%</text>}
         </svg>
       </div>
     );
   }
 
-  // -------------------------------------------------------------------------
-  // 3. HTML <progress> LINEAR BAR (readable track)
-  // -------------------------------------------------------------------------
   return (
-    <div className={`progress-view-linear-wrap ${className}`.trim()} style={style}>
+    <div className={`progress-view-linear-wrap ${className}`.trim()}
+      style={{ ...(color ? { "--progress-fill": color } : {}), ...(trackColor ? { "--progress-track": trackColor } : {}), ...style }}>
       {((label && showLabel) || showValue) && (
-        <div className="progress-view-linear-header">
+        <div className="progress-view-linear-header" aria-hidden="true">
           {label && showLabel && <span className="progress-view-linear-label">{label}</span>}
-          {showValue && (
-            <span className="progress-view-linear-value" aria-hidden="true">
-              {percent}%
-            </span>
-          )}
+          {showValue && <span className="progress-view-linear-value">{percent}%</span>}
         </div>
       )}
       <progress
-        className="progress-view-bar"
-        value={numValue}
-        max={max}
-        aria-valuenow={percent}
-        aria-valuemin={min}
-        aria-valuemax={max}
-        aria-label={label || `${percent}% progress`}
         {...props}
-      >
-        {percent}%
-      </progress>
+        className="progress-view-bar"
+        role="progressbar"
+        value={percent}
+        max={100}
+        aria-valuenow={percent}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuetext={`${percent}%`}
+        aria-label={accessibleLabel || "Progress"}
+      >{percent}%</progress>
     </div>
   );
 }

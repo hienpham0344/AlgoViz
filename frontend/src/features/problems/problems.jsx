@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NavigationBar, CustomSelect, ProgressView } from "../../components/index.js";
 import { api } from "../../services/api.js";
+import { isAccepted, profileStats } from "../../services/submissions.js";
+import ApiState from "../../components/ApiState.jsx";
+import { COURSES } from "../learn/coursesData.js";
 import "./problems.css";
 
 const TOPIC_TAGS = [
@@ -196,6 +199,7 @@ const DIFFICULTY_OPTIONS = [
 
 const STATUS_OPTIONS = [
   { value: "All", label: "All Status" },
+  { value: "Attempted", label: "Attempted" },
   {
     value: "Solved",
     label: "Solved",
@@ -226,208 +230,7 @@ const SORT_OPTIONS = [
   { value: "title-asc", label: "Title (A → Z)" },
 ];
 
-const PROBLEMS = [
-  {
-    id: 1,
-    title: "Two Sum",
-    difficulty: "Easy",
-    acceptance: 54.2,
-    topics: ["Array", "Hash Table"],
-    status: "Solved",
-    action: "Solve",
-    hasVisualizer: true,
-  },
-  {
-    id: 912,
-    title: "Sort an Array (Merge Sort)",
-    difficulty: "Medium",
-    acceptance: 68.1,
-    topics: ["Sorting", "Divide & Conquer"],
-    status: "To Do",
-    action: "Solve",
-    hasVisualizer: true,
-  },
-  {
-    id: 704,
-    title: "Binary Search",
-    difficulty: "Easy",
-    acceptance: 57.8,
-    topics: ["Binary Search", "Array"],
-    status: "Solved",
-    action: "Review",
-    hasVisualizer: true,
-  },
-  {
-    id: 3,
-    title: "Longest Substring Without Repeating Characters",
-    difficulty: "Medium",
-    acceptance: 35.6,
-    topics: ["Sliding Window", "Hash Table"],
-    status: "To Do",
-    action: "Solve",
-    hasVisualizer: true,
-  },
-  {
-    id: 146,
-    title: "LRU Cache",
-    difficulty: "Medium",
-    acceptance: 42.0,
-    topics: ["Hash Table", "Linked List", "Design"],
-    status: "Solved",
-    action: "Review",
-    hasVisualizer: false,
-  },
-  {
-    id: 42,
-    title: "Trapping Rain Water",
-    difficulty: "Hard",
-    acceptance: 61.2,
-    topics: ["Two Pointers", "Stack", "Array"],
-    status: "To Do",
-    action: "Solve",
-    hasVisualizer: true,
-  },
-  {
-    id: 98,
-    title: "Validate Binary Search Tree",
-    difficulty: "Medium",
-    acceptance: 33.4,
-    topics: ["Tree", "Depth-First Search"],
-    status: "Solved",
-    action: "Review",
-    hasVisualizer: false,
-  },
-  {
-    id: 207,
-    title: "Course Schedule",
-    difficulty: "Medium",
-    acceptance: 47.9,
-    topics: ["Graph", "Topological Sort"],
-    status: "To Do",
-    action: "Solve",
-    hasVisualizer: true,
-  },
-  {
-    id: 20,
-    title: "Valid Parentheses",
-    difficulty: "Easy",
-    acceptance: 40.5,
-    topics: ["String", "Stack"],
-    status: "Solved",
-    action: "Review",
-    hasVisualizer: true,
-  },
-  {
-    id: 21,
-    title: "Merge Two Sorted Lists",
-    difficulty: "Easy",
-    acceptance: 63.2,
-    topics: ["Linked List", "Recursion"],
-    status: "Solved",
-    action: "Review",
-    hasVisualizer: false,
-  },
-  {
-    id: 53,
-    title: "Maximum Subarray",
-    difficulty: "Medium",
-    acceptance: 50.4,
-    topics: ["Array", "Dynamic Programming"],
-    status: "To Do",
-    action: "Solve",
-    hasVisualizer: true,
-  },
-  {
-    id: 70,
-    title: "Climbing Stairs",
-    difficulty: "Easy",
-    acceptance: 52.3,
-    topics: ["Dynamic Programming", "Math"],
-    status: "Solved",
-    action: "Review",
-    hasVisualizer: false,
-  },
-  {
-    id: 206,
-    title: "Reverse Linked List",
-    difficulty: "Easy",
-    acceptance: 75.1,
-    topics: ["Linked List", "Recursion"],
-    status: "Solved",
-    action: "Review",
-    hasVisualizer: true,
-  },
-  {
-    id: 121,
-    title: "Best Time to Buy and Sell Stock",
-    difficulty: "Easy",
-    acceptance: 54.1,
-    topics: ["Array", "Dynamic Programming"],
-    status: "Solved",
-    action: "Review",
-    hasVisualizer: false,
-  },
-  {
-    id: 15,
-    title: "3Sum",
-    difficulty: "Medium",
-    acceptance: 33.7,
-    topics: ["Array", "Two Pointers", "Sorting"],
-    status: "To Do",
-    action: "Solve",
-    hasVisualizer: true,
-  },
-  {
-    id: 300,
-    title: "Longest Increasing Subsequence",
-    difficulty: "Medium",
-    acceptance: 54.8,
-    topics: ["Array", "Binary Search", "Dynamic Programming"],
-    status: "To Do",
-    action: "Solve",
-    hasVisualizer: false,
-  },
-  {
-    id: 72,
-    title: "Edit Distance",
-    difficulty: "Hard",
-    acceptance: 55.4,
-    topics: ["String", "Dynamic Programming"],
-    status: "To Do",
-    action: "Solve",
-    hasVisualizer: false,
-  },
-  {
-    id: 200,
-    title: "Number of Islands",
-    difficulty: "Medium",
-    acceptance: 58.2,
-    topics: ["Graph", "Breadth-First Search"],
-    status: "To Do",
-    action: "Solve",
-    hasVisualizer: true,
-  },
-  {
-    id: 4,
-    title: "Median of Two Sorted Arrays",
-    difficulty: "Hard",
-    acceptance: 39.8,
-    topics: ["Array", "Binary Search", "Divide & Conquer"],
-    status: "To Do",
-    action: "Solve",
-    hasVisualizer: false,
-  },
-  {
-    id: 76,
-    title: "Minimum Window Substring",
-    difficulty: "Hard",
-    acceptance: 42.1,
-    topics: ["Hash Table", "String", "Sliding Window"],
-    status: "To Do",
-    action: "Solve",
-    hasVisualizer: false,
-  },
-];
+
 
 function getDifficultyOrder(difficulty) {
   return { Easy: 1, Medium: 2, Hard: 3 }[difficulty] ?? 0;
@@ -448,7 +251,7 @@ function filterProblems(problems, filters) {
     const matchesStatus = filters.status === "All" || problem.status === filters.status;
     const matchesTopic =
       filters.topic === "All" ||
-      problem.topics.some((t) => t.toLowerCase() === filters.topic.toLowerCase());
+      problem.topics.some((topic) => topic.toLowerCase().includes(filters.topic.toLowerCase()));
 
     return matchesQuery && matchesDifficulty && matchesStatus && matchesTopic;
   });
@@ -486,6 +289,7 @@ function DifficultyBadge({ difficulty }) {
 }
 
 function ProblemHeroBanner({
+  history,
   userName,
   totalCount,
   solvedCount,
@@ -499,48 +303,19 @@ function ProblemHeroBanner({
 }) {
   const [showStats, setShowStats] = useState(true);
   const percent = totalCount > 0 ? Math.round((solvedCount / totalCount) * 100) : 0;
-  const displayName = userName && userName !== "Your name" ? userName : "Hiển Phạm Hoàng Gia";
+  const displayName = userName && userName !== "Your name" ? userName : "Guest";
 
   // Circular progress ring calculation (radius 22, circumference ~138.23)
   const radius = 22;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percent / 100) * circumference;
 
-  // Kaggle 3-week public activity matrix (M T W T F S S) matching Kaggle's authentic dashboard
-  const weekDays = ["M", "T", "W", "T", "F", "S", "S"];
-  const activityWeeks = [
-    // Week 1 (2 weeks ago)
-    [
-      { active: true, label: "Oct 5: 2 problems solved" },
-      { active: true, label: "Oct 6: 1 problem solved" },
-      { active: true, label: "Oct 7: 4 problems solved" },
-      { active: true, label: "Oct 8: 2 problems solved" },
-      { active: true, label: "Oct 9: 3 problems solved" },
-      { active: false, label: "Oct 10: Rest day" },
-      { active: false, label: "Oct 11: Rest day" },
-    ],
-    // Week 2 (1 week ago)
-    [
-      { active: true, label: "Oct 12: 3 problems solved" },
-      { active: true, label: "Oct 13: 2 problems solved" },
-      { active: true, label: "Oct 14: 1 problem solved" },
-      { active: true, label: "Oct 15: 5 problems solved" },
-      { active: true, label: "Oct 16: 2 problems solved" },
-      { active: true, label: "Oct 17: 4 problems solved" },
-      { active: true, label: "Oct 18: 1 problem solved" },
-    ],
-    // Week 3 (Current week - Monday is today)
-    [
-      { active: true, isToday: true, label: "Oct 19 (Today): Active streak" },
-      { active: false, isFuture: true, label: "Oct 20: Upcoming" },
-      { active: false, isFuture: true, label: "Oct 21: Upcoming" },
-      { active: false, isFuture: true, label: "Oct 22: Upcoming" },
-      { active: false, isFuture: true, label: "Oct 23: Upcoming" },
-      { active: false, isFuture: true, label: "Oct 24: Upcoming" },
-      { active: false, isFuture: true, label: "Oct 25: Upcoming" },
-    ],
-  ];
-  const totalActiveDays = activityWeeks.flat().filter((d) => d.active).length;
+  const activity = profileStats(history, []);
+  const weekDays = ["S", "M", "T", "W", "T", "F", "S"];
+  const recentDays = activity.cells.slice(-21);
+  const activityWeeks = [0, 1, 2].map((week) => recentDays.slice(week * 7, week * 7 + 7)
+    .map((day) => ({ active: day.count > 0, label: `${day.date}: ${day.count} submissions` })));
+  const totalActiveDays = recentDays.filter((day) => day.count > 0).length;
 
   return (
     <section className="problemset-banner" aria-label="Welcome Overview">
@@ -553,34 +328,34 @@ function ProblemHeroBanner({
         <div className="problemset-banner__kpi-group">
           {/* 1. Login streak */}
           <div className="kaggle-kpi-col">
-            <span className="kaggle-kpi-label">Login streak</span>
+            <span className="kaggle-kpi-label">Practice streak</span>
             <div className="kaggle-kpi-streak-val">
-              <span className="kaggle-streak-num">3</span>
+              <span className="kaggle-streak-num">{activity.currentStreak}</span>
             </div>
-            <span className="kaggle-kpi-sub">Your longest is 12 days</span>
+            <span className="kaggle-kpi-sub">days of consecutive practice</span>
           </div>
 
-          {/* 2. Tier progress */}
+          {/* 2. Problem progress */}
           <div className="kaggle-kpi-col kaggle-kpi-col--center">
-            <span className="kaggle-kpi-label">Tier progress</span>
+            <span className="kaggle-kpi-label">Problem progress</span>
             <div className="kaggle-ring-box">
               <ProgressView
                 variant="ring"
                 value={percent}
                 size={56}
                 strokeWidth={3.5}
-                color="#0083bf"
-                trackColor="#dadce0"
+                color="var(--accent-primary-hover)"
+                trackColor="var(--border-muted)"
                 showValue
-                label="Tier progress"
+                label="Problem progress"
               />
             </div>
-            <span className="kaggle-kpi-sub">to Expert</span>
+            <span className="kaggle-kpi-sub">of the problem catalog</span>
           </div>
 
-          {/* 3. Public activity (Kaggle 3-week dot matrix) */}
+          {/* 3. Recent activity (Kaggle 3-week dot matrix) */}
           <div className="kaggle-kpi-col">
-            <span className="kaggle-kpi-label">Public activity</span>
+            <span className="kaggle-kpi-label">Recent activity</span>
             <div className="kaggle-activity-grid">
               <div className="kaggle-grid-header">
                 {weekDays.map((d, i) => (
@@ -681,7 +456,7 @@ function ProblemHeroBanner({
                 <span className="banner-stat-label">Curriculum Tracks</span>
               </div>
               <div className="banner-stat-value">
-                <strong>4</strong>
+                <strong>{COURSES.length}</strong>
                 <span className="banner-stat-badge banner-stat-badge--amber">Courses</span>
               </div>
               <span className="banner-stat-sub">Foundations to advanced prep</span>
@@ -731,6 +506,7 @@ function ProblemHeroBanner({
 }
 
 function FilterBar({
+  topics = TOPIC_TAGS,
   filters,
   onSearchChange,
   onDifficultyChange,
@@ -790,7 +566,7 @@ function FilterBar({
       </div>
 
       <div className="filter-topic-strip" role="tablist" aria-label="Topic categories">
-        {TOPIC_TAGS.map((topic) => (
+        {topics.map((topic) => (
           <button
             type="button"
             key={topic}
@@ -873,13 +649,13 @@ function ProblemRow({ problem, onSolve, onVisualizer }) {
       </div>
 
       <div className="col-acceptance">
-        <span className="acceptance-pct">{problem.acceptance.toFixed(1)}%</span>
+        <span className="acceptance-pct">{problem.acceptance == null ? "—" : `${problem.acceptance.toFixed(1)}%`}</span>
         <div className="acceptance-bar" aria-hidden="true">
           <div
             className={`acceptance-fill ${
               problem.acceptance >= 55 ? "is-high" : problem.acceptance >= 40 ? "is-med" : "is-low"
             }`}
-            style={{ width: `${Math.min(100, Math.max(8, problem.acceptance))}%` }}
+            style={{ width: `${Math.min(100, Math.max(0, problem.acceptance ?? 0))}%` }}
           />
         </div>
       </div>
@@ -968,6 +744,8 @@ function Pagination({ page, pageCount, onPageChange }) {
 }
 
 function ProblemsSidebar({
+  problems,
+  history,
   totalCount,
   solvedCount,
   easySolved,
@@ -980,49 +758,18 @@ function ProblemsSidebar({
   onVisualizer,
 }) {
   const percent = totalCount > 0 ? Math.round((solvedCount / totalCount) * 100) : 0;
-  const dailyProblem = PROBLEMS[0];
+  const dailyProblem = problems.length ? problems[0] : null;
+  const activity = profileStats(history, []);
+  if (!dailyProblem) return null;
 
   return (
     <div className="problems-sidebar">
-      {/* 1. Daily Streak Card (Minimalist & Anti-Slop) */}
       <div className="sidebar-card sidebar-card--streak">
         <div className="streak-minimal-header">
-          <div className="streak-minimal-title-group">
-            <span className="streak-flame-glyph" aria-hidden="true">🔥</span>
-            <div className="streak-stat-headline">
-              <strong>3</strong>
-              <span>Day Streak</span>
-            </div>
-          </div>
-          <span className="streak-best-label">Best 12d</span>
+          <div className="streak-stat-headline"><strong>{activity.currentStreak}</strong><span>Day Streak</span></div>
+          <span className="streak-best-label">{history.length} submissions</span>
         </div>
-
-        {/* 7-Day Activity Matrix (Minimal Dots - Kaggle & GitHub Style) */}
-        <div className="streak-minimal-days" role="group" aria-label="Current week practice activity">
-          {[
-            { day: "M", date: "17", active: true, isToday: false },
-            { day: "T", date: "18", active: true, isToday: false },
-            { day: "W", date: "19", active: true, isToday: true },
-            { day: "T", date: "20", active: false, isToday: false },
-            { day: "F", date: "21", active: false, isToday: false },
-            { day: "S", date: "22", active: false, isToday: false },
-            { day: "S", date: "23", active: false, isToday: false },
-          ].map((d, i) => (
-            <div
-              key={i}
-              className={`streak-min-col ${d.active ? "is-active" : ""} ${d.isToday ? "is-today" : ""}`}
-              title={`${d.day} ${d.date}: ${d.active ? "Completed" : "Upcoming"}`}
-            >
-              <span className="streak-min-day">{d.day}</span>
-              <span className="streak-min-dot" />
-              <span className="streak-min-date">{d.date}</span>
-            </div>
-          ))}
-        </div>
-
-        <p className="streak-minimal-subtext">
-          Solve today’s pick to extend your streak to <strong>4 days</strong>.
-        </p>
+        <p className="streak-minimal-subtext">Practice regularly to build your streak.</p>
       </div>
 
       {/* 2. Daily Algorithm Challenge Card */}
@@ -1030,9 +777,9 @@ function ProblemsSidebar({
         <div className="sidebar-card__header">
           <div className="daily-badge-wrap">
             <span className="daily-pill">Daily Challenge</span>
-            <span className="xp-tag">+50 XP</span>
+            <span className="xp-tag">+10 points on first solve</span>
           </div>
-          <span className="daily-countdown">14h left</span>
+
         </div>
 
         <div className="daily-card-body">
@@ -1044,10 +791,10 @@ function ProblemsSidebar({
               {dailyProblem.difficulty}
             </span>
             <span className="daily-meta-tag">{dailyProblem.topics[0]}</span>
-            <span className="daily-meta-rate">{dailyProblem.acceptance}% pass</span>
+            <span className="daily-meta-rate">{dailyProblem.acceptance == null ? "No submissions yet" : `${dailyProblem.acceptance}% pass`}</span>
           </div>
           <p className="daily-problem-hint">
-            Step through array index search and hash map lookups with live execution trace.
+            {dailyProblem.shortDescription || "Practice this problem and explore its reference solutions."}
           </p>
 
           <div className="daily-card-actions">
@@ -1145,26 +892,7 @@ function ProblemsSidebar({
         <div className="sidebar-card__header">
           <span className="sidebar-card__title">Curated Tracks</span>
         </div>
-        <div className="roadmap-mini-list">
-          <div className="roadmap-mini-item">
-            <div className="roadmap-mini-header">
-              <span>Blind 75 Fast-Track</span>
-              <span className="roadmap-pct">60%</span>
-            </div>
-            <div className="roadmap-mini-bar">
-              <div className="roadmap-mini-bar-fill" style={{ width: "60%" }} />
-            </div>
-          </div>
-          <div className="roadmap-mini-item">
-            <div className="roadmap-mini-header">
-              <span>Dynamic Programming Sprint</span>
-              <span className="roadmap-pct">25%</span>
-            </div>
-            <div className="roadmap-mini-bar">
-              <div className="roadmap-mini-bar-fill" style={{ width: "25%" }} />
-            </div>
-          </div>
-        </div>
+        <div className="roadmap-mini-list"><a href="#learn">Browse courses and track your lesson progress →</a></div>
       </div>
     </div>
   );
@@ -1180,59 +908,45 @@ function ProblemsPage({ userName = "Your name", isAuthenticated = false, onOpenP
   });
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [problemsList, setProblemsList] = useState(PROBLEMS);
+  const [problemsList, setProblemsList] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
   const searchInputRef = useRef(null);
 
   useEffect(() => {
+    let active = true;
     async function loadProblems() {
+      setIsLoading(true);
+      setLoadError("");
       try {
-        let solvedIds = new Set();
-        try {
-          const history = await api.getSubmissionHistory();
-          if (Array.isArray(history)) {
-            history.forEach((sub) => {
-              if (sub.status === "Accepted" || sub.status === "ACCEPTED") {
-                solvedIds.add(sub.problemId);
-              }
-            });
-          }
-        } catch {
-          // ignore unauthenticated
-        }
-
-        const apiProblems = await api.getProblems();
-        if (Array.isArray(apiProblems) && apiProblems.length > 0) {
-          const mapped = apiProblems.map((p) => {
-            const isSolved = solvedIds.has(p.id);
-            const rate =
-              typeof p.acceptanceRate === "number"
-                ? p.acceptanceRate
-                : p.difficulty === "Hard"
-                ? 35.8
-                : p.difficulty === "Medium"
-                ? 46.5
-                : 54.2 + (p.id % 5) * 3.1;
-
-            return {
-              id: p.id,
-              title: p.title,
-              difficulty: p.difficulty || "Easy",
-              acceptance: Math.round(rate * 10) / 10,
-              topics: p.category ? [p.category] : ["Algorithm"],
-              status: isSolved ? "Solved" : "To Do",
-              action: isSolved ? "Review" : "Solve",
-              hasVisualizer: [1, 912, 704, 3, 42, 207, 20, 53, 206, 15, 200].includes(p.id),
-              shortDescription: p.shortDescription,
-            };
-          });
-          setProblemsList(mapped);
-        }
-      } catch (err) {
-        console.warn("Could not fetch problems from backend, using defaults:", err);
-      }
+        const [catalog, submissions] = await Promise.allSettled([
+          api.getProblems(), isAuthenticated ? api.getSubmissionHistory() : Promise.resolve([]),
+        ]);
+        if (!active) return;
+        if (catalog.status === "rejected") throw catalog.reason;
+        if (!Array.isArray(catalog.value)) throw new Error("Invalid problems response.");
+        const records = submissions.status === "fulfilled" && Array.isArray(submissions.value) ? submissions.value : [];
+        setHistory(records);
+        if (submissions.status === "rejected") setLoadError("Could not load your progress. Please try again.");
+        const solvedIds = new Set(records.filter((item) => isAccepted(item.status)).map((item) => item.problemId));
+        const attemptedIds = new Set(records.map((item) => item.problemId));
+        setProblemsList(catalog.value.map((p) => ({
+          ...p, difficulty: p.difficulty || "Easy",
+          acceptance: typeof p.acceptanceRate === "number" ? Math.round(p.acceptanceRate * 10) / 10 : null,
+          topics: p.category ? p.category.split(/,\s*/) : ["Algorithm"],
+          status: solvedIds.has(p.id) ? "Solved" : attemptedIds.has(p.id) ? "Attempted" : "To Do",
+          action: solvedIds.has(p.id) ? "Review" : "Solve",
+          hasVisualizer: [1, 912, 704, 3, 42, 207, 20, 53, 206, 15, 200].includes(p.id),
+        })));
+      } catch (error) {
+        if (active) { setProblemsList([]); setLoadError(error.message); }
+      } finally { if (active) setIsLoading(false); }
     }
     loadProblems();
-  }, []);
+    return () => { active = false; };
+  }, [isAuthenticated, reloadKey]);
 
   useEffect(() => {
     const handleShortcut = (e) => {
@@ -1336,10 +1050,19 @@ function ProblemsPage({ userName = "Your name", isAuthenticated = false, onOpenP
       ? 0
       : Math.min(filteredProblems.length, startIndex + visibleProblems.length - 1);
 
+  if (isLoading || (loadError && problemsList.length === 0)) return (
+    <main className="problems-page" aria-busy={isLoading}>
+      <div className="problems-container">
+        <ApiState loading={isLoading} error={loadError} onRetry={() => setReloadKey((key) => key + 1)} label="Loading problems…" page />
+      </div>
+    </main>
+  );
+
   return (
     <main className="problems-page" id="top">
       <div className="problems-container">
         <ProblemHeroBanner
+          history={history}
           userName={userName}
           totalCount={totalProblemsCount}
           solvedCount={solvedCount}
@@ -1352,9 +1075,11 @@ function ProblemsPage({ userName = "Your name", isAuthenticated = false, onOpenP
           onPickRandom={handlePickRandom}
         />
 
+        <ApiState loading={isLoading} error={loadError} onRetry={() => setReloadKey((key) => key + 1)} />
         <div className="problems-main-layout">
           <div className="problems-primary-column">
             <FilterBar
+              topics={["All", ...new Set(problemsList.flatMap((problem) => problem.topics))]}
               filters={filters}
               onSearchChange={handleSearchChange}
               onDifficultyChange={handleDifficultyChange}
@@ -1387,7 +1112,7 @@ function ProblemsPage({ userName = "Your name", isAuthenticated = false, onOpenP
                   ))
                 ) : (
                   <div className="problem-table-empty">
-                    <p>No algorithmic problems match the current filter.</p>
+                    <p>{isLoading ? "Loading problems…" : loadError ? "Problem data is unavailable." : "No problems match the current filter."}</p>
                     <button type="button" className="filter-reset-btn" onClick={handleResetFilters}>
                       Clear all filters
                     </button>
@@ -1432,6 +1157,8 @@ function ProblemsPage({ userName = "Your name", isAuthenticated = false, onOpenP
 
           <aside className="problems-sidebar-column">
             <ProblemsSidebar
+              problems={problemsList}
+              history={history}
               totalCount={totalProblemsCount}
               solvedCount={solvedCount}
               easySolved={easySolved}

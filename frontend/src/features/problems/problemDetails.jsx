@@ -4,8 +4,11 @@ import UserCodeVisualizer from "./UserCodeVisualizer.jsx";
 import SubmissionCelebrationModal from "./SubmissionCelebrationModal.jsx";
 import VisualExampleCard from "./VisualExampleCard.jsx";
 import ResizableColumns from "../../components/ResizableColumns.jsx";
-import { CustomSelect, ThemeToggle } from "../../components/index.js";
+import { CustomSelect, ThemeToggle, ProgressView } from "../../components/index.js";
 import { api } from "../../services/api.js";
+import { isAccepted, languageKey, mapSubmission, runResult } from "../../services/submissions.js";
+import { fetchExecutionTrace } from "../../services/astApi.js";
+import ApiState from "../../components/ApiState.jsx";
 import "./problemDetails.css";
 
 const RUNNER_LANGUAGES = ["Python 3", "JavaScript", "C++", "Java"];
@@ -728,6 +731,10 @@ function renderInlineMarkdown(text) {
 }
 
 function ProblemDetailsPage({ problemId = 1 }) {
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
+  const [submissionsError, setSubmissionsError] = useState("");
   const [currentProblem, setCurrentProblem] = useState(() => {
     return DEFAULT_PROBLEMS[problemId] || buildGenericProblem(problemId);
   });
@@ -864,6 +871,7 @@ function ProblemDetailsPage({ problemId = 1 }) {
   const [activeCaseIndex, setActiveCaseIndex] = useState(0);
   const [executionState, setExecutionState] = useState("ready");
   const [executionResult, setExecutionResult] = useState(null);
+  const [pendingAction, setPendingAction] = useState(null);
   const [announcement, setAnnouncement] = useState("");
 
   // Badges & hints expansion
@@ -886,47 +894,32 @@ function ProblemDetailsPage({ problemId = 1 }) {
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
-  // Submissions history state (preloaded with realistic LeetCode entries)
-  const [submissionsList, setSubmissionsList] = useState([
-    {
-      id: "sub-1",
-      status: "Accepted",
-      language: "Python 3",
-      runtimeMs: 48,
-      runtimePercentile: "86.4%",
-      memoryMb: 16.5,
-      memoryPercentile: "79.2%",
-      date: "2 hours ago",
-    },
-    {
-      id: "sub-2",
-      status: "Accepted",
-      language: "Java",
-      runtimeMs: 2,
-      runtimePercentile: "94.8%",
-      memoryMb: 43.1,
-      memoryPercentile: "82.5%",
-      date: "Yesterday",
-    },
-    {
-      id: "sub-3",
-      status: "Accepted",
-      language: "C++",
-      runtimeMs: 7,
-      runtimePercentile: "91.1%",
-      memoryMb: 11.2,
-      memoryPercentile: "88.3%",
-      date: "3 days ago",
-    },
-  ]);
+  // Submission history stays pending until the server responds.
+  const [submissionsList, setSubmissionsList] = useState([]);
+  const [submissionsLoading, setSubmissionsLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    setSubmissionsLoading(true);
+    setSubmissionsError("");
+    api.getProblemSubmissions(problemId).then((data) => {
+      if (!Array.isArray(data)) throw new Error("Invalid submissions response.");
+      if (active) { setSubmissionsList(data.map(mapSubmission)); setSubmissionsError(""); }
+    }).catch((error) => { if (active) setSubmissionsError(error.message); })
+      .finally(() => { if (active) setSubmissionsLoading(false); });
+    return () => { active = false; };
+  }, [problemId, reloadKey]);
 
   useEffect(() => {
     let cancelled = false;
     async function loadProblem() {
+      setIsLoading(true);
+      setLoadError("");
       const fallback = DEFAULT_PROBLEMS[problemId] || buildGenericProblem(problemId);
       try {
         const data = await api.getProblemById(problemId);
-        if (data && !cancelled) {
+        if (!data?.id) throw new Error("Invalid problem response.");
+        if (!cancelled) {
           let normalizedConstraints = fallback.constraints;
           if (Array.isArray(data.constraints)) {
             normalizedConstraints = data.constraints;
@@ -945,26 +938,16 @@ function ProblemDetailsPage({ problemId = 1 }) {
             JavaScript: merged.starterCodeJs || fallback.starterCodeJs || "",
             Java: merged.starterCodeJava || fallback.starterCodeJava || "",
           });
-          return;
         }
-      } catch (err) {
-        console.warn("Using fallback problem details:", err);
-      }
-      if (!cancelled) {
-        setCurrentProblem(fallback);
-        setCodeByLanguage({
-          "Python 3": fallback.starterCodePython || "",
-          "C++": fallback.starterCodeCpp || "",
-          JavaScript: fallback.starterCodeJs || "",
-          Java: fallback.starterCodeJava || "",
-        });
-      }
+      } catch (error) {
+        if (!cancelled) setLoadError(error.message);
+      } finally { if (!cancelled) setIsLoading(false); }
     }
     loadProblem();
     return () => {
       cancelled = true;
     };
-  }, [problemId]);
+  }, [problemId, reloadKey]);
 
   const testCasesList = useMemo(() => {
     if (currentProblem?.sampleTestCases && currentProblem.sampleTestCases.length > 0) {
@@ -1034,131 +1017,66 @@ function ProblemDetailsPage({ problemId = 1 }) {
   };
 
   const handleRunCode = async () => {
-    if (executionState === "running") return;
+    if (pendingAction) return;
+    setPendingAction("run");
     setExecutionState("running");
-    if (runnerTab !== "visualize") {
-      setRunnerTab("console");
-    }
-
-    const currentCase = testCasesList[activeCaseIndex] || testCasesList[0];
-    const testInput = currentCase?.input || "";
-    const expectedOutput = (currentCase?.expected || "").trim();
-
+    setExecutionResult(null);
+    if (runnerTab !== "visualize") setRunnerTab("console");
+    const currentCase = testCasesList[activeCaseIndex];
     try {
-      const langKey = language.toLowerCase().replace("python 3", "python");
-      const result = await api.runCode(langKey, code, testInput);
-
-      if (result) {
-        if (result.status === "Runtime Error" || result.status === "Time Limit Exceeded" || result.errorMessage) {
-          setExecutionState("failed");
-          setExecutionResult({
-            status: result.status || "Runtime Error",
-            actual: result.errorMessage || result.output || "(Runtime Error)",
-            expected: expectedOutput,
-            runtimeMs: result.executionTimeMs || 0,
-            memoryMb: result.memoryUsageMb || 0,
-          });
-          return;
-        }
-
-        const rawOutput = (result.output != null ? String(result.output) : "").trim();
-        const normActual = rawOutput.replace(/\r\n/g, "\n");
-        const normExpected = expectedOutput.replace(/\r\n/g, "\n");
-        const isMatch = normActual === normExpected || normActual.replace(/\s+/g, "") === normExpected.replace(/\s+/g, "");
-
-        setExecutionState(isMatch ? "passed" : "failed");
-        setExecutionResult({
-          status: isMatch ? "Passed" : "Wrong Answer",
-          actual: normActual || "(No output returned)",
-          expected: normExpected,
-          runtimeMs: result.executionTimeMs ?? 14,
-          memoryMb: result.memoryUsageMb ?? 12.4,
-        });
-      }
-    } catch (err) {
-      console.warn("API Run Code fallback:", err);
-      setExecutionState("passed");
-      setExecutionResult({
-        status: "Passed",
-        actual: expectedOutput,
-        expected: expectedOutput,
-        runtimeMs: 18,
-        memoryMb: 14.2,
-      });
-    }
+      const trace = languageKey(language) === "java"
+        ? await fetchExecutionTrace(code, { customInput: currentCase?.input || "" }) : null;
+      const result = trace ? { ...trace, errorMessage: trace.errorMessage || undefined }
+        : await api.runCode(languageKey(language), code, currentCase?.input || "");
+      const evaluation = { ...runResult(result, currentCase?.expected || ""), trace };
+      setExecutionState(evaluation.passed ? "passed" : "failed");
+      setExecutionResult(evaluation);
+    } catch (error) {
+      setExecutionState("failed");
+      setExecutionResult({ status: "Execution unavailable", actual: error.message, expected: currentCase?.expected || "", traceError: error.message });
+      setAnnouncement(error.message);
+    } finally { setPendingAction(null); }
   };
 
   const handleSubmit = async () => {
-    if (executionState === "running") return;
+    if (pendingAction) return;
+    setPendingAction("submit");
     setExecutionState("running");
+    setExecutionResult(null);
     setRunnerTab("console");
-
-    const currentCase = testCasesList[activeCaseIndex] || testCasesList[0];
-    const expectedOutput = (currentCase?.expected || "").trim();
-
-    const recordSubmission = (runtimeMs = 38, memoryMb = 15.6) => {
-      const newSub = {
-        id: `sub-${Date.now()}`,
-        status: "Accepted",
-        language,
-        runtimeMs,
-        runtimePercentile: "88.6%",
-        memoryMb,
-        memoryPercentile: "84.2%",
-        date: "Just now",
-      };
-      setSubmissionsList((prev) => [newSub, ...prev]);
-      showToast("Submission Accepted! 🎉");
-      setCelebrationData({
-        runtimeMs,
-        memoryMb,
-        runtimePercentile: "88.6%",
-        memoryPercentile: "84.2%",
-        language,
-        problemTitle: currentProblem.title,
-      });
-      setIsCelebrationOpen(true);
-    };
-
     try {
-      const langKey = language.toLowerCase().replace("python 3", "python");
-      const res = await api.submitCode(problemId, langKey, code);
-
-      if (res) {
-        const isAccepted = res.status === "Accepted" || res.status === "ACCEPTED";
-        setExecutionState(isAccepted ? "passed" : "failed");
-        setExecutionResult({
-          status: isAccepted ? "Accepted" : (res.status || "Wrong Answer"),
-          actual: isAccepted
-            ? `All ${res.totalTestCases || 3} test cases passed!`
-            : res.errorMessage || "Failed on test case",
-          expected: expectedOutput,
-          runtimeMs: res.executionTimeMs ?? 24,
-          memoryMb: res.memoryUsageMb ?? 14.8,
-        });
-
-        if (isAccepted) recordSubmission(res.executionTimeMs ?? 24, res.memoryUsageMb ?? 14.8);
-        return;
-      }
-    } catch (err) {
-      console.warn("API Submit error, using simulation:", err);
-    }
-
-    // High fidelity fallback simulation
-    setTimeout(() => {
-      setExecutionState("passed");
+      const result = await api.submitCode(problemId, languageKey(language), code);
+      if (!result?.id || !result?.status) throw new Error("The server returned no submission result.");
+      const accepted = isAccepted(result.status);
+      setExecutionState(accepted ? "passed" : "failed");
       setExecutionResult({
-        status: "Accepted",
-        actual: "All 3 sample test cases passed successfully!",
-        expected: expectedOutput,
-        runtimeMs: 22,
-        memoryMb: 14.6,
+        status: result.status,
+        actual: result.errorMessage || `${result.passedTestCases ?? 0} / ${result.totalTestCases ?? 0} test cases passed.`,
+        expected: testCasesList[activeCaseIndex]?.expected || "",
+        runtimeMs: result.executionTimeMs, memoryMb: result.memoryUsageMb,
       });
-      recordSubmission(22, 14.6);
-    }, 500);
+      setSubmissionsList((previous) => [mapSubmission(result), ...previous.filter((item) => item.id !== result.id)]);
+      setSubmissionsError("");
+      showToast(accepted ? "Submission Accepted! 🎉" : result.status);
+      if (accepted) {
+        setCelebrationData({ runtimeMs: result.executionTimeMs, memoryMb: result.memoryUsageMb,
+          language, problemTitle: currentProblem.title });
+        setIsCelebrationOpen(true);
+      }
+    } catch (error) {
+      setExecutionState("failed");
+      setExecutionResult({ status: "Submission unavailable", actual: error.message, expected: "" });
+      setAnnouncement(error.message);
+    } finally { setPendingAction(null); }
   };
 
   const lineCount = Math.max(1, code.split(/\r?\n/).length);
+  if (isLoading || loadError) return (
+    <main className="ide-problem-details">
+      <a href="#problems">← Back to problems</a>
+      <ApiState loading={isLoading} error={loadError} onRetry={() => setReloadKey((key) => key + 1)} label="Loading problem…" page />
+    </main>
+  );
 
   return (
     <main className="ide-problem-details" id="top">
@@ -1185,25 +1103,27 @@ function ProblemDetailsPage({ problemId = 1 }) {
           <button
             type="button"
             className="ide-action-btn ide-btn-run"
-            disabled={executionState === "running"}
+            disabled={Boolean(pendingAction)}
             onClick={handleRunCode}
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-              <polygon points="5 3 19 12 5 21 5 3" />
-            </svg>
-            <span>{executionState === "running" ? "Running..." : "Run"}</span>
+            {pendingAction === "run" ? <ProgressView size="sm" label="Running…" /> : <>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <polygon points="5 3 19 12 5 21 5 3" />
+              </svg><span>Run</span>
+            </>}
           </button>
 
           <button
             type="button"
             className="ide-action-btn ide-btn-submit"
-            disabled={executionState === "running"}
+            disabled={Boolean(pendingAction)}
             onClick={handleSubmit}
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-            <span>Submit</span>
+            {pendingAction === "submit" ? <ProgressView size="sm" label="Judging…" /> : <>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <polyline points="20 6 9 17 4 12" />
+              </svg><span>Submit</span>
+            </>}
           </button>
         </div>
       </header>
@@ -1645,7 +1565,7 @@ function ProblemDetailsPage({ problemId = 1 }) {
 
             {/* TAB 3: SUBMISSIONS (LeetCode Submission History) */}
             {leftTab === "submissions" && (
-              <div className="lc-panel-content lc-submissions-content">
+              <div className="lc-panel-content lc-submissions-content" aria-busy={submissionsLoading}>
                 <div className="submissions-header">
                   <div className="editorial-eyebrow">Submission Records</div>
                   <h2 className="submissions-title">Submission History</h2>
@@ -1654,7 +1574,9 @@ function ProblemDetailsPage({ problemId = 1 }) {
                   </p>
                 </div>
 
-                <div className="submissions-table-card">
+                <ApiState loading={submissionsLoading} error={submissionsError} onRetry={() => setReloadKey((key) => key + 1)} label="Loading submissions…" />
+                {!submissionsLoading && !submissionsList.length && !submissionsError && <p role="status">No submissions yet. Submit your solution to get started.</p>}
+                {!submissionsLoading && !submissionsError && submissionsList.length > 0 && <div className="submissions-table-card">
                   <table className="submissions-table">
                     <thead>
                       <tr>
@@ -1669,7 +1591,7 @@ function ProblemDetailsPage({ problemId = 1 }) {
                       {submissionsList.map((sub) => (
                         <tr key={sub.id} className="submission-row">
                           <td>
-                            <span className="sub-status-pill sub-status-pill--accepted">
+                            <span className={`sub-status-pill ${sub.completed ? "sub-status-pill--accepted" : "sub-status-pill--failed"}`}>
                               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                                 <polyline points="20 6 9 17 4 12" />
                               </svg>
@@ -1681,14 +1603,12 @@ function ProblemDetailsPage({ problemId = 1 }) {
                           </td>
                           <td>
                             <span className="sub-metric">
-                              <strong>{sub.runtimeMs} ms</strong>
-                              <small>Beats {sub.runtimePercentile}</small>
+                              <strong>{sub.runtimeMs ?? "—"} ms</strong>
                             </span>
                           </td>
                           <td>
                             <span className="sub-metric">
-                              <strong>{sub.memoryMb} MB</strong>
-                              <small>Beats {sub.memoryPercentile}</small>
+                              <strong>{sub.memoryMb ?? "—"} MB</strong>
                             </span>
                           </td>
                           <td>
@@ -1698,7 +1618,7 @@ function ProblemDetailsPage({ problemId = 1 }) {
                       ))}
                     </tbody>
                   </table>
-                </div>
+                </div>}
               </div>
             )}
           </div>
@@ -1960,14 +1880,14 @@ function ProblemDetailsPage({ problemId = 1 }) {
                   )}
 
                   {runnerTab === "console" && (
-                    <div className="runner-console-view">
-                      {executionResult ? (
+                    <div className="runner-console-view" aria-busy={Boolean(pendingAction)}>
+                      {pendingAction ? <ApiState loading label={pendingAction === "submit" ? "Judging submission…" : "Running code…"} /> : executionResult ? (
                         <div className="console-result">
                           <div className={`console-banner is-${executionState}`}>
                             <div className="banner-status-line">
                               <span className="status-badge">{executionResult.status}</span>
                               <span className="status-meta">
-                                Runtime: <strong>{executionResult.runtimeMs}ms</strong> • Memory: <strong>{executionResult.memoryMb} MB</strong>
+                                Runtime: <strong>{executionResult.runtimeMs ?? "—"} ms</strong> • Memory: <strong>{executionResult.memoryMb ?? "—"} MB</strong>
                               </span>
                             </div>
                           </div>
@@ -1999,6 +1919,7 @@ function ProblemDetailsPage({ problemId = 1 }) {
                       testCase={testCasesList[activeCaseIndex]}
                       executionResult={executionResult}
                       onRunCode={handleRunCode}
+                      loading={Boolean(pendingAction)}
                     />
                   )}
                 </div>

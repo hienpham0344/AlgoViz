@@ -95,7 +95,7 @@
   font-family: 'Google Sans', 'Inter', -apple-system, sans-serif;
   font-size: 12px;
   font-weight: 700;
-  fill: #202124;
+  fill: var(--text-primary);
   user-select: none;
 }
 
@@ -115,7 +115,7 @@
   justify-content: space-between;
   gap: 8px;
   font-size: 12px;
-  color: #5f6368;
+  color: var(--text-secondary);
 }
 
 .progress-view-linear-label {
@@ -125,7 +125,7 @@
 .progress-view-linear-value {
   font-weight: 700;
   font-family: 'JetBrains Mono', monospace;
-  color: #202124;
+  color: var(--text-primary);
 }
 
 progress.progress-view-bar {
@@ -137,45 +137,44 @@ progress.progress-view-bar {
   height: 6px;
   border: none;
   border-radius: 9999px;
-  background-color: var(--progress-track, #e8eaed);
+  background-color: var(--progress-track, var(--border-subtle));
   overflow: hidden;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 progress.progress-view-bar::-webkit-progress-bar {
-  background-color: var(--progress-track, #e8eaed);
+  background-color: var(--progress-track, var(--border-subtle));
   border-radius: 9999px;
 }
 
 progress.progress-view-bar::-webkit-progress-value {
-  background-color: var(--progress-fill, #0083bf);
+  background-color: var(--progress-fill, var(--accent-primary-hover));
   border-radius: 9999px;
   transition: width 260ms cubic-bezier(.4, 0, .2, 1);
 }
 
 progress.progress-view-bar::-moz-progress-bar {
-  background-color: var(--progress-fill, #0083bf);
+  background-color: var(--progress-fill, var(--accent-primary-hover));
   border-radius: 9999px;
   transition: width 260ms cubic-bezier(.4, 0, .2, 1);
 }
 
 /* Thin variant for cards */
-progress.progress-view-bar--thin {
+.progress-view-bar--thin .progress-view-bar {
   height: 4px;
 }
 
 /* Thick variant for major milestones */
-progress.progress-view-bar--thick {
+.progress-view-bar--thick .progress-view-bar {
   height: 10px;
 }
 
 /* Tone modifiers */
-progress.progress-view-bar--green {
-  --progress-fill: #1e8e3e;
+.progress-view-bar--green {
+  --progress-fill: var(--status-success);
 }
 
-progress.progress-view-bar--purple {
-  --progress-fill: #7c3aed;
+.progress-view-bar--purple {
+  --progress-fill: var(--accent-purple);
 }
 
 /* --------------------------------------------------------------------------
@@ -183,7 +182,7 @@ progress.progress-view-bar--purple {
    -------------------------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   .progress-spinner-svg {
-    animation-duration: 2s;
+    animation: none;
   }
   .progress-ring-fill,
   progress.progress-view-bar::-webkit-progress-value,

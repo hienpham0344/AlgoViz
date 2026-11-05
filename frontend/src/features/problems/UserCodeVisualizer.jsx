@@ -1,167 +1,26 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import "./UserCodeVisualizer.css";
-
-/**
- * =========================================================================
- * PLUGGABLE ENGINE ADAPTER HOOK:
- * This is the integration point for your team's custom compiler & AST visualizer
- * engine. When ready to import your tool:
- * 1. Import your service, e.g.:
- *    import { runCustomAstVisualizer } from "../../services/myCustomEngine.js";
- * 2. Connect it in `generateUserTrace()` below.
- * =========================================================================
- */
-
-function parseNumbersFromInput(inputStr = "") {
-  if (!inputStr) return { nums: [2, 7, 11, 15], target: 9 };
-  // match target
-  const targetMatch = inputStr.match(/target\s*=\s*(-?\d+)/i);
-  const target = targetMatch ? parseInt(targetMatch[1], 10) : 9;
-
-  // match nums array or list of ints
-  const arrayMatch = inputStr.match(/nums\s*=\s*\[([^\]]+)\]/i) || inputStr.match(/nums\s*=\s*([0-9\s,-]+)/i);
-  let nums = [2, 7, 11, 15];
-  if (arrayMatch) {
-    const raw = arrayMatch[1]
-      .split(/[\s,]+/)
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .map(Number)
-      .filter((n) => !isNaN(n));
-    if (raw.length > 0) nums = raw;
-  }
-  return { nums, target };
-}
-
-function generateTraceForUserCode({ problemId = 1, code = "", language = "Python 3", testCase }) {
-  const { nums, target } = parseNumbersFromInput(testCase?.input);
-
-  // Problem 1: Two Sum
-  if (problemId === 1) {
-    const isHashMap = code.includes("seen") || code.includes("map") || code.includes("dict") || code.includes("HashMap");
-    const frames = [];
-
-    // Frame 0: Initialization
-    frames.push({
-      stepNumber: 1,
-      line: 3,
-      action: "Initialize hash map / variables",
-      annotation: `Initialize hash table seen = {} to store seen numbers and their indices. Target = ${target}.`,
-      nums: [...nums],
-      activeIndices: [],
-      pointers: { i: null },
-      variables: { target, seen: "{}" },
-      hashMap: [],
-    });
-
-    const seen = {};
-    let found = false;
-
-    for (let i = 0; i < nums.length; i++) {
-      const num = nums[i];
-      const diff = target - num;
-
-      // Checking diff
-      const isHit = diff in seen;
-      frames.push({
-        stepNumber: frames.length + 1,
-        line: isHashMap ? 5 : 4,
-        action: `Inspect nums[${i}] = ${num}`,
-        annotation: `i = ${i}, num = ${num}. Needed complement diff = ${target} - ${num} = ${diff}. Checking if ${diff} is in hash map...`,
-        nums: [...nums],
-        activeIndices: [i],
-        pointers: { i },
-        variables: { i, num, diff, target, seen: JSON.stringify(seen) },
-        hashMap: Object.entries(seen).map(([k, v]) => ({ key: k, value: v, state: k === String(diff) ? "matched" : "idle" })),
-      });
-
-      if (isHit) {
-        frames.push({
-          stepNumber: frames.length + 1,
-          line: isHashMap ? 6 : 7,
-          action: `Found complement! Return [${seen[diff]}, ${i}]`,
-          annotation: `Complement ${diff} found in hash map at index ${seen[diff]}! Solution pair is [${seen[diff]}, ${i}].`,
-          nums: [...nums],
-          activeIndices: [seen[diff], i],
-          pointers: { i, match: seen[diff] },
-          variables: { i, num, diff, result: `[${seen[diff]}, ${i}]` },
-          hashMap: Object.entries(seen).map(([k, v]) => ({ key: k, value: v, state: k === String(diff) ? "matched" : "idle" })),
-          isSolution: true,
-        });
-        found = true;
-        break;
-      } else {
-        seen[num] = i;
-        frames.push({
-          stepNumber: frames.length + 1,
-          line: isHashMap ? 7 : 5,
-          action: `Store seen[${num}] = ${i}`,
-          annotation: `${diff} not in hash map. Record current element seen[${num}] = ${i} and proceed.`,
-          nums: [...nums],
-          activeIndices: [i],
-          pointers: { i },
-          variables: { i, num, seen: JSON.stringify(seen) },
-          hashMap: Object.entries(seen).map(([k, v]) => ({ key: k, value: v, state: k === String(num) ? "added" : "idle" })),
-        });
-      }
-    }
-
-    if (!found) {
-      frames.push({
-        stepNumber: frames.length + 1,
-        line: 9,
-        action: "No valid pair found",
-        annotation: "Finished scanning array. No pair adds up to the target. Return [].",
-        nums: [...nums],
-        activeIndices: [],
-        pointers: {},
-        variables: { result: "[]" },
-        hashMap: Object.entries(seen).map(([k, v]) => ({ key: k, value: v, state: "idle" })),
-      });
-    }
-
-    return frames;
-  }
-
-  // Generic Problem Fallback Frames
-  const frames = [];
-  for (let idx = 0; idx < Math.min(nums.length, 6); idx++) {
-    frames.push({
-      stepNumber: idx + 1,
-      line: idx + 2,
-      action: `Processing element index ${idx}`,
-      annotation: `Traversing element at index ${idx}: value = ${nums[idx]}. Evaluating algorithm logic.`,
-      nums: [...nums],
-      activeIndices: [idx],
-      pointers: { current: idx },
-      variables: { index: idx, value: nums[idx] },
-    });
-  }
-  return frames;
-}
+import ApiState from "../../components/ApiState.jsx";
+import { runtimeFrames, traceMatchesEditor } from "../../services/runtimeTrace.js";
+import { languageKey } from "../../services/submissions.js";
 
 export default function UserCodeVisualizer({
   code = "",
   language = "Python 3",
-  problem,
   testCase,
   executionResult,
   onRunCode,
+  loading = false,
+  onStepChange,
 }) {
   const [stepIndex, setStepIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
   const timerRef = useRef(null);
 
-  // Generate trace from user code + testcase input
-  const trace = useMemo(() => {
-    return generateTraceForUserCode({
-      problemId: problem?.id || 1,
-      code,
-      language,
-      testCase,
-    });
-  }, [problem?.id, code, language, testCase]);
+  const captured = executionResult?.trace;
+  const matches = traceMatchesEditor(captured, code, testCase?.input || "");
+  const trace = useMemo(() => matches ? runtimeFrames(captured) : [], [captured, matches]);
 
   // Reset stepIndex when trace changes
   useEffect(() => {
@@ -192,7 +51,8 @@ export default function UserCodeVisualizer({
     };
   }, [isPlaying, speed, trace.length]);
 
-  const currentFrame = trace[stepIndex] || trace[0] || {};
+  const currentFrame = trace[stepIndex] || trace[0] || null;
+  useEffect(() => { onStepChange?.(currentFrame); }, [currentFrame, onStepChange]);
   const isComplete = stepIndex >= trace.length - 1;
 
   const handlePrev = () => {
@@ -225,35 +85,20 @@ export default function UserCodeVisualizer({
     return (code || "").split(/\r?\n/);
   }, [code]);
 
-  // If code hasn't been executed yet, show pleasant ready-state callout
-  if (!executionResult) {
-    return (
-      <div className="user-vis-unexecuted">
-        <div className="user-vis-empty-card">
-          <div className="user-vis-empty-icon" aria-hidden="true">⚡</div>
-          <h3>Interactive Code Visualization</h3>
-          <p>
-            Write or edit your solution in the editor above, then click <strong>Run</strong> or <strong>Submit</strong> to compile and visualize your code execution step-by-step.
-          </p>
-          <div className="user-vis-empty-actions">
-            <button
-              type="button"
-              className="user-vis-run-now-btn"
-              onClick={onRunCode}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <polygon points="5 3 19 12 5 21 5 3" />
-              </svg>
-              <span>Run Code &amp; Generate Visualization</span>
-            </button>
-          </div>
-          <div className="user-vis-adapter-pill">
-            <span className="adapter-dot" />
-            <span>Engine Adapter Ready: Code executes through AST trace analyzer</span>
-          </div>
-        </div>
-      </div>
-    );
+  if (loading) return <ApiState loading label="Waiting for execution…" />;
+  if (!currentFrame) {
+    const supported = languageKey(language) === "java";
+    const message = !supported ? "AST-tool supports Java runtime traces. Select Java to inspect actual execution steps."
+      : captured && !matches ? "Code or testcase changed. Run again to generate a matching trace."
+      : captured ? "The program produced no observable source steps."
+      : "Run your code to inspect the actual source lines, arrays and local variables captured by AST/JDI.";
+    return <div className="user-vis-unexecuted"><div className="user-vis-empty-card">
+      <h3>Runtime Code Visualization</h3><p>{message}</p>
+      <ApiState error={executionResult?.traceError || captured?.errorMessage} />
+      {supported && <button type="button" className="user-vis-run-now-btn" onClick={onRunCode}>
+        Run Code &amp; Generate Runtime Trace
+      </button>}
+    </div></div>;
   }
 
   return (
@@ -263,7 +108,7 @@ export default function UserCodeVisualizer({
         <div className="user-vis-header-left">
           <div className="user-vis-title-pill">
             <span className="user-vis-pill-glyph">⚡</span>
-            <span>Your Code Live Trace</span>
+            <span>Runtime Trace</span>
           </div>
           <span className="user-vis-io-tag" title="Testcase input">
             Input: {testCase?.input ? testCase.input.replace(/\n/g, " • ") : "nums = [2, 7, 11, 15], target = 9"}
@@ -271,18 +116,19 @@ export default function UserCodeVisualizer({
         </div>
 
         <div className="user-vis-header-right">
-          <span className="user-vis-engine-tag" title="AST Runtime & Custom Engine Tool Integration Ready">
+          <span className="user-vis-engine-tag" title="Source snapshots captured before each Java breakpoint">
             <span className="engine-dot" />
-            Live AST Engine
+            AST / JDI
           </span>
         </div>
       </div>
 
+      <ApiState error={captured.partial ? `Partial trace: ${(captured.warnings || []).join(" ")}` : captured.status !== "Success" ? captured.errorMessage || captured.status : ""} />
       {/* 2. Visualizer Canvas Stage */}
       <div className="user-vis-canvas">
         <div className="user-vis-stage-row">
           <div className="user-vis-array-box">
-            <span className="user-vis-array-label">nums:</span>
+            <span className="user-vis-array-label">{currentFrame.arrayName || "No sequence in this scope"}:</span>
             <div className="user-vis-cells">
               {(currentFrame.nums || []).map((val, idx) => {
                 const isActive = currentFrame.activeIndices?.includes(idx);
@@ -296,12 +142,9 @@ export default function UserCodeVisualizer({
                       {val}
                     </div>
                     <div className="user-vis-pointer-slot">
-                      {currentFrame.pointers?.i === idx && (
-                        <span className="user-vis-ptr ptr-i">↑ i</span>
-                      )}
-                      {currentFrame.pointers?.match === idx && (
-                        <span className="user-vis-ptr ptr-match">↑ found</span>
-                      )}
+                      {Object.entries(currentFrame.pointers || {}).filter(([, index]) => index === idx).map(([name]) => (
+                        <span key={name} className="user-vis-ptr ptr-i">↑ {name}</span>
+                      ))}
                     </div>
                   </div>
                 );

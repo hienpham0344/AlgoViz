@@ -51,6 +51,7 @@ function SolutionVisualizerExecution({ problem, solution, onAnnounce, onStepChan
 
   // AST tool backend status
   const [isAstOnline, setIsAstOnline] = useState(false);
+  const [traceIsLive, setTraceIsLive] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
 
   // Determine initial trace based on specific problem solution
@@ -63,6 +64,8 @@ function SolutionVisualizerExecution({ problem, solution, onAnnounce, onStepChan
   // Check AST server health on mount & try real execution if available
   useEffect(() => {
     let isMounted = true;
+    setTrace(initialTrace);
+    setTraceIsLive(false);
     checkAstToolHealth().then((online) => {
       if (isMounted) setIsAstOnline(online);
     });
@@ -83,6 +86,7 @@ function SolutionVisualizerExecution({ problem, solution, onAnnounce, onStepChan
               setTrace(richAdapted);
             }
             setIsAstOnline(true);
+            setTraceIsLive(true);
             setStepIndex(0);
             setStatusMessage("✅ Đã kết nối & đồng bộ trace trực quan từ AST-tool JDI!");
             setTimeout(() => setStatusMessage(""), 3500);
@@ -101,7 +105,8 @@ function SolutionVisualizerExecution({ problem, solution, onAnnounce, onStepChan
         controller.abort();
       };
     }
-  }, [source, solution?.language, problem?.title]);
+    return () => { isMounted = false; };
+  }, [source, solution?.language, problem?.title, initialTrace]);
 
   // Current active step
   const currentStep = useMemo(() => trace[stepIndex] || trace[0] || {}, [trace, stepIndex]);
@@ -230,12 +235,12 @@ function SolutionVisualizerExecution({ problem, solution, onAnnounce, onStepChan
             }`}
             title={
               isAstOnline
-                ? "AST backend connected on port 8081"
+                ? "AST backend available"
                 : "Deterministic simulation trace active"
             }
           >
             <span className="smooth-vis-status-dot" />
-            {isAstOnline ? "JDI Debugger" : "Simulation Engine"}
+            {traceIsLive ? "JDI Debugger" : "Reference Illustration"}
           </span>
         </div>
 

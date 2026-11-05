@@ -1899,3 +1899,41 @@ body.is-resizing-runner-dock * {
   color: #202124;
 }
 
+
+/* Keep each workspace pane readable on phones. */
+@media (max-width: 760px) {
+  .ide-problem-details {
+    width: 100%;
+    max-width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+  }
+  .ide-workspace-body {
+    display: block;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+  }
+  .ide-workspace-grid.resizable-columns {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+    gap: 1rem;
+  }
+  .ide-workspace-grid > .resizable-column-divider { display: none; }
+  .ide-left-pane {
+    height: 55svh;
+    min-height: 18rem;
+    max-height: 55svh;
+  }
+  .ide-right-pane {
+    height: 80svh;
+    min-height: 32rem;
+  }
+  .right-subbar,
+  .runner-subbar {
+    height: auto;
+    min-height: 2.5rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .runner-height-presets { display: none; }
+}
