@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { NavigationBar, CustomSelect } from "../../components/index.js";
+import { CustomSelect } from "../../components/index.js";
 import { api } from "../../services/api.js";
 import "./history.css";
 
@@ -538,7 +538,7 @@ function HistoryFooter() {
   );
 }
 
-function HistoryPage({ userName = "Developer", isAuthenticated = false }) {
+function HistoryPage() {
   const [query, setQuery] = useState("");
   const [language, setLanguage] = useState("All");
   const [completion, setCompletion] = useState("All");
@@ -596,11 +596,6 @@ function HistoryPage({ userName = "Developer", isAuthenticated = false }) {
     loadHistory();
   }, []);
 
-  // Reset to page 1 whenever search, language, completion, or order changes
-  useEffect(() => {
-    setPage(1);
-  }, [query, language, completion, newestFirst]);
-
   const rows = useMemo(() => {
     const filtered = historyList.filter(
       (row) =>
@@ -617,18 +612,13 @@ function HistoryPage({ userName = "Developer", isAuthenticated = false }) {
   const totalCount = rows.length;
   const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
 
-  // Auto-clamp page if it exceeds pageCount (e.g. after deleting items)
-  useEffect(() => {
-    if (page > pageCount) {
-      setPage(pageCount);
-    }
-  }, [page, pageCount]);
+  const currentPage = Math.min(page, pageCount);
 
   // Current page's sliced slice
   const pagedRows = useMemo(() => {
-    const start = (page - 1) * pageSize;
+    const start = (currentPage - 1) * pageSize;
     return rows.slice(start, start + pageSize);
-  }, [rows, page, pageSize]);
+  }, [rows, currentPage, pageSize]);
 
   const isAllSelected =
     pagedRows.length > 0 && pagedRows.every((r) => selected.has(r.id));
@@ -773,13 +763,13 @@ function HistoryPage({ userName = "Developer", isAuthenticated = false }) {
 
       <HistoryToolbar
         query={query}
-        onQueryChange={setQuery}
+        onQueryChange={(value) => { setQuery(value); setPage(1); }}
         language={language}
-        onLanguageChange={setLanguage}
+        onLanguageChange={(value) => { setLanguage(value); setPage(1); }}
         completion={completion}
-        onCompletionChange={setCompletion}
+        onCompletionChange={(value) => { setCompletion(value); setPage(1); }}
         newestFirst={newestFirst}
-        onSortChange={() => setNewestFirst((current) => !current)}
+        onSortChange={() => { setNewestFirst((current) => !current); setPage(1); }}
         selectedCount={selected.size}
         onDeleteSelected={handleDeleteSelected}
         onClearSelected={clearSelected}
@@ -788,7 +778,7 @@ function HistoryPage({ userName = "Developer", isAuthenticated = false }) {
       <HistoryTable
         rows={pagedRows}
         totalCount={totalCount}
-        page={page}
+        page={currentPage}
         pageSize={pageSize}
         pageCount={pageCount}
         onPageChange={(newPage) => setPage(newPage)}

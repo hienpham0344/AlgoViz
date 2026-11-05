@@ -4,7 +4,7 @@ import "./VisualExampleCard.css";
 /**
  * Intelligent helper to parse testcase input and output into structured MasterAlgo data
  */
-function parseMasterAlgoData(tc, problemId, index) {
+function parseMasterAlgoData(tc, problemId) {
   const inputStr = tc.input || "";
   const expectedStr = tc.expected || tc.expectedOutput || "";
   const lines = inputStr.trim().split("\n");
@@ -87,7 +87,7 @@ function parseMasterAlgoData(tc, problemId, index) {
           detectedArr = arr;
           break;
         }
-      } catch {}
+      } catch { /* parse fail */ }
     } else if (trimmed.split(/\s+/).length > 1) {
       const parts = trimmed.split(/\s+/).map(Number);
       if (parts.every((p) => !isNaN(p))) {

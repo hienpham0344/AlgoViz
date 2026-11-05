@@ -13,8 +13,8 @@ export default function SubmissionCelebrationModal({
 
   useEffect(() => {
     if (!isOpen) {
-      setShowContent(false);
-      return;
+      const timer = setTimeout(() => setShowContent(false), 0);
+      return () => clearTimeout(timer);
     }
 
     const timer = setTimeout(() => setShowContent(true), 50);

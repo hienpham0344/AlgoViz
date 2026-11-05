@@ -1,0 +1,9 @@
+target
+.env
+.env.*
+Dockerfile
+*.md
+.mvn
+mvnw
+mvnw.cmd
+src/test

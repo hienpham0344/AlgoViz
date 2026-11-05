@@ -4,7 +4,7 @@ import UserCodeVisualizer from "./UserCodeVisualizer.jsx";
 import SubmissionCelebrationModal from "./SubmissionCelebrationModal.jsx";
 import VisualExampleCard from "./VisualExampleCard.jsx";
 import ResizableColumns from "../../components/ResizableColumns.jsx";
-import { CustomSelect, ThemeToggle, ProgressView } from "../../components/index.js";
+import { CustomSelect, ProgressView } from "../../components/index.js";
 import { api } from "../../services/api.js";
 import { isAccepted, languageKey, mapSubmission, runResult } from "../../services/submissions.js";
 import { fetchExecutionTrace } from "../../services/astApi.js";
@@ -756,7 +756,7 @@ function ProblemDetailsPage({ problemId = 1 }) {
         const val = Number(saved);
         if (!isNaN(val) && val >= 8 && val <= 88) return val;
       }
-    } catch {}
+    } catch { /* parse */ }
     return 38; // balanced default height (38%)
   });
   const [isDraggingRunner, setIsDraggingRunner] = useState(false);
@@ -770,7 +770,7 @@ function ProblemDetailsPage({ problemId = 1 }) {
     setRunnerPercent(clamped);
     try {
       localStorage.setItem(RUNNER_STORAGE_KEY, String(clamped));
-    } catch {}
+    } catch { /* storage */ }
   };
 
   const handleRunnerResizeStart = (e) => {
@@ -805,7 +805,7 @@ function ProblemDetailsPage({ problemId = 1 }) {
     document.body.classList.remove("is-resizing-runner-dock");
     try {
       e.currentTarget.releasePointerCapture(e.pointerId);
-    } catch {}
+    } catch { /* no capture */ }
   };
 
   const handleRunnerDoubleClick = () => {
@@ -900,8 +900,7 @@ function ProblemDetailsPage({ problemId = 1 }) {
 
   useEffect(() => {
     let active = true;
-    setSubmissionsLoading(true);
-    setSubmissionsError("");
+    setTimeout(() => { if (active) { setSubmissionsLoading(true); setSubmissionsError(""); } }, 0);
     api.getProblemSubmissions(problemId).then((data) => {
       if (!Array.isArray(data)) throw new Error("Invalid submissions response.");
       if (active) { setSubmissionsList(data.map(mapSubmission)); setSubmissionsError(""); }
@@ -926,7 +925,7 @@ function ProblemDetailsPage({ problemId = 1 }) {
           } else if (typeof data.constraints === "string" && data.constraints.trim()) {
             normalizedConstraints = data.constraints
               .split(/\r?\n/)
-              .map((s) => s.replace(/^[•\-\*]\s*/, "").trim())
+              .map((s) => s.replace(/^[•\-*]\s*/, "").trim())
               .filter(Boolean);
           }
 

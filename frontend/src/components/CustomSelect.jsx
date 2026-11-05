@@ -44,7 +44,9 @@ export default function CustomSelect({
           }
         }
       } else {
-        setComputedDirection(direction);
+        // defer to avoid cascade render
+        const id = requestAnimationFrame(() => setComputedDirection(direction));
+        return () => cancelAnimationFrame(id);
       }
     }
   }, [isOpen, direction]);

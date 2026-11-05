@@ -19,14 +19,14 @@ export function ThemeProvider({ children }) {
         localStorage.setItem("algoviz-theme", "light");
         return "light";
       }
-    } catch {}
+    } catch { /* localStorage disabled */ }
     return "light";
   });
 
   useEffect(() => {
     try {
       localStorage.setItem("algoviz-theme", theme);
-    } catch {}
+    } catch { /* localStorage disabled */ }
 
     document.documentElement.setAttribute("data-theme", theme);
     if (theme === "dark") {
@@ -62,6 +62,7 @@ export function ThemeProvider({ children }) {
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useTheme() {
   return useContext(ThemeContext);
 }

@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { api } from "../../services/api.js";
-import ThemeToggle from "../../components/ThemeToggle.jsx";
 import "./landing.css";
 
 // Partner logos matching Kaggle's infinite marquee
@@ -252,7 +251,8 @@ export default function LandingPage({ isAuthenticated = false, userName = "Devel
     if (!isHovered) {
       runCycle();
     } else {
-      setIsSpawning(false);
+      const id = setTimeout(() => setIsSpawning(false), 0);
+      return () => clearTimeout(id);
     }
 
     return () => {

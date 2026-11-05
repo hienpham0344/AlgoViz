@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { NavigationBar, CustomSelect, ProgressView } from "../../components/index.js";
+import { CustomSelect, ProgressView } from "../../components/index.js";
 import { api } from "../../services/api.js";
 import { isAccepted, profileStats } from "../../services/submissions.js";
 import ApiState from "../../components/ApiState.jsx";
@@ -306,10 +306,6 @@ function ProblemHeroBanner({
   const displayName = userName && userName !== "Your name" ? userName : "Guest";
 
   // Circular progress ring calculation (radius 22, circumference ~138.23)
-  const radius = 22;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (percent / 100) * circumference;
-
   const activity = profileStats(history, []);
   const weekDays = ["S", "M", "T", "W", "T", "F", "S"];
   const recentDays = activity.cells.slice(-21);
@@ -746,18 +742,9 @@ function Pagination({ page, pageCount, onPageChange }) {
 function ProblemsSidebar({
   problems,
   history,
-  totalCount,
-  solvedCount,
-  easySolved,
-  easyTotal,
-  medSolved,
-  medTotal,
-  hardSolved,
-  hardTotal,
   onSolve,
   onVisualizer,
 }) {
-  const percent = totalCount > 0 ? Math.round((solvedCount / totalCount) * 100) : 0;
   const dailyProblem = problems.length ? problems[0] : null;
   const activity = profileStats(history, []);
   if (!dailyProblem) return null;

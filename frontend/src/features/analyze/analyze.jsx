@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { ProgressView, NavigationBar, CustomSelect } from "../../components/index.js";
+import { ProgressView, CustomSelect } from "../../components/index.js";
 import UserCodeVisualizer from "../problems/UserCodeVisualizer.jsx";
 import { fetchExecutionTrace } from "../../services/astApi.js";
 import { api } from "../../services/api.js";
@@ -485,7 +485,7 @@ function ExecutionConsole({ logs, isOpen, onToggle, onClear }) {
       const finalHeight = Math.max(minHeight, Math.min(maxHeight, Math.round(startHeight + finalDelta)));
       try {
         localStorage.setItem("algoviz-analyze-console-height", String(finalHeight));
-      } catch {}
+      } catch { /* storage quota */ }
     };
 
     window.addEventListener("pointermove", onPointerMove);
@@ -499,14 +499,14 @@ function ExecutionConsole({ logs, isOpen, onToggle, onClear }) {
       if (!isOpen) onToggle();
       setConsoleHeight((h) => {
         const next = Math.min(maxHeight, h + 24);
-        try { localStorage.setItem("algoviz-analyze-console-height", String(next)); } catch {}
+        try { localStorage.setItem("algoviz-analyze-console-height", String(next)); } catch { /* storage quota */ }
         return next;
       });
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
       setConsoleHeight((h) => {
         const next = Math.max(minHeight, h - 24);
-        try { localStorage.setItem("algoviz-analyze-console-height", String(next)); } catch {}
+        try { localStorage.setItem("algoviz-analyze-console-height", String(next)); } catch { /* storage quota */ }
         return next;
       });
     } else if (e.key === "Home") {
@@ -523,7 +523,7 @@ function ExecutionConsole({ logs, isOpen, onToggle, onClear }) {
     setConsoleHeight(nextHeight);
     try {
       localStorage.setItem("algoviz-analyze-console-height", String(nextHeight));
-    } catch {}
+    } catch { /* storage quota */ }
   };
 
   return (
@@ -669,7 +669,12 @@ function ExecutionVisualizerStudio({
   );
 }
 
-function AnalyzeFooter() {
+// eslint-disable-next-line no-unused-vars -- Footer is kept for a future layout.
+function _AnalyzeFooter() { // unused
+  return null;
+}
+// eslint-disable-next-line no-unused-vars -- Footer is kept for a future layout.
+function __AnalyzeFooterRemoved() {
   return (
     <footer className="analyze-footer">
       <div className="analyze-footer-grid">
@@ -713,7 +718,7 @@ function AnalyzeFooter() {
   );
 }
 
-function AnalyzePage({ userName = "Your name", isAuthenticated }) {
+function AnalyzePage() {
   const [language, setLanguage] = useState("Java 21");
   const [code, setCode] = useState(CODE_SNIPPETS["Java 21"]);
   const [executionState, setExecutionState] = useState("ready");

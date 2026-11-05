@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { COURSES } from "./coursesData.js";
 import { getLessonContent } from "./lessonContent.js";
 import "./LessonPage.css";
@@ -25,8 +25,6 @@ function formatInline(text) {
 export default function LessonPage({
   courseId = "sorting-masterclass",
   lessonId = 1,
-  userName = "Developer",
-  isAuthenticated = true,
 }) {
   // Current course metadata
   const currentCourse = useMemo(() => {
@@ -62,10 +60,13 @@ export default function LessonPage({
   // Sync code editor state when lesson changes
   useEffect(() => {
     if (lessonData?.codeSandbox) {
-      setUserCode(lessonData.codeSandbox.starterCode);
-      setOutputLog(lessonData.codeSandbox.sampleOutput);
-      setHasRun(false);
-      setExecTime("12ms");
+      const id = setTimeout(() => {
+        setUserCode(lessonData.codeSandbox.starterCode);
+        setOutputLog(lessonData.codeSandbox.sampleOutput);
+        setHasRun(false);
+        setExecTime("12ms");
+      }, 0);
+      return () => clearTimeout(id);
     }
   }, [lessonData]);
 
@@ -74,7 +75,8 @@ export default function LessonPage({
 
   // Reset quiz answers when lesson changes
   useEffect(() => {
-    setSelectedAnswers({});
+    const id = setTimeout(() => setSelectedAnswers({}), 0);
+    return () => clearTimeout(id);
   }, [courseId, lessonId]);
 
   // Completed status tracking via localStorage
