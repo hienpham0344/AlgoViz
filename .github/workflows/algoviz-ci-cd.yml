@@ -47,6 +47,27 @@ jobs:
         working-directory: backend
         run: mvn -B -ntp verify
 
+  backend_image_ci:
+    name: Backend - Docker build and smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build backend image
+        run: docker build --file backend/Dockerfile --tag algoviz-backend:ci backend
+      - name: Smoke test backend image
+        run: |
+          docker run -d --name algoviz-backend-ci -p 8080:8080 \
+            -e ALGOVIZ_JWT_SECRET="$(openssl rand -hex 32)" algoviz-backend:ci
+          for attempt in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8080/api/ast/health; then exit 0; fi
+            sleep 5
+          done
+          docker logs algoviz-backend-ci
+          exit 1
+      - name: Stop test container
+        if: always()
+        run: docker rm -f algoviz-backend-ci || true
+
   deploy_frontend:
     name: CD - Azure Static Web Apps
     if: >-

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { NavigationBar, ProgressView } from "../../components/index.js";
+import { ProgressView } from "../../components/index.js";
 import { api } from "../../services/api.js";
 import EditProfileModal from "./EditProfileModal.jsx";
 import "./profile.css";
@@ -479,6 +479,7 @@ function AnalysisHistory() {
   );
 }
 
+// eslint-disable-next-line no-unused-vars -- Security settings UI is not mounted yet.
 function SecuritySection({ profile, onSave }) {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -748,7 +749,7 @@ function ProfileFooter() {
   );
 }
 
-function ProfilePage({ userName = "Developer", isAuthenticated = false }) {
+function ProfilePage({ userName = "Developer" }) {
   const [profile, setProfile] = useState(() => {
     try {
       const saved = localStorage.getItem("algoviz-user-profile");

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { fetchAlgorithmCatalog } from "../../services/astApi.js";
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function hintLabel(type) {
   return String(type || "").split("-").filter(Boolean).map(word => word[0].toUpperCase() + word.slice(1)).join(" ");
 }

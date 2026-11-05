@@ -441,8 +441,8 @@ export default function AlgoMasterVisualizer({
 
   // Reset step index when approach or preset changes
   useEffect(() => {
-    setStepIndex(0);
-    setIsPlaying(false);
+    const id = setTimeout(() => { setStepIndex(0); setIsPlaying(false); }, 0);
+    return () => clearTimeout(id);
   }, [activeApproach, selectedPresetId, language, runtime?.data]);
 
   // Autoplay ticker

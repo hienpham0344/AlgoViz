@@ -64,8 +64,12 @@ function SolutionVisualizerExecution({ problem, solution, onAnnounce, onStepChan
   // Check AST server health on mount & try real execution if available
   useEffect(() => {
     let isMounted = true;
-    setTrace(initialTrace);
-    setTraceIsLive(false);
+    const tid = setTimeout(() => {
+      if (isMounted) {
+        setTrace(initialTrace);
+        setTraceIsLive(false);
+      }
+    }, 0);
     checkAstToolHealth().then((online) => {
       if (isMounted) setIsAstOnline(online);
     });
@@ -100,12 +104,13 @@ function SolutionVisualizerExecution({ problem, solution, onAnnounce, onStepChan
         .finally(() => clearTimeout(timeout));
 
       return () => {
+        clearTimeout(tid);
         isMounted = false;
         clearTimeout(timeout);
         controller.abort();
       };
     }
-    return () => { isMounted = false; };
+    return () => { clearTimeout(tid); isMounted = false; };
   }, [source, solution?.language, problem?.title, initialTrace]);
 
   // Current active step

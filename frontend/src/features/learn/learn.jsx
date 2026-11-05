@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { NavigationBar, ProgressView } from "../../components/index.js";
-import ResizableColumns from "../../components/ResizableColumns.jsx";
+import { ProgressView } from "../../components/index.js";
 import "./learn.css";
 
 const CATEGORIES = [
@@ -1835,7 +1834,7 @@ function LearnPage({ userName = "Your name", isAuthenticated }) {
 
   const handleOpenCurriculum = (course) => {
     if (!isAuthenticated) {
-      window.location.hash = "#login";
+      window.location.assign("#login");
       return;
     }
     setSelectedCourseModal(course);

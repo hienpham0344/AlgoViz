@@ -24,8 +24,8 @@ export default function UserCodeVisualizer({
 
   // Reset stepIndex when trace changes
   useEffect(() => {
-    setStepIndex(0);
-    setIsPlaying(false);
+    const id = setTimeout(() => { setStepIndex(0); setIsPlaying(false); }, 0);
+    return () => clearTimeout(id);
   }, [trace]);
 
   // Playback timer
