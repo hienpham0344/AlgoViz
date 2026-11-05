@@ -138,6 +138,21 @@ public class GlobalExceptionHandler {
                         .build());
     }
 
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNoResourceFoundException(
+            org.springframework.web.servlet.resource.NoResourceFoundException ex) {
+
+        CommonErrorCode errorCode = CommonErrorCode.RESOURCE_NOT_FOUND;
+
+        return ResponseEntity
+                .status(errorCode.getStatus())
+                .body(ApiResponse.<Void>builder()
+                        .status(errorCode.getStatus().value())
+                        .code(errorCode.getCode())
+                        .message(errorCode.getMessage() + ": " + ex.getResourcePath())
+                        .build());
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGeneralException(Exception ex) {
 

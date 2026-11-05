@@ -91,7 +91,7 @@ class AuthControllerIntegrationTest {
 
         // 5. Access protected endpoint without token -> 401 or 403 Forbidden
         mockMvc.perform(get("/api/users/me"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
 
         // 6. Refresh token rotation
         RefreshTokenRequest refreshReq = RefreshTokenRequest.builder()
@@ -127,7 +127,7 @@ class AuthControllerIntegrationTest {
         // 9. Blacklisted access token should now be rejected on protected endpoint
         mockMvc.perform(get("/api/users/me")
                         .header("Authorization", "Bearer " + rotatedAccessToken))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

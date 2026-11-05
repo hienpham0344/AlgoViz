@@ -10,6 +10,8 @@ public enum CommonErrorCode implements ErrorCode {
     USERNAME_TAKEN(4090, "Username is already taken", HttpStatus.CONFLICT),
     EMAIL_TAKEN(4091, "Email is already in use", HttpStatus.CONFLICT),
 
+    INVALID_CURRENT_PASSWORD(4004, "Current password is incorrect", HttpStatus.BAD_REQUEST),
+
     INVALID_REQUEST(
             4000,
             "Dữ liệu đầu vào không hợp lệ",
@@ -38,6 +40,12 @@ public enum CommonErrorCode implements ErrorCode {
             4290,
             "Quá nhiều yêu cầu gửi lên hệ thống. Vui lòng thử lại sau.",
             HttpStatus.TOO_MANY_REQUESTS
+    ),
+
+    RESOURCE_NOT_FOUND(
+            4044,
+            "Tài nguyên yêu cầu không tồn tại",
+            HttpStatus.NOT_FOUND
     ),
 
     INTERNAL_SERVER_ERROR(

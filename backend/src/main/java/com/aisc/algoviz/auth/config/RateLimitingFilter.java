@@ -38,8 +38,8 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
         String path = request.getRequestURI();
 
-        // Bỏ qua rate limit cho static resources, swagger, and h2-console
-        if (path.startsWith("/swagger-ui") || path.startsWith("/v3/api-docs") || path.startsWith("/h2-console")) {
+        // Bỏ qua rate limit cho static resources, swagger, h2-console và non-API routes
+        if (!path.startsWith("/api") || path.startsWith("/swagger-ui") || path.startsWith("/v3/api-docs") || path.startsWith("/h2-console")) {
             filterChain.doFilter(request, response);
             return;
         }
