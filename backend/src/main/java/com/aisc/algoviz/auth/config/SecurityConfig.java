@@ -62,6 +62,7 @@ public class SecurityConfig {
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/api/analyze/**", "/api/ai/analyze/**").permitAll()
                         .requestMatchers("/api/submissions/run").permitAll()
+                        .requestMatchers("/api/ast/**", "/api/debug", "/api/debug/steps", "/api/algorithms/**").permitAll()
                         .anyRequest().authenticated()
                 );
 
