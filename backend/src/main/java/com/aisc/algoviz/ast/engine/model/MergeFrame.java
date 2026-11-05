@@ -1,0 +1,60 @@
+package com.aisc.algoviz.ast.engine.model;
+
+/** Runtime Merge Sort evidence for one invocation or its caller's verified result. */
+public record MergeFrame(
+    String phase,
+    Long invocationId,
+    Integer low,
+    Integer mid,
+    Integer high,
+    Integer left,
+    Integer right,
+    Integer write,
+    Integer index,
+    VisualState.ArrayValue auxiliary,
+    SortFrame.Comparison comparison,
+    SortFrame.Mutation pendingMutation,
+    SortFrame.Mutation completedMutation,
+    String mergedRangeStatus,
+    String fullArrayStatus,
+    String snapshotPhase,
+    Integer verifiedLow,
+    Integer verifiedHigh) {
+  public MergeFrame(
+      String phase,
+      Long invocationId,
+      Integer low,
+      Integer mid,
+      Integer high,
+      Integer left,
+      Integer right,
+      Integer write,
+      Integer index,
+      VisualState.ArrayValue auxiliary,
+      SortFrame.Comparison comparison,
+      SortFrame.Mutation pendingMutation,
+      SortFrame.Mutation completedMutation,
+      String mergedRangeStatus,
+      String fullArrayStatus,
+      String snapshotPhase) {
+    this(
+        phase,
+        invocationId,
+        low,
+        mid,
+        high,
+        left,
+        right,
+        write,
+        index,
+        auxiliary,
+        comparison,
+        pendingMutation,
+        completedMutation,
+        mergedRangeStatus,
+        fullArrayStatus,
+        snapshotPhase,
+        null,
+        null);
+  }
+}
