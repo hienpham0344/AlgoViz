@@ -1189,3 +1189,14 @@
     text-align: left;
   }
 }
+.lesson-math {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.95em;
+}
+
+.lesson-math--display {
+  display: block;
+  margin: 12px 0;
+  text-align: center;
+  white-space: normal;
+}

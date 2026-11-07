@@ -479,7 +479,7 @@ export default function AlgoMasterVisualizer({
   // Announce step
   useEffect(() => {
     if (onAnnounce && currentStep) {
-      onAnnounce(`AlgoMaster step ${stepIndex + 1} of ${trace.length}: ${currentStep.comparison || ""}`);
+      onAnnounce(`AlgoViz step ${stepIndex + 1} of ${trace.length}: ${currentStep.comparison || ""}`);
     }
   }, [stepIndex, currentStep, trace.length, onAnnounce]);
 
@@ -558,7 +558,7 @@ export default function AlgoMasterVisualizer({
       ref={containerRef}
       className={`algomaster-root ${isFullscreen ? "is-fullscreen" : ""}`}
       tabIndex={0}
-      aria-label="AlgoMaster Visualizer"
+      aria-label="AlgoViz Visualizer"
     >
       {isJava && runtime.data.partial && <ApiState error={`Partial trace: ${runtime.data.warnings.join(" ")}`} />}
       {/* 1. TOP HEADER & APPROACH TABS (AlgoMaster style) */}

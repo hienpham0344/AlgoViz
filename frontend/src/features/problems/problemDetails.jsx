@@ -6,6 +6,10 @@ import VisualExampleCard from "./VisualExampleCard.jsx";
 import ResizableColumns from "../../components/ResizableColumns.jsx";
 import { CustomSelect, ProgressView } from "../../components/index.js";
 import { api } from "../../services/api.js";
+import { problemImages, problemText, readableMath } from "../../services/problemText.js";
+import { buildGenericProblem } from "../../services/problemDetailFallback.js";
+import { hasReferenceTrace } from "../../services/problemCapabilities.js";
+import { clearProblemDraft, readProblemDraft, saveProblemDraft } from "../../services/problemDraft.js";
 import { isAccepted, languageKey, mapSubmission, runResult } from "../../services/submissions.js";
 import { fetchExecutionTrace } from "../../services/astApi.js";
 import ApiState from "../../components/ApiState.jsx";
@@ -684,41 +688,6 @@ public:
   },
 };
 
-function buildGenericProblem(id) {
-  return {
-    id,
-    title: `Problem #${id}`,
-    difficulty: "Medium",
-    category: "Algorithm",
-    topics: ["Algorithm", "Data Structure"],
-    companies: ["Tech Company"],
-    hints: ["Consider breaking the problem down into smaller subproblems."],
-    description: `Solve algorithmic problem #${id}. Implement your solution in the editor on the right and run test cases to verify correctness.`,
-    inputFormat: "Standard formatted input.",
-    outputFormat: "Expected output matching test case.",
-    constraints: ["1 <= input.length <= 10^4"],
-    starterCodePython: `class Solution:\n    def solve(self, data):\n        # AlgoViz pre-setup solution\n        return data\n`,
-    starterCodeJs: `function solve(data) {\n    return data;\n}\n`,
-    starterCodeCpp: `class Solution {\npublic:\n    void solve() {}\n};\n`,
-    starterCodeJava: `class Solution {\n    public void solve() {}\n}\n`,
-    sampleTestCases: [
-      { input: "1 2 3", expectedOutput: "1 2 3" },
-      { input: "0", expectedOutput: "0" },
-    ],
-    solutions: [
-      {
-        id: "gen-1",
-        name: "Standard Optimal Approach",
-        language: "Python 3",
-        timeComplexity: "O(n)",
-        spaceComplexity: "O(1)",
-        explanation: "Optimal algorithmic solution pattern for this challenge.",
-        codeSnippet: `class Solution:\n    def solve(self, data):\n        return data`,
-      },
-    ],
-  };
-}
-
 function renderInlineMarkdown(text) {
   if (!text) return null;
   const parts = text.split(/(`[^`]+`)/);
@@ -730,9 +699,10 @@ function renderInlineMarkdown(text) {
   });
 }
 
-function ProblemDetailsPage({ problemId = 1 }) {
+function ProblemDetailsPage({ problemId = 1, isAuthenticated = false }) {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  const [sampleNotice, setSampleNotice] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
   const [submissionsError, setSubmissionsError] = useState("");
   const [currentProblem, setCurrentProblem] = useState(() => {
@@ -756,7 +726,7 @@ function ProblemDetailsPage({ problemId = 1 }) {
         const val = Number(saved);
         if (!isNaN(val) && val >= 8 && val <= 88) return val;
       }
-    } catch { /* parse */ }
+    } catch {}
     return 38; // balanced default height (38%)
   });
   const [isDraggingRunner, setIsDraggingRunner] = useState(false);
@@ -770,7 +740,7 @@ function ProblemDetailsPage({ problemId = 1 }) {
     setRunnerPercent(clamped);
     try {
       localStorage.setItem(RUNNER_STORAGE_KEY, String(clamped));
-    } catch { /* storage */ }
+    } catch {}
   };
 
   const handleRunnerResizeStart = (e) => {
@@ -805,7 +775,7 @@ function ProblemDetailsPage({ problemId = 1 }) {
     document.body.classList.remove("is-resizing-runner-dock");
     try {
       e.currentTarget.releasePointerCapture(e.pointerId);
-    } catch { /* no capture */ }
+    } catch {}
   };
 
   const handleRunnerDoubleClick = () => {
@@ -859,12 +829,15 @@ function ProblemDetailsPage({ problemId = 1 }) {
     return () => window.removeEventListener("hashchange", handleHash);
   }, []);
 
-  const [language, setLanguage] = useState("Python 3");
+  const [guestDraft] = useState(() => readProblemDraft(problemId));
+  const guestDraftRef = useRef(guestDraft);
+  const [language, setLanguage] = useState(() => guestDraft?.language || "Python 3");
   const [codeByLanguage, setCodeByLanguage] = useState({
     "Python 3": "",
     JavaScript: "",
     "C++": "",
     Java: "",
+    ...guestDraft?.codeByLanguage,
   });
 
   const [runnerTab, setRunnerTab] = useState("cases");
@@ -899,21 +872,29 @@ function ProblemDetailsPage({ problemId = 1 }) {
   const [submissionsLoading, setSubmissionsLoading] = useState(true);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      setSubmissionsList([]);
+      setSubmissionsLoading(false);
+      setSubmissionsError("");
+      return;
+    }
     let active = true;
-    setTimeout(() => { if (active) { setSubmissionsLoading(true); setSubmissionsError(""); } }, 0);
+    setSubmissionsLoading(true);
+    setSubmissionsError("");
     api.getProblemSubmissions(problemId).then((data) => {
       if (!Array.isArray(data)) throw new Error("Invalid submissions response.");
       if (active) { setSubmissionsList(data.map(mapSubmission)); setSubmissionsError(""); }
     }).catch((error) => { if (active) setSubmissionsError(error.message); })
       .finally(() => { if (active) setSubmissionsLoading(false); });
     return () => { active = false; };
-  }, [problemId, reloadKey]);
+  }, [problemId, reloadKey, isAuthenticated]);
 
   useEffect(() => {
     let cancelled = false;
     async function loadProblem() {
       setIsLoading(true);
       setLoadError("");
+      setSampleNotice("");
       const fallback = DEFAULT_PROBLEMS[problemId] || buildGenericProblem(problemId);
       try {
         const data = await api.getProblemById(problemId);
@@ -925,21 +906,37 @@ function ProblemDetailsPage({ problemId = 1 }) {
           } else if (typeof data.constraints === "string" && data.constraints.trim()) {
             normalizedConstraints = data.constraints
               .split(/\r?\n/)
-              .map((s) => s.replace(/^[•\-*]\s*/, "").trim())
+              .map((s) => s.replace(/^[•\-\*]\s*/, "").trim())
               .filter(Boolean);
           }
 
-          const merged = { ...fallback, ...data, constraints: normalizedConstraints };
+          const merged = { ...fallback, ...data, constraints: normalizedConstraints,
+            difficulty: data.difficulty || fallback.difficulty,
+            sampleTestCases: Array.isArray(data.sampleTestCases) ? data.sampleTestCases : fallback.sampleTestCases,
+            solutions: Array.isArray(data.solutions) ? data.solutions : fallback.solutions,
+          };
           setCurrentProblem(merged);
           setCodeByLanguage({
             "Python 3": merged.starterCodePython || fallback.starterCodePython || "",
             "C++": merged.starterCodeCpp || fallback.starterCodeCpp || "",
             JavaScript: merged.starterCodeJs || fallback.starterCodeJs || "",
             Java: merged.starterCodeJava || fallback.starterCodeJava || "",
+            ...guestDraftRef.current?.codeByLanguage,
           });
+          if (guestDraftRef.current) {
+            clearProblemDraft(problemId);
+            guestDraftRef.current = null;
+          }
         }
       } catch (error) {
-        if (!cancelled) setLoadError(error.message);
+        if (!cancelled) {
+          if ((!error.status || error.status >= 500) && DEFAULT_PROBLEMS[problemId]) {
+            setCurrentProblem(fallback);
+            setSampleNotice("Live problem data is unavailable. This is a sample problem; code execution and submissions require the server.");
+          } else {
+            setLoadError(error.message);
+          }
+        }
       } finally { if (!cancelled) setIsLoading(false); }
     }
     loadProblem();
@@ -955,11 +952,12 @@ function ProblemDetailsPage({ problemId = 1 }) {
         expected: tc.expectedOutput || "",
       }));
     }
-    return [
-      { input: "9\n2 7 11 15", expected: "[0, 1]" },
-      { input: "6\n3 2 4", expected: "[1, 2]" },
-    ];
+    if (currentProblem?.sampleInput || currentProblem?.sampleOutput) {
+      return [{ input: currentProblem.sampleInput || "", expected: currentProblem.sampleOutput || "" }];
+    }
+    return [];
   }, [currentProblem]);
+  const illustrations = useMemo(() => problemImages(currentProblem.description), [currentProblem.description]);
 
   const fallback = DEFAULT_PROBLEMS[problemId] || buildGenericProblem(problemId);
   const code = codeByLanguage[language] || {
@@ -991,7 +989,7 @@ function ProblemDetailsPage({ problemId = 1 }) {
     setCodeByLanguage((c) => ({ ...c, [language]: starter }));
     setExecutionState("ready");
     setExecutionResult(null);
-    showToast("Reset code to pre-setup solution template.");
+    showToast(starter ? "Reset code to the provided template." : "Editor cleared; no starter code is available for this language.");
   };
 
   const handleCopyCode = async () => {
@@ -1009,7 +1007,8 @@ function ProblemDetailsPage({ problemId = 1 }) {
   };
 
   const handleLoadSolutionToEditor = (sol) => {
-    const targetLang = sol.language;
+    const targetLang = RUNNER_LANGUAGES.find((item) => languageKey(item) === languageKey(sol.language));
+    if (!targetLang || !sol.codeSnippet) return;
     setLanguage(targetLang);
     setCodeByLanguage((c) => ({ ...c, [targetLang]: sol.codeSnippet }));
     showToast(`Loaded ${targetLang} solution into editor!`);
@@ -1039,6 +1038,14 @@ function ProblemDetailsPage({ problemId = 1 }) {
 
   const handleSubmit = async () => {
     if (pendingAction) return;
+    if (!isAuthenticated) {
+      if (!saveProblemDraft(problemId, language, codeByLanguage)) {
+        showToast("Could not preserve your code. Copy it before signing in.");
+        return;
+      }
+      window.location.hash = `#login?next=${encodeURIComponent(`problem-details?id=${problemId}`)}`;
+      return;
+    }
     setPendingAction("submit");
     setExecutionState("running");
     setExecutionResult(null);
@@ -1079,6 +1086,8 @@ function ProblemDetailsPage({ problemId = 1 }) {
 
   return (
     <main className="ide-problem-details" id="top">
+      {sampleNotice && <p className="problem-sample-notice" role="status">{sampleNotice} <button type="button" onClick={() => setReloadKey((key) => key + 1)}>Retry live data</button></p>}
+      {!DEFAULT_PROBLEMS[problemId] && <p className="problem-sample-notice" role="note">Imported problems include reference snippets and example inputs. To run or submit code, provide a complete program that reads stdin and prints its answer.</p>}
       {/* 1. TOP STUDIO BAR (LeetCode Inspired) */}
       <header className="ide-topbar" aria-label="Problem workspace navigation">
         <div className="ide-topbar__left">
@@ -1102,7 +1111,7 @@ function ProblemDetailsPage({ problemId = 1 }) {
           <button
             type="button"
             className="ide-action-btn ide-btn-run"
-            disabled={Boolean(pendingAction)}
+            disabled={Boolean(pendingAction) || !code.trim()}
             onClick={handleRunCode}
           >
             {pendingAction === "run" ? <ProgressView size="sm" label="Running…" /> : <>
@@ -1115,7 +1124,7 @@ function ProblemDetailsPage({ problemId = 1 }) {
           <button
             type="button"
             className="ide-action-btn ide-btn-submit"
-            disabled={Boolean(pendingAction)}
+            disabled={Boolean(pendingAction) || !code.trim()}
             onClick={handleSubmit}
           >
             {pendingAction === "submit" ? <ProgressView size="sm" label="Judging…" /> : <>
@@ -1201,6 +1210,7 @@ function ProblemDetailsPage({ problemId = 1 }) {
                     </span>
 
                     {/* Topics Dropdown Pill */}
+                    {currentProblem.topics?.length > 0 && (
                     <div className="lc-pill-group">
                       <button
                         type="button"
@@ -1223,15 +1233,17 @@ function ProblemDetailsPage({ problemId = 1 }) {
                             <span className="lc-meta-popup-title">Algorithm Topics</span>
                           </div>
                           <div className="lc-meta-popup-chips">
-                            {(currentProblem.topics || ["Array", "Hash Table"]).map((t, idx) => (
+                            {currentProblem.topics.map((t, idx) => (
                               <span key={idx} className="lc-tag-chip">{t}</span>
                             ))}
                           </div>
                         </div>
                       )}
                     </div>
+                    )}
 
                     {/* Companies Pill with Locked State */}
+                    {currentProblem.companies?.length > 0 && (
                     <div className="lc-pill-group">
                       <button
                         type="button"
@@ -1266,7 +1278,7 @@ function ProblemDetailsPage({ problemId = 1 }) {
                           </div>
 
                           <div className="lc-meta-popup-chips">
-                            {(currentProblem.companies || ["Amazon", "Google", "Apple", "Microsoft", "Meta"]).map((c, idx) => (
+                            {currentProblem.companies.map((c, idx) => (
                               <span key={idx} className="lc-tag-chip lc-tag-chip--locked" title={`${c} (Locked)`}>
                                 <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                                   <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
@@ -1282,8 +1294,10 @@ function ProblemDetailsPage({ problemId = 1 }) {
                         </div>
                       )}
                     </div>
+                    )}
 
                     {/* Hint Accordion */}
+                    {currentProblem.hints?.length > 0 && (
                     <button
                       type="button"
                       className={`lc-hint-btn ${hintOpen ? "is-open" : ""}`}
@@ -1291,14 +1305,12 @@ function ProblemDetailsPage({ problemId = 1 }) {
                     >
                       <span>💡 Hint 1</span>
                     </button>
+                    )}
                   </div>
 
-                  {hintOpen && (
+                  {hintOpen && currentProblem.hints?.length > 0 && (
                     <div className="lc-hint-card">
-                      <p>
-                        {currentProblem.hints?.[0] ||
-                          "A really brute force way would be to search for all possible pairs of numbers but that would be too slow. Can you think of using a Hash Map to look up complement in O(1)?"}
-                      </p>
+                      <p>{currentProblem.hints[0]}</p>
                     </div>
                   )}
                 </div>
@@ -1306,10 +1318,13 @@ function ProblemDetailsPage({ problemId = 1 }) {
                 {/* Problem Statement Body */}
                 <div className="lc-problem-body">
                   <div className="lc-statement-text">
-                    {currentProblem.description.split("\n\n").map((para, i) => (
+                    {(problemText(currentProblem.description) || "No description is available for this problem yet.").split("\n\n").map((para, i) => (
                       <p key={i}>{renderInlineMarkdown(para)}</p>
                     ))}
                   </div>
+                  {illustrations.length > 0 && <div className="problem-illustrations">
+                    {illustrations.map((item) => <img key={item.src} src={item.src} alt={item.alt} loading="lazy" />)}
+                  </div>}
 
                   {/* Interactive Visual Examples (Blocks / Memory Cells) */}
                   <div className="lc-examples-list">
@@ -1322,6 +1337,7 @@ function ProblemDetailsPage({ problemId = 1 }) {
                       />
                     ))}
                   </div>
+                  {!testCasesList.length && <p role="status">No sample test cases are available for this problem.</p>}
 
                   {/* Constraints */}
                   {Array.isArray(currentProblem.constraints) && currentProblem.constraints.length > 0 && (
@@ -1336,11 +1352,11 @@ function ProblemDetailsPage({ problemId = 1 }) {
                   )}
 
                   {/* AlgoMaster Visualizer Banner Callout */}
-                  <div className="lc-visualizer-callout">
+                  {hasReferenceTrace(currentProblem.id) && <div className="lc-visualizer-callout">
                     <div className="callout-left">
                       <span className="callout-icon">⚡</span>
                       <div>
-                        <strong>AlgoMaster Interactive Visualizer</strong>
+                        <strong>AlgoViz Interactive Visualizer</strong>
                         <p>Watch this algorithm execute step-by-step with array animations and synchronized code!</p>
                       </div>
                     </div>
@@ -1351,7 +1367,7 @@ function ProblemDetailsPage({ problemId = 1 }) {
                     >
                       Open Solution &amp; Visualizer →
                     </button>
-                  </div>
+                  </div>}
                 </div>
               </div>
             )}
@@ -1360,13 +1376,14 @@ function ProblemDetailsPage({ problemId = 1 }) {
             {leftTab === "solution" && (
               <div className="lc-panel-content lc-editorial-content">
                 <div className="editorial-header">
-                  <div className="editorial-eyebrow">Official Solution &amp; Interactive Visualizer</div>
-                  <h2 className="editorial-title">{currentProblem.id}. {currentProblem.title} — Solution &amp; Visualizer</h2>
+                  <div className="editorial-eyebrow">Reference Solutions</div>
+                  <h2 className="editorial-title">{currentProblem.id}. {currentProblem.title} — {hasReferenceTrace(currentProblem.id) ? "Solutions & Visualizer" : "Solutions"}</h2>
                   <p className="editorial-lead">
-                    In-depth breakdown of optimal algorithmic approaches paired with an interactive, step-by-step visual execution.
+                    {currentProblem.id === 1 ? "Explore the Two Sum walkthrough and reference implementations." : "Review the available reference implementations for this problem."}
                   </p>
                 </div>
 
+                {currentProblem.id === 1 && <>
                 <article className="editorial-approach-card">
                   <div className="approach-header-row">
                     <span className="approach-tag approach-tag--optimal">Approach 1</span>
@@ -1513,31 +1530,43 @@ function ProblemDetailsPage({ problemId = 1 }) {
                     Loop through each element <code className="inline-code">x</code> and search for whether there is another value that equals to <code className="inline-code">target - x</code>. While using <code className="inline-code">O(1)</code> space, its quadratic runtime is suboptimal for large inputs.
                   </p>
                 </article>
+                </>}
+
+                {currentProblem.id === 704 && (
+                  <div className="solution-embedded-visualizer">
+                    <div className="embedded-vis-header"><h3 className="embedded-vis-title">Binary Search Visualizer</h3></div>
+                    <div className="embedded-vis-body">
+                      <AlgoMasterVisualizer problem={currentProblem} language={solutionLanguage}
+                        onLanguageChange={setSolutionLanguage} onAnnounce={setAnnouncement} />
+                    </div>
+                  </div>
+                )}
 
                 {/* Reference Solutions Library Section */}
                 <div className="solutions-header" style={{ marginTop: "32px" }}>
-                  <div className="editorial-eyebrow">AlgoViz Pre-setup Solutions</div>
+                  <div className="editorial-eyebrow">Available references</div>
                   <h3 className="solutions-title">Reference Implementations Library</h3>
                   <p className="solutions-lead">
-                    Official implementations in multiple languages ready to load into the code editor.
+                    Code and explanations provided with this problem.
                   </p>
                 </div>
 
                 <div className="solutions-list">
+                  {!currentProblem.solutions?.length && <p role="status">No reference solutions are available for this problem yet.</p>}
                   {(currentProblem.solutions || []).map((sol) => (
                     <div className="solution-library-card" key={sol.id}>
                       <div className="sol-card-header">
                         <div className="sol-header-left">
                           <span className="sol-lang-badge">{sol.language}</span>
-                          <span className="sol-name">{sol.name}</span>
+                          <span className="sol-name">{sol.name || "Reference solution"}</span>
                         </div>
                         <div className="sol-header-right">
-                          <span className="sol-chip sol-chip--time">{sol.timeComplexity}</span>
-                          <span className="sol-chip sol-chip--space">{sol.spaceComplexity}</span>
+                          {sol.timeComplexity && <span className="sol-chip sol-chip--time">{sol.timeComplexity}</span>}
+                          {sol.spaceComplexity && <span className="sol-chip sol-chip--space">{sol.spaceComplexity}</span>}
                         </div>
                       </div>
 
-                      <p className="sol-explanation">{sol.explanation}</p>
+                      {sol.explanation && <p className="sol-explanation">{readableMath(sol.explanation)}</p>}
 
                       <div className="sol-code-block">
                         <pre><code>{sol.codeSnippet}</code></pre>
@@ -1547,6 +1576,7 @@ function ProblemDetailsPage({ problemId = 1 }) {
                         <button
                           type="button"
                           className="sol-load-btn"
+                          disabled={!sol.codeSnippet || !RUNNER_LANGUAGES.some((item) => languageKey(item) === languageKey(sol.language))}
                           onClick={() => handleLoadSolutionToEditor(sol)}
                         >
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -1573,8 +1603,8 @@ function ProblemDetailsPage({ problemId = 1 }) {
                   </p>
                 </div>
 
-                <ApiState loading={submissionsLoading} error={submissionsError} onRetry={() => setReloadKey((key) => key + 1)} label="Loading submissions…" />
-                {!submissionsLoading && !submissionsList.length && !submissionsError && <p role="status">No submissions yet. Submit your solution to get started.</p>}
+                {!isAuthenticated ? <p role="status"><a href={`#login?next=${encodeURIComponent(`problem-details?id=${problemId}&tab=submissions`)}`}>Sign in</a> to view your submissions.</p> : <ApiState loading={submissionsLoading} error={submissionsError} onRetry={() => setReloadKey((key) => key + 1)} label="Loading submissions…" />}
+                {isAuthenticated && !submissionsLoading && !submissionsList.length && !submissionsError && <p role="status">No submissions yet. Submit your solution to get started.</p>}
                 {!submissionsLoading && !submissionsError && submissionsList.length > 0 && <div className="submissions-table-card">
                   <table className="submissions-table">
                     <thead>
@@ -1645,7 +1675,7 @@ function ProblemDetailsPage({ problemId = 1 }) {
                   type="button"
                   className="tool-btn"
                   onClick={handleResetCode}
-                  title="Reset code to pre-setup solution"
+                  title="Reset code to the provided template"
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
                     <polyline points="1 4 1 10 7 10" />
@@ -1852,6 +1882,7 @@ function ProblemDetailsPage({ problemId = 1 }) {
                 <div className="runner-content">
                   {runnerTab === "cases" && (
                     <div className="runner-cases-view">
+                      {!testCasesList.length && <p role="status">No sample test cases are available. Run uses empty stdin until examples are provided.</p>}
                       <div className="case-chips">
                         {testCasesList.map((_, idx) => (
                           <button
@@ -1865,7 +1896,7 @@ function ProblemDetailsPage({ problemId = 1 }) {
                         ))}
                       </div>
 
-                      <div className="case-io-details">
+                      {testCasesList.length > 0 && <div className="case-io-details">
                         <div className="case-field">
                           <label>Input:</label>
                           <pre>{testCasesList[activeCaseIndex]?.input}</pre>
@@ -1874,7 +1905,7 @@ function ProblemDetailsPage({ problemId = 1 }) {
                           <label>Expected Output:</label>
                           <pre>{testCasesList[activeCaseIndex]?.expected}</pre>
                         </div>
-                      </div>
+                      </div>}
                     </div>
                   )}
 

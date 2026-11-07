@@ -88,54 +88,54 @@ function JaneStreetLogo() {
   );
 }
 
-// 6 Cycling Featured Items for Floating Card (live algorithmic telemetry)
+// Featured routes point to real content available in the studio.
 const FEATURED_ITEMS = [
   {
     id: 1,
     tag: "Interactive Trace",
-    meta: "Live 2ms",
+    meta: "Two Sum",
     typeClass: "tag-coral",
-    title: "Dijkstra Shortest Path & Priority Queue",
+    title: "Two Sum: Hash Map Lookup",
     href: "#problem-details?id=1&tab=visualizer",
   },
   {
     id: 2,
-    tag: "Benchmark",
-    meta: "Live 60 FPS",
+    tag: "Code Studio",
+    meta: "Run code",
     typeClass: "tag-green",
-    title: "QuickSort vs MergeSort Stress Benchmark (N=100K)",
+    title: "Write code and inspect execution output",
     href: "#visualize",
   },
   {
     id: 3,
-    tag: "State Machine",
-    meta: "Step 14/42",
+    tag: "Interactive Trace",
+    meta: "Binary Search",
     typeClass: "tag-blue",
-    title: "Binary Tree Level Order Traversal BFS",
-    href: "#visualizer",
+    title: "Binary Search: Pointer Movement",
+    href: "#problem-details?id=704&tab=visualizer",
   },
   {
     id: 4,
-    tag: "Dynamic Prog",
-    meta: "Live 1ms",
+    tag: "Guided Lesson",
+    meta: "Sorting",
     typeClass: "tag-amber",
-    title: "Longest Increasing Subsequence O(N log N)",
-    href: "#problem-details?id=2",
+    title: "Sorting Invariants & Adjacent Swaps",
+    href: "#lesson?courseId=sorting-masterclass&lessonId=1",
   },
   {
     id: 5,
-    tag: "Graph Theory",
-    meta: "Step 28/80",
+    tag: "Learning Paths",
+    meta: "Algorithms",
     typeClass: "tag-blue",
-    title: "Topological Sort & Cycle Detection (DAG)",
-    href: "#problem-details?id=3&tab=visualizer",
+    title: "Explore Guided Algorithm Courses",
+    href: "#learn",
   },
   {
     id: 6,
-    tag: "Divide & Conquer",
-    meta: "Live 120 FPS",
+    tag: "Problem Set",
+    meta: "Practice",
     typeClass: "tag-green",
-    title: "Median of Two Sorted Arrays Binary Partition",
+    title: "Browse algorithm challenges",
     href: "#problems",
   },
 ];
@@ -179,7 +179,6 @@ export default function LandingPage({ isAuthenticated = false, userName = "Devel
   const [jitter, setJitter] = useState({ x: 0, y: 0 });
   const [isSpawning, setIsSpawning] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const [spawnCount, setSpawnCount] = useState(0);
 
   // Parallax container ref (uses CSS variables for 120 FPS performance without React re-render lags)
   const containerRef = useRef(null);
@@ -234,7 +233,6 @@ export default function LandingPage({ isAuthenticated = false, userName = "Devel
             y: Math.round((Math.random() - 0.5) * 14),
           });
 
-          setSpawnCount((c) => c + 1);
 
           // 4. Brief pause while invisible (80ms), then fade in smoothly at the new spot
           fadeInTimer = setTimeout(() => {
@@ -312,20 +310,13 @@ export default function LandingPage({ isAuthenticated = false, userName = "Devel
               <a className="kaggle-nav-link" href="#learn">
                 Learn
               </a>
-              <button 
-                className="kaggle-nav-more" 
-                aria-label="More options"
-                onClick={() => { window.location.hash = "problems"; }}
-              >
-                ···
-              </button>
             </nav>
           </div>
 
           <div className="kaggle-header-right">
             <button
               className="kaggle-search-btn"
-              aria-label="Search algorithms and problems"
+              aria-label="Browse algorithms and problems"
               onClick={() => { window.location.hash = "problems"; }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -410,7 +401,7 @@ export default function LandingPage({ isAuthenticated = false, userName = "Devel
           </h1>
 
           <p className="kaggle-hero-subtitle">
-            Interactive code visualizers, execution traces, and benchmark sandboxes where the community builds deep algorithmic intuition.
+            Practice problems, execution traces, and guided lessons that help you understand algorithms.
           </p>
         </div>
 
@@ -572,7 +563,7 @@ export default function LandingPage({ isAuthenticated = false, userName = "Devel
           <a
             className={`kaggle-floating-card ${isSpawning ? "is-spawning" : "has-spawned"}`}
             href={currentItem.href}
-            aria-label={`View live trace: ${currentItem.title}`}
+            aria-label={`Open featured content: ${currentItem.title}`}
             style={{
               ...currentZone,
               "--jitter-x": `${jitter.x}px`,
@@ -588,7 +579,6 @@ export default function LandingPage({ isAuthenticated = false, userName = "Devel
               <div className="kaggle-card-header">
                 <div className="kaggle-card-tag-wrapper">
                   <span className={`kaggle-card-tag ${currentItem.typeClass}`}>
-                    <span className="kaggle-live-dot" aria-hidden="true" />
                     {currentItem.tag}
                   </span>
                 </div>
@@ -598,21 +588,14 @@ export default function LandingPage({ isAuthenticated = false, userName = "Devel
                 {currentItem.title}
               </div>
             </div>
-            <div className="kaggle-card-progress-bar" aria-hidden="true">
-              <div
-                className="kaggle-card-progress-fill"
-                key={`progress-${spawnCount}`}
-                style={{ animationPlayState: isHovered ? "paused" : "running" }}
-              />
-            </div>
           </a>
         </div>
       </section>
 
-      {/* 4. "TRUSTED BY TEAMS AT" INFINITE CONTINUOUS MARQUEE BAR */}
-      <section className="kaggle-trusted-bar" aria-label="Trusted by companies and universities">
+      {/* Illustrative ecosystem references; no partnership is implied. */}
+      <section className="kaggle-trusted-bar" aria-label="Technology ecosystem references">
         <div className="kaggle-trusted-caption">
-          Trusted by teams at
+          Ideas from across the engineering ecosystem
         </div>
         <div className="kaggle-marquee-wrapper">
           <div className="kaggle-marquee-track">
@@ -666,7 +649,7 @@ export default function LandingPage({ isAuthenticated = false, userName = "Devel
               </div>
               <h2 className="kaggle-pillar-title">Interactive Visualizers</h2>
               <p className="kaggle-pillar-desc">
-                Step frame-by-frame through memory buffers, pointer states, dynamic programming tables, and recursion graphs at 60 FPS.
+                Explore supported problems with captured source lines, variables, array states, and step controls.
               </p>
               <a className="kaggle-pillar-link" href="#visualizer">
                 Launch Visualizer
@@ -683,9 +666,9 @@ export default function LandingPage({ isAuthenticated = false, userName = "Devel
                   <line x1="6" y1="20" x2="6" y2="14" />
                 </svg>
               </div>
-              <h2 className="kaggle-pillar-title">Big-O Telemetry Sandbox</h2>
+              <h2 className="kaggle-pillar-title">Code Execution Studio</h2>
               <p className="kaggle-pillar-desc">
-                Benchmark execution times across large datasets, plot empirical scaling curves, and analyze hardware CPU instruction cycles.
+                Run code on the server, inspect output and runtime metrics, and explore Java execution traces.
               </p>
               <a className="kaggle-pillar-link" href="#visualize">
                 Open Visualize Studio
@@ -718,7 +701,7 @@ export default function LandingPage({ isAuthenticated = false, userName = "Devel
       <section className="kaggle-cta-section">
         <div className="kaggle-cta-card">
           <h2 className="kaggle-cta-heading">
-            Join the community shaping algorithmic mastery
+            Start practicing algorithms with AlgoViz
           </h2>
           <div className="kaggle-cta-actions">
             <a className="kaggle-btn-dark" href="#register">
@@ -747,17 +730,14 @@ export default function LandingPage({ isAuthenticated = false, userName = "Devel
         </div>
       </footer>
 
-      {/* 8. KAGGLE COOKIE & TELEMETRY BANNER */}
+      {/* Browser storage notice */}
       {!cookieDismissed && (
-        <aside className="kaggle-cookie-banner" role="region" aria-label="Cookie consent">
+        <aside className="kaggle-cookie-banner" role="region" aria-label="Browser storage notice">
           <div className="kaggle-cookie-content">
             <p className="kaggle-cookie-text">
-              AlgoViz uses cookies from Google to deliver and enhance the quality of its services and to analyze traffic.
+              AlgoViz stores your theme preference, sign-in session, and temporary code drafts in this browser.
             </p>
             <div className="kaggle-cookie-actions">
-              <a className="kaggle-cookie-link" href="#problems">
-                Learn more
-              </a>
               <button
                 className="kaggle-cookie-dismiss"
                 onClick={handleDismissCookie}

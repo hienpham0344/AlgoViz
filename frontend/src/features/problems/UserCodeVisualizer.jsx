@@ -111,7 +111,7 @@ export default function UserCodeVisualizer({
             <span>Runtime Trace</span>
           </div>
           <span className="user-vis-io-tag" title="Testcase input">
-            Input: {testCase?.input ? testCase.input.replace(/\n/g, " • ") : "nums = [2, 7, 11, 15], target = 9"}
+            Input: {testCase?.input ? testCase.input.replace(/\n/g, " • ") : "No sample input"}
           </span>
         </div>
 

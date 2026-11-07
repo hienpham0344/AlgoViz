@@ -1015,10 +1015,6 @@ function LearnPage({ userName = "Your name", isAuthenticated }) {
   }, [activeCategory, searchQuery, courses]);
 
   const handleOpenCurriculum = (course) => {
-    if (!isAuthenticated) {
-      window.location.assign("#login");
-      return;
-    }
     setSelectedCourseModal(course);
     setAnnouncement(`Opened curriculum for ${course.title}`);
   };
@@ -1033,20 +1029,12 @@ function LearnPage({ userName = "Your name", isAuthenticated }) {
   };
 
   const handleLaunchLesson = (course, lesson) => {
-    if (!isAuthenticated) {
-      window.location.hash = "#login";
-      return;
-    }
     setAnnouncement(`Navigating to ${lesson.title}`);
     setSelectedCourseModal(null);
     window.location.hash = `#lesson?courseId=${course.id}&lessonId=${lesson.id}`;
   };
 
   const handleOpenQuiz = (course) => {
-    if (!isAuthenticated) {
-      window.location.hash = "#login";
-      return;
-    }
     setSelectedCourseModal(null);
     const quizLesson =
       course.lessons?.find((l) => l.type === "quiz") ||
@@ -1057,10 +1045,6 @@ function LearnPage({ userName = "Your name", isAuthenticated }) {
   };
 
   const handleSolveProblemFromGuide = (prob) => {
-    if (!isAuthenticated) {
-      window.location.hash = "#login";
-      return;
-    }
     window.location.hash = `problem-details?id=${prob?.id || 1}`;
   };
 

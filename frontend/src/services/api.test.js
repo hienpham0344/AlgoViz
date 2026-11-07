@@ -73,6 +73,21 @@ test("failed refresh clears credentials and notifies the app", async () => {
   assert.equal(loggedOut, true);
 });
 
+test("logout clears the local session before a slow server responds", async () => {
+  setAuthData("token", { username: "dev" }, "refresh");
+  let finish;
+  globalThis.fetch = async (_url, options) => {
+    assert.equal(options.headers.Authorization, "Bearer token");
+    assert.equal(JSON.parse(options.body).refreshToken, "refresh");
+    return new Promise((resolve) => { finish = () => resolve(json({})); });
+  };
+  const logout = api.logout();
+  assert.equal(getToken(), null);
+  assert.equal(localStorage.getItem("algoviz-refresh-token"), null);
+  finish();
+  await logout;
+});
+
 test("code execution failures preserve the server error", async () => {
   globalThis.fetch = async () => json({ message: "Execution unavailable" }, 503);
   await assert.rejects(api.runCode("python", "print(1)"), /Execution unavailable/);

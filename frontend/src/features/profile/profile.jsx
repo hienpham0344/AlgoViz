@@ -25,7 +25,7 @@ function ProfileIcon({ name }) {
 
 function ProfileHeader({ profile, onEdit }) {
   const displayName = profile?.displayName || "Developer";
-  const email = profile?.email || `${displayName.toLowerCase().replace(/[^a-z0-9]/g, "") || "developer"}@example.com`;
+  const email = profile?.email;
 
   return (
     <section className="profile-card profile-header-card">
@@ -41,9 +41,7 @@ function ProfileHeader({ profile, onEdit }) {
               <i className="profile-role-dot" aria-hidden="true" /> {profile?.roleTitle || "Learner"}
             </span>
           </div>
-          <a className="profile-email" href={`mailto:${email}`}>
-            {email}
-          </a>
+          {email ? <a className="profile-email" href={`mailto:${email}`}>{email}</a> : <span className="profile-email">Email unavailable</span>}
           <p>
             {profile?.bio ||
               "Chưa có giới thiệu."}
@@ -68,7 +66,6 @@ function ProfileHeader({ profile, onEdit }) {
           className="profile-button profile-button--danger"
           type="button"
           onClick={() => {
-            window.location.hash = "#landing";
             api.logout().catch(() => {});
           }}
           title="Sign out of your account"
@@ -109,7 +106,7 @@ function Statistics({ stats, points }) {
   return <section className="profile-section">
     <div className="profile-section-heading"><h2>Statistics</h2><span className="profile-updated">From your submissions</span></div>
     <div className="profile-metrics">
-      <MetricCard label="Points" value={points ?? 0} note="Earned from accepted solutions" detail="10 points per first solve" icon="clock" />
+      <MetricCard label="Points" value={points ?? 0} note="Earned from accepted solutions" detail="Awarded for first solves" icon="clock" />
       <MetricCard label="Attempts" value={stats.attempts} note={`${stats.successRate}% accepted`} detail="All submissions" icon="bolt" accent="profile-metric--purple" />
       <MetricCard label="Problems Solved" value={stats.solved} note={`${stats.inProgress} in progress`} detail={`${stats.total} problems available`} icon="check" accent="profile-metric--mint" />
     </div>
@@ -121,7 +118,7 @@ function Activity({ stats }) {
   return <section className="profile-card profile-activity" aria-labelledby="activity-heading">
     <div className="profile-activity-header"><h2 id="activity-heading">Learning Activity</h2><span>Past 52 weeks</span></div>
     <div className="profile-activity-kpis">
-      {[["Current streak", `${stats.currentStreak} days`], ["Active days", stats.cells.filter((cell) => cell.count).length],
+      {[["Current streak", `${stats.currentStreak} ${stats.currentStreak === 1 ? "day" : "days"}`], ["Active days", stats.cells.filter((cell) => cell.count).length],
         ["Submissions", total], ["Acceptance", `${stats.successRate}%`]].map(([label, value]) => (
         <div className="activity-kpi-item" key={label}><div className="activity-kpi-text"><span>{label}</span><strong>{value}</strong></div></div>
       ))}

@@ -13,6 +13,8 @@ test("compiler errors and empty responses cannot pass a run", () => {
   assert.equal(runResult({ status: "Compilation Error", output: "", errorMessage: "Syntax error" }, "").passed, false);
   assert.equal(runResult({ status: "Success", output: "1 23" }, "12 3").passed, false);
   assert.equal(runResult({ status: "Success", output: "[1, 2]" }, "[1,2]").passed, true);
+  assert.equal(runResult({ status: "Success", output: "answer" }, "").status, "Executed");
+  assert.equal(runResult({ status: "Wrong Answer", output: "answer" }, "").passed, false);
 });
 test("submission formatting preserves the real verdict and zero metrics", () => {
   const row = mapSubmission({ id: 4, status: "Wrong Answer", executionTimeMs: 0, language: "cpp" });
@@ -20,6 +22,7 @@ test("submission formatting preserves the real verdict and zero metrics", () => 
   assert.equal(row.completed, false);
   assert.equal(row.runtimeMs, 0);
   assert.equal(row.language, "C++");
+  assert.equal(row.topic, "");
 });
 test("profile totals derive from submissions and count solved problems once", () => {
   const history = [
