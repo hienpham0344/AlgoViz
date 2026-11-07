@@ -439,7 +439,7 @@ function EditorPanel({
   );
 }
 
-function ExecutionConsole({ logs, isOpen, onToggle, onClear }) {
+function ExecutionConsole({ logs, isOpen, onToggle, onClear, executionState, executionResult }) {
   const [consoleHeight, setConsoleHeight] = useState(() => {
     try {
       const saved = localStorage.getItem("algoviz-analyze-console-height");
@@ -485,7 +485,7 @@ function ExecutionConsole({ logs, isOpen, onToggle, onClear }) {
       const finalHeight = Math.max(minHeight, Math.min(maxHeight, Math.round(startHeight + finalDelta)));
       try {
         localStorage.setItem("algoviz-analyze-console-height", String(finalHeight));
-      } catch { /* storage quota */ }
+      } catch {}
     };
 
     window.addEventListener("pointermove", onPointerMove);
@@ -499,14 +499,14 @@ function ExecutionConsole({ logs, isOpen, onToggle, onClear }) {
       if (!isOpen) onToggle();
       setConsoleHeight((h) => {
         const next = Math.min(maxHeight, h + 24);
-        try { localStorage.setItem("algoviz-analyze-console-height", String(next)); } catch { /* storage quota */ }
+        try { localStorage.setItem("algoviz-analyze-console-height", String(next)); } catch {}
         return next;
       });
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
       setConsoleHeight((h) => {
         const next = Math.max(minHeight, h - 24);
-        try { localStorage.setItem("algoviz-analyze-console-height", String(next)); } catch { /* storage quota */ }
+        try { localStorage.setItem("algoviz-analyze-console-height", String(next)); } catch {}
         return next;
       });
     } else if (e.key === "Home") {
@@ -523,7 +523,7 @@ function ExecutionConsole({ logs, isOpen, onToggle, onClear }) {
     setConsoleHeight(nextHeight);
     try {
       localStorage.setItem("algoviz-analyze-console-height", String(nextHeight));
-    } catch { /* storage quota */ }
+    } catch {}
   };
 
   return (
@@ -554,7 +554,9 @@ function ExecutionConsole({ logs, isOpen, onToggle, onClear }) {
             <line x1="12" y1="19" x2="20" y2="19" />
           </svg>
           <strong>Console Output &amp; Telemetry</strong>
-          <span className="analyze-console-badge">SUCCESS (0.18ms)</span>
+          <span className={`analyze-console-badge analyze-console-badge--${executionState}`}>
+            {executionState === "running" ? "RUNNING" : executionState === "failed" ? "FAILED" : executionState === "passed" ? `${executionResult?.status || "COMPLETE"}${executionResult?.executionTimeMs == null ? "" : ` (${executionResult.executionTimeMs}ms)`}` : "READY"}
+          </span>
           {isOpen && (
             <span className="analyze-console-height-hint" title="Độ cao console hiện tại">
               {consoleHeight}px
@@ -661,6 +663,8 @@ function ExecutionVisualizerStudio({
 
       <ExecutionConsole
         logs={consoleLogs}
+        executionState={executionState}
+        executionResult={executionResult}
         isOpen={isConsoleOpen}
         onToggle={onToggleConsole}
         onClear={onClearConsole}
@@ -729,8 +733,7 @@ function AnalyzePage() {
   const [announcement, setAnnouncement] = useState("");
   const [isConsoleOpen, setIsConsoleOpen] = useState(true);
   const [consoleLogs, setConsoleLogs] = useState([
-    { tag: "System", text: "Compiler workspace initialized (Java 21 standard sandbox).", type: "system" },
-    { tag: "Visualizer", text: "Java source and testcase run through the embedded AST/JDI engine. Other languages provide server output without a runtime trace.", type: "info" },
+    { tag: "System", text: "Ready to run. Java can produce an AST/JDI runtime trace when the server is available.", type: "info" },
   ]);
 
   const announce = (message) => setAnnouncement(message);
@@ -741,16 +744,15 @@ function AnalyzePage() {
     if (executionState === "running") return;
     setExecutionState("running");
     setExecutionResult(null);
+    setActiveStep(null);
     setIsConsoleOpen(true);
     announce("Executing code on the server…");
-    setConsoleLogs((previous) => [...previous,
-      { tag: "Compiler", text: `Running ${language}…`, type: "system" },
-    ]);
+    setConsoleLogs([{ tag: "Compiler", text: `Running ${language}…`, type: "system" }]);
     try {
       const trace = languageKey(language) === "java" ? await fetchExecutionTrace(code, { customInput: input }) : null;
       const result = trace || await api.runCode(languageKey(language), code, input);
-      setExecutionResult({ ...result, trace });
       if (!result?.status) throw new Error("The server returned no execution result.");
+      setExecutionResult({ ...result, trace });
       const failed = /error|exceeded|unsupported|failed|limit/i.test(result.status) || Boolean(result.errorMessage);
       setExecutionState(failed ? "failed" : "passed");
       setConsoleLogs((previous) => [...previous, {
@@ -770,15 +772,13 @@ function AnalyzePage() {
     if (executionState === "running") return;
     setLanguage(nextLanguage);
     setExecutionResult(null);
+    setActiveStep(null);
     if (CODE_SNIPPETS[nextLanguage]) {
       setCode(CODE_SNIPPETS[nextLanguage]);
     }
     setExecutionState("ready");
     announce(`${nextLanguage} editor selected.`);
-    setConsoleLogs((prev) => [
-      ...prev,
-      { tag: "Language", text: `Switched target environment to ${nextLanguage}.`, type: "info" },
-    ]);
+    setConsoleLogs([{ tag: "Language", text: `${nextLanguage} selected. Run code to see output.`, type: "info" }]);
   };
 
   const handleCopy = async () => {
@@ -797,8 +797,10 @@ function AnalyzePage() {
   const handleReset = () => {
     if (executionState === "running") return;
     setExecutionResult(null);
+    setActiveStep(null);
     setCode(CODE_SNIPPETS[language] || CODE_SNIPPETS["Java 21"]);
     setExecutionState("ready");
+    setConsoleLogs([{ tag: "System", text: "Starter code restored. Run code to see output.", type: "info" }]);
     announce(`Code reset to ${language} starter solution.`);
   };
 
@@ -828,7 +830,9 @@ function AnalyzePage() {
               if (executionState === "running") return;
               setCode(nextCode);
               setExecutionResult(null);
+              setActiveStep(null);
               setExecutionState("ready");
+              setConsoleLogs([{ tag: "System", text: "Code changed. Run code to see current output.", type: "info" }]);
             }}
             onCopy={handleCopy}
             onReset={handleReset}
@@ -841,7 +845,7 @@ function AnalyzePage() {
             code={code}
             language={language}
             input={input}
-            onInputChange={(value) => { setInput(value); setExecutionResult(null); setExecutionState("ready"); }}
+            onInputChange={(value) => { setInput(value); setExecutionResult(null); setActiveStep(null); setExecutionState("ready"); setConsoleLogs([{ tag: "System", text: "Testcase changed. Run code to see current output.", type: "info" }]); }}
             executionResult={executionResult}
             onRun={handleRun}
             onStepChange={setActiveStep}

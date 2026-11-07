@@ -104,19 +104,22 @@ function App() {
     localStorage.setItem(USER_NAME_STORAGE_KEY, name);
     setIsAuthenticated(true);
     setUserName(name);
-    if (window.location.pathname === "/login" || window.location.pathname === "/register") {
-      window.history.pushState(null, "", "/problems");
-    } else {
-      window.location.hash = "#problems";
+    const requestedRoute = getRoutePath();
+    const next = getQueryParam("next");
+    const protectedDestination = requestedRoute === "profile" || requestedRoute.startsWith("profile/") || requestedRoute === "history" || requestedRoute.startsWith("history/");
+    if (next && /^problem-details\?id=\d+(?:&tab=(?:submissions|visualizer))?$/.test(next)) {
+      window.location.hash = `#${next}`;
+    } else if (!protectedDestination) {
+      if (window.location.pathname === "/login" || window.location.pathname === "/register") {
+        window.history.pushState(null, "", "/problems");
+      } else {
+        window.location.hash = "#problems";
+      }
     }
     setLocationKey(window.location.pathname + window.location.search + window.location.hash);
   };
 
   const handleOpenProblem = (problem) => {
-    if (!isAuthenticated) {
-      window.location.hash = "#login";
-      return;
-    }
     window.location.hash = `problem-details?id=${problem?.id || 1}`;
   };
 
@@ -174,10 +177,6 @@ function App() {
     activeNav = "Visualize";
     pageContent = <AnalyzePage userName={userName} isAuthenticated={isAuthenticated} />;
   } else if (route === "problem-details" || route.startsWith("problem-details/")) {
-    if (!isAuthenticated) {
-      pageKey = "login";
-      pageContent = <AuthPage mode="login" onAuthenticated={handleAuthenticated} />;
-    } else {
       const pId = getProblemId();
       pageKey = `problem-details-${pId}`;
       pageContent = (
@@ -188,7 +187,6 @@ function App() {
           isAuthenticated={isAuthenticated}
         />
       );
-    }
   } else if (!isAuthenticated && (route === "history" || route.startsWith("history/") || route === "profile" || route.startsWith("profile/"))) {
     pageKey = "login";
     pageContent = <AuthPage mode="login" onAuthenticated={handleAuthenticated} />;

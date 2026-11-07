@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { CustomSelect } from "../../components/index.js";
 import { api } from "../../services/api.js";
+import { paginationItems } from "../../services/pagination.js";
 import { mapSubmission } from "../../services/submissions.js";
 import ApiState from "../../components/ApiState.jsx";
 import "./history.css";
@@ -21,7 +22,7 @@ const HISTORY_COMPLETION_OPTIONS = [
 
 
 
-function HistoryHero({ onNewAnalysis, onExport }) {
+function HistoryHero({ onOpenStudio, onExport }) {
   return (
     <section className="history-hero">
       <div className="history-shell history-hero-content">
@@ -29,10 +30,10 @@ function HistoryHero({ onNewAnalysis, onExport }) {
           <nav className="history-breadcrumb" aria-label="Breadcrumb">
             <a href="#problems">AlgoViz</a>
             <span aria-hidden="true">/</span>
-            <strong>Execution History</strong>
+            <strong>Submission History</strong>
           </nav>
-          <h1>Execution History</h1>
-          <p>Review past algorithm runs, runtime complexity benchmarks, and visual execution traces.</p>
+          <h1>Submission History</h1>
+          <p>Review your judged solutions, verdicts, runtime, and language.</p>
         </div>
         <div className="history-hero-actions">
           <button
@@ -50,13 +51,13 @@ function HistoryHero({ onNewAnalysis, onExport }) {
           <button
             className="history-btn-primary"
             type="button"
-            onClick={onNewAnalysis}
+            onClick={onOpenStudio}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
-            <span>New Analysis</span>
+            <span>Open Code Studio</span>
           </button>
         </div>
       </div>
@@ -64,15 +65,7 @@ function HistoryHero({ onNewAnalysis, onExport }) {
   );
 }
 
-function HistoryStats({
-  totalAnalyses = 12,
-  successRate = 92,
-  topAlgo = "Bubble Sort Visualizer",
-  topAlgoRuns = 2,
-  topTopic = "Sorting Algorithms",
-  topLang = "Python",
-  topLangPercent = 42,
-}) {
+function HistoryStats({ totalSubmissions, successRate, topAlgo, topAlgoRuns, topLang, topLangPercent }) {
   return (
     <section className="history-stats history-shell" aria-label="History overview">
       <div className="history-stat-card">
@@ -84,13 +77,13 @@ function HistoryStats({
               <line x1="16" y1="6" x2="16" y2="18" />
             </svg>
           </span>
-          <span className="history-stat-label">Total Analyses</span>
+          <span className="history-stat-label">Total Submissions</span>
         </div>
         <div className="history-stat-val">
-          <strong>{totalAnalyses}</strong>
-          <span className="history-stat-pill history-stat-pill--emerald">Active Session</span>
+          <strong>{totalSubmissions}</strong>
+          <span className="history-stat-pill history-stat-pill--emerald">Recorded</span>
         </div>
-        <span className="history-stat-sub">Recorded algorithmic runs</span>
+        <span className="history-stat-sub">Judged code submissions</span>
       </div>
 
       <div className="history-stat-card">
@@ -101,13 +94,13 @@ function HistoryStats({
               <polyline points="22 4 12 14.01 9 11.01" />
             </svg>
           </span>
-          <span className="history-stat-label">Success Rate</span>
+          <span className="history-stat-label">Acceptance Rate</span>
         </div>
         <div className="history-stat-val">
           <strong>{successRate}%</strong>
           <span className="history-stat-pill history-stat-pill--cyan">Passing</span>
         </div>
-        <span className="history-stat-sub">Completed assertion suites</span>
+        <span className="history-stat-sub">Accepted submissions</span>
       </div>
 
       <div className="history-stat-card">
@@ -117,13 +110,13 @@ function HistoryStats({
               <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
             </svg>
           </span>
-          <span className="history-stat-label">Top Algorithm</span>
+          <span className="history-stat-label">Most Submitted Problem</span>
         </div>
         <div className="history-stat-val">
           <strong style={{ fontSize: "16px" }} title={topAlgo}>{topAlgo}</strong>
-          <span className="history-stat-pill history-stat-pill--indigo">{topAlgoRuns} {topAlgoRuns === 1 ? "run" : "runs"}</span>
+          <span className="history-stat-pill history-stat-pill--indigo">{topAlgoRuns} {topAlgoRuns === 1 ? "submission" : "submissions"}</span>
         </div>
-        <span className="history-stat-sub">{topTopic || "Most analyzed algorithm"}</span>
+        <span className="history-stat-sub">Most frequently submitted</span>
       </div>
 
       <div className="history-stat-card">
@@ -138,9 +131,9 @@ function HistoryStats({
         </div>
         <div className="history-stat-val">
           <strong>{topLang}</strong>
-          <span className="history-stat-pill history-stat-pill--amber">{topLangPercent}% of runs</span>
+          <span className="history-stat-pill history-stat-pill--amber">{topLangPercent}% of submissions</span>
         </div>
-        <span className="history-stat-sub">Most practiced runtime environment</span>
+        <span className="history-stat-sub">Most used language</span>
       </div>
     </section>
   );
@@ -169,7 +162,7 @@ function HistoryToolbar({
         <input
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
-          placeholder="Search by algorithm, topic, or language..."
+          placeholder="Search by problem or language..."
           aria-label="Search history"
         />
         {query && (
@@ -236,6 +229,7 @@ function HistoryToolbar({
 function HistoryTable({
   rows,
   totalCount,
+  hasHistory,
   page = 1,
   pageSize = 5,
   pageCount = 1,
@@ -246,10 +240,10 @@ function HistoryTable({
   onSelectAll,
   isAllSelected,
   onDelete,
-  onInspect,
+  onViewProblem,
 }) {
   return (
-    <section className="history-table-card history-shell" aria-label="Analysis history table">
+    <section className="history-table-card history-shell" aria-label="Submission history table">
       <div className="history-table-wrapper">
         <table className="history-table">
           <thead>
@@ -262,8 +256,8 @@ function HistoryTable({
                   aria-label="Select all rows"
                 />
               </th>
-              <th>Algorithm</th>
-              <th>Complexity</th>
+              <th>Problem</th>
+              <th>Runtime</th>
               <th>Language</th>
               <th>Date</th>
               <th>Status</th>
@@ -274,8 +268,8 @@ function HistoryTable({
             {rows.length === 0 ? (
               <tr>
                 <td colSpan={7} className="history-empty-td">
-                  <p>No matching analyses found</p>
-                  <small>Try clearing your search query or selecting a different filter.</small>
+                  <p>{hasHistory ? "No matching submissions found" : "No submissions yet"}</p>
+                  <small>{hasHistory ? "Try clearing your search query or selecting a different filter." : "Open a problem and submit a solution to build your history."}</small>
                 </td>
               </tr>
             ) : (
@@ -296,7 +290,7 @@ function HistoryTable({
                   <td>
                     <div className="algo-cell">
                       <strong className="algo-title">{row.algorithm}</strong>
-                      <span className="algo-topic">{row.topic}</span>
+                      {row.topic && <span className="algo-topic">{row.topic}</span>}
                     </div>
                   </td>
                   <td>
@@ -310,7 +304,7 @@ function HistoryTable({
                   <td className="algo-date">{row.date}</td>
                   <td>
                     <span className={`algo-status algo-status--${row.completed ? "done" : "incomplete"}`}>
-                      {row.completed ? "✓ Done" : "● Incomplete"}
+                      {row.rawStatus}
                     </span>
                   </td>
                   <td style={{ textAlign: "right" }} onClick={(e) => e.stopPropagation()}>
@@ -318,13 +312,13 @@ function HistoryTable({
                       <button
                         type="button"
                         className="algo-btn-trace"
-                        title="Open interactive trace in Visualizer"
-                        onClick={() => onInspect(row)}
+                        title="View this problem and its submissions"
+                        onClick={() => onViewProblem(row)}
                       >
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
                         </svg>
-                        <span>Trace</span>
+                        <span>View</span>
                       </button>
                       <button
                         type="button"
@@ -351,7 +345,7 @@ function HistoryTable({
         <div className="history-footer-left">
           <span>
             Showing {totalCount > 0 ? (page - 1) * pageSize + 1 : 0}–
-            {Math.min(page * pageSize, totalCount)} of {totalCount} analyses
+            {Math.min(page * pageSize, totalCount)} of {totalCount} submissions
           </span>
           <div className="history-page-size-selector">
             <label htmlFor="history-page-size">Per page:</label>
@@ -379,7 +373,9 @@ function HistoryTable({
           >
             ‹ Prev
           </button>
-          {Array.from({ length: pageCount }, (_, i) => i + 1).map((pNum) => (
+          {paginationItems(page, pageCount).map((pNum, index) => pNum === "ellipsis" ? (
+            <span key={`ellipsis-${index}`} aria-hidden="true">…</span>
+          ) : (
             <button
               key={pNum}
               type="button"
@@ -410,7 +406,7 @@ function HistoryTable({
 function HistoryFooter() {
   return (
     <footer className="history-simple-footer history-shell">
-      <span>© 2025 AlgoViz. All rights reserved.</span>
+      <span>© {new Date().getFullYear()} AlgoViz. All rights reserved.</span>
       <div className="history-footer-links">
         <a href="#problems">Problems</a>
         <a href="#visualize">Visualize</a>
@@ -420,7 +416,7 @@ function HistoryFooter() {
   );
 }
 
-function HistoryPage() {
+function HistoryPage({ userName = "Developer", isAuthenticated = false }) {
   const [query, setQuery] = useState("");
   const [language, setLanguage] = useState("All");
   const [completion, setCompletion] = useState("All");
@@ -506,7 +502,7 @@ function HistoryPage() {
     catch (error) { setLoadError(error.message); return; }
     setHistoryList((prev) => prev.filter((item) => item.id !== id));
     setSelected((current) => new Set([...current].filter((item) => item !== id)));
-    setAnnouncement("Analysis removed from the selected history.");
+    setAnnouncement("Submission removed from history.");
   };
 
   const handleDeleteSelected = async () => {
@@ -523,7 +519,7 @@ function HistoryPage() {
 
   const clearSelected = () => {
     setSelected(new Set());
-    setAnnouncement("Selected analyses cleared.");
+    setAnnouncement("Selection cleared.");
   };
 
   const handleExport = () => {
@@ -542,8 +538,8 @@ function HistoryPage() {
     setAnnouncement("History exported as JSON.");
   };
 
-  const handleInspectTrace = (row) => {
-    window.location.hash = `problem-details?id=${row.problemId || 1}&tab=visualizer`;
+  const handleViewProblem = (row) => {
+    window.location.hash = `problem-details?id=${row.problemId}&tab=submissions`;
   };
 
   // Dynamic calculations for Hero stats
@@ -554,7 +550,6 @@ function HistoryPage() {
         successRate: 0,
         topAlgo: "None",
         topAlgoRuns: 0,
-        topTopic: "None",
         topLang: "None",
         topLangPercent: 0,
       };
@@ -565,11 +560,9 @@ function HistoryPage() {
     const successRate = Math.round((completedCount / total) * 100);
 
     const algoCounts = {};
-    const algoTopics = {};
     const langCounts = {};
     historyList.forEach((h) => {
       algoCounts[h.algorithm] = (algoCounts[h.algorithm] || 0) + 1;
-      algoTopics[h.algorithm] = h.topic;
       langCounts[h.language] = (langCounts[h.language] || 0) + 1;
     });
 
@@ -597,7 +590,6 @@ function HistoryPage() {
       successRate,
       topAlgo,
       topAlgoRuns: maxAlgoCount,
-      topTopic: algoTopics[topAlgo] || "Sorting Algorithms",
       topLang,
       topLangPercent,
     };
@@ -612,7 +604,7 @@ function HistoryPage() {
   return (
     <main className="history-page" id="top">
       <HistoryHero
-        onNewAnalysis={() => {
+        onOpenStudio={() => {
           window.location.hash = "visualize";
         }}
         onExport={handleExport}
@@ -620,11 +612,10 @@ function HistoryPage() {
 
       <ApiState loading={isLoading} error={loadError} onRetry={() => setReloadKey((key) => key + 1)} />
       <HistoryStats
-        totalAnalyses={stats.total}
+        totalSubmissions={stats.total}
         successRate={stats.successRate}
         topAlgo={stats.topAlgo}
         topAlgoRuns={stats.topAlgoRuns}
-        topTopic={stats.topTopic}
         topLang={stats.topLang}
         topLangPercent={stats.topLangPercent}
       />
@@ -646,6 +637,7 @@ function HistoryPage() {
       <HistoryTable
         rows={pagedRows}
         totalCount={totalCount}
+        hasHistory={historyList.length > 0}
         page={currentPage}
         pageSize={pageSize}
         pageCount={pageCount}
@@ -659,7 +651,7 @@ function HistoryPage() {
         onSelectAll={handleSelectAll}
         isAllSelected={isAllSelected}
         onDelete={removeRow}
-        onInspect={handleInspectTrace}
+        onViewProblem={handleViewProblem}
       />
 
       <p className="sr-only" aria-live="polite">

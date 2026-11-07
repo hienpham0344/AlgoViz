@@ -102,6 +102,15 @@ test("guest learning content remains available without fetching personal progres
   }
 });
 
+test("guest lesson presents readable math and asks to sign in before saving progress", async () => {
+  const Page = (await server.ssrLoadModule("/src/features/learn/LessonPage.jsx")).default;
+  const html = render(Page, { isAuthenticated: false, courseId: "sorting-masterclass", lessonId: 1 });
+  assert.match(html, /lesson-math/);
+  assert.match(html, /Sign in to save progress/);
+  assert.match(html, /Preview/);
+  assert.doesNotMatch(html, /\\le|\\dots|\$\$A\[i\]/);
+});
+
 test('the runtime visualizer renders captured state and invalidates it after editing', async () => {
   const Page = (await server.ssrLoadModule('/src/features/problems/UserCodeVisualizer.jsx')).default;
   const code = 'class Main { public static void main(String[] args) {} }';

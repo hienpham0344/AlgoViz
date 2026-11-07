@@ -35,3 +35,10 @@ Follow these mandatory rules when generating UI and writing code for this projec
 Use `ProgressView` for asynchronous work. Unknown completion uses `variant="spinner"`; supply a finite `value` for `variant="ring"` or the default native `<progress>` track. Custom `min`/`max` ranges normalize to the same 0–100 percentage for the visual indicator and accessibility value. Missing or invalid progress stays indeterminate.
 
 Use `ApiState` with a contextual `label` while loading data (`page` centers a full-page state). Render data-dependent statistics and empty states only after loading finishes. Loading takes priority over stale errors; failed requests can expose `onRetry`. Respect reduced motion and use existing theme tokens.
+
+## Guest and sample flow
+
+Guests can browse courses, lessons, and problem descriptions. Saving lesson progress, viewing submissions, and submitting solutions require sign-in. If the problems API is unavailable, the catalog shows a labeled set of local sample problems; code execution and live progress still require the backend. The interface never treats sample completion or runtime output as verified results.
+
+Imported problems show the available API description, examples, images, and reference solutions. Their reference snippets may use LeetCode method signatures; Run and Submit require a complete program that reads stdin and prints an answer. When an example has no expected output, Run reports execution without claiming the result passed a test.
+Submitting as a guest sends the user to sign-in and restores their editor draft when they return to the problem in the same browser tab.

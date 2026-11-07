@@ -109,11 +109,11 @@ export const api = {
     username, email, password, fullName: fullName || username,
   }),
   logout: async () => {
-    try {
-      await request("/auth/logout", {
-        method: "POST", body: JSON.stringify({ refreshToken: getRefreshToken() }),
-      }, { retry: true });
-    } finally { expireSession(); }
+    const logoutRequest = request("/auth/logout", {
+      method: "POST", body: JSON.stringify({ refreshToken: getRefreshToken() }),
+    }, { retry: true });
+    expireSession();
+    await logoutRequest;
   },
   getProblems: (difficulty = "", category = "") => {
     const params = new URLSearchParams();

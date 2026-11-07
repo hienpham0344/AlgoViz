@@ -16,7 +16,7 @@ export function mapSubmission(item) {
   return {
     ...item,
     algorithm: item.problemTitle || `Problem #${item.problemId}`,
-    topic: item.topic || "Algorithm",
+    topic: item.topic || "",
     complexity: item.executionTimeMs != null ? `${Number(item.executionTimeMs).toFixed(1)} ms` : "—",
     runtimeMs: item.executionTimeMs ?? null,
     memoryMb: item.memoryUsageMb ?? null,
@@ -28,12 +28,13 @@ export function mapSubmission(item) {
 }
 export function runResult(result, expected = "") {
   if (!result?.status) throw new Error("The server returned no execution result.");
-  const failed = /error|exceeded|unsupported|failed|limit/i.test(result.status) || Boolean(result.errorMessage) || Boolean(result.partial);
+  const failed = /error|exceeded|unsupported|failed|limit|wrong answer|not judged/i.test(result.status) || Boolean(result.errorMessage) || Boolean(result.partial);
   const actual = String(result.output ?? "").trim();
   const normalize = (text) => String(text).trim().replaceAll("[", " ").replaceAll("]", " ").replaceAll(",", " ").replace(/\s+/g, " ");
-  const passed = !failed && normalize(actual) === normalize(expected);
+  const hasExpected = String(expected).trim() !== "";
+  const passed = !failed && (!hasExpected || normalize(actual) === normalize(expected));
   return {
-    passed, status: failed ? result.status : passed ? "Passed" : "Wrong Answer",
+    passed, status: failed ? result.status : !hasExpected ? "Executed" : passed ? "Passed" : "Wrong Answer",
     actual: result.errorMessage || actual || "(No output returned)", expected,
     runtimeMs: result.executionTimeMs ?? null, memoryMb: result.memoryUsageMb ?? null,
   };

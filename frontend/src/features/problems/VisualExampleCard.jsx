@@ -9,6 +9,19 @@ function parseMasterAlgoData(tc, problemId) {
   const expectedStr = tc.expected || tc.expectedOutput || "";
   const lines = inputStr.trim().split("\n");
 
+  if (![1, 704].includes(problemId)) {
+    return {
+      inputLabel: "Input",
+      inputString: inputStr,
+      inputArray: [],
+      target: null,
+      targetName: "target",
+      outputString: expectedStr,
+      outputArray: [],
+      explanation: null,
+    };
+  }
+
   let parsed = {
     inputLabel: "nums",
     inputString: "",
@@ -76,50 +89,7 @@ function parseMasterAlgoData(tc, problemId) {
     return parsed;
   }
 
-  // 3. Generic detection: search for array format or space-separated integers
-  let detectedArr = [];
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
-      try {
-        const arr = JSON.parse(trimmed);
-        if (Array.isArray(arr)) {
-          detectedArr = arr;
-          break;
-        }
-      } catch { /* parse fail */ }
-    } else if (trimmed.split(/\s+/).length > 1) {
-      const parts = trimmed.split(/\s+/).map(Number);
-      if (parts.every((p) => !isNaN(p))) {
-        detectedArr = parts;
-        break;
-      }
-    }
-  }
 
-  if (detectedArr.length > 0) {
-    parsed.inputArray = detectedArr;
-    parsed.inputString = `nums = [${detectedArr.join(", ")}]`;
-  } else {
-    parsed.inputString = inputStr;
-  }
-
-  // Output detection
-  try {
-    const outParsed = JSON.parse(expectedStr);
-    if (Array.isArray(outParsed)) {
-      parsed.outputArray = outParsed;
-      parsed.outputString = `[${outParsed.join(", ")}]`;
-    }
-  } catch {
-    parsed.outputString = expectedStr;
-    const num = Number(expectedStr.trim());
-    if (!isNaN(num)) {
-      parsed.outputArray = [num];
-    }
-  }
-
-  return parsed;
 }
 
 export function VisualExampleCard({ tc, index, problemId }) {
@@ -128,7 +98,7 @@ export function VisualExampleCard({ tc, index, problemId }) {
   const [copiedInput, setCopiedInput] = useState(false);
   const [copiedOutput, setCopiedOutput] = useState(false);
 
-  const data = parseMasterAlgoData(tc, problemId, index);
+  const data = parseMasterAlgoData(tc, problemId);
 
   const handleCopyInput = () => {
     navigator.clipboard.writeText(data.inputString);

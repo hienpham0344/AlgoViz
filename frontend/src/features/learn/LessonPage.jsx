@@ -9,10 +9,19 @@ import { withLearningProgress } from "../../services/learning.js";
 import ProgressView from "../../components/ProgressView.jsx";
 import ApiState from "../../components/ApiState.jsx";
 
-// Helper to format inline code (`...`) and bold (**...**)
+function formatMath(expression) {
+  return expression
+    .replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, "($1)/($2)")
+    .replace(/\\text\{([^{}]+)\}/g, "$1")
+    .replace(/\\(le|ge|dots|lfloor|rfloor|Theta|quad|log)\b/g, (_, symbol) => ({
+      le: "≤", ge: "≥", dots: "…", lfloor: "⌊", rfloor: "⌋", Theta: "Θ", quad: " ", log: "log",
+    })[symbol]);
+}
+
+// Format the small set of Markdown and math notation used by local lessons.
 function formatInline(text) {
   if (typeof text !== "string") return text;
-  const parts = text.split(/(`[^`]+`|\*\*[^*]+\*\*)/g);
+  const parts = text.split(/(`[^`]+`|\*\*[^*]+\*\*|\$\$[^$]+\$\$|\$[^$]+\$)/g);
   return parts.map((part, i) => {
     if (part.startsWith("`") && part.endsWith("`")) {
       return (
@@ -22,7 +31,13 @@ function formatInline(text) {
       );
     }
     if (part.startsWith("**") && part.endsWith("**")) {
-      return <strong key={i}>{part.slice(2, -2)}</strong>;
+      return <strong key={i}>{formatInline(part.slice(2, -2))}</strong>;
+    }
+    if (part.startsWith("$") && part.endsWith("$")) {
+      const display = part.startsWith("$$");
+      return <span key={i} className={`lesson-math${display ? " lesson-math--display" : ""}`}>
+        {formatMath(part.slice(display ? 2 : 1, display ? -2 : -1))}
+      </span>;
     }
     return part;
   });
@@ -31,6 +46,7 @@ function formatInline(text) {
 export default function LessonPage({
   courseId = "sorting-masterclass",
   lessonId = 1,
+  userName = "Developer",
   isAuthenticated = true,
 }) {
   const { progress, loading: progressLoading, error: progressError, save, retry } = useLearningProgress(isAuthenticated);
@@ -193,7 +209,7 @@ export default function LessonPage({
                 </span>
               ) : (
                 <span className="lesson-status-tag is-pending">
-                  In Progress
+                  {isAuthenticated ? "In Progress" : "Preview"}
                 </span>
               )}
             </div>
@@ -212,7 +228,7 @@ export default function LessonPage({
                 onClick={toggleCompleted}
                 disabled={savingProgress || progressLoading || Boolean(progressError)}
               >
-                {savingProgress ? <ProgressView size="sm" label="Saving…" /> : isCompleted ? "✓ Completed" : "Mark as Complete"}
+                {savingProgress ? <ProgressView size="sm" label="Saving…" /> : !isAuthenticated ? "Sign in to save progress" : isCompleted ? "✓ Completed" : "Mark as Complete"}
               </button>
             </div>
           </div>
@@ -538,7 +554,7 @@ export default function LessonPage({
                       </h3>
                       <p className="bridge-desc">
                         Step through pointer movements, array swaps, and state transitions
-                        frame-by-frame in our dedicated AlgoMaster Visualizer Studio.
+                        frame-by-frame in the AlgoViz Visualizer Studio.
                       </p>
                     </div>
                     <a
@@ -609,7 +625,7 @@ export default function LessonPage({
                   onClick={toggleCompleted}
                 disabled={savingProgress || progressLoading || Boolean(progressError)}
                 >
-                  {savingProgress ? <ProgressView size="sm" label="Saving…" /> : isCompleted ? "✓ Completed" : "Mark Lesson Completed"}
+                  {savingProgress ? <ProgressView size="sm" label="Saving…" /> : !isAuthenticated ? "Sign in to save progress" : isCompleted ? "✓ Completed" : "Mark Lesson Completed"}
                 </button>
               </div>
 

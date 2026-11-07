@@ -709,10 +709,20 @@
   font-weight: 700;
   padding: 2px 6px;
   border-radius: 4px;
-  background: rgba(52, 168, 83, 0.2);
-  color: #34a853;
-  border: 1px solid rgba(52, 168, 83, 0.4);
+  background: var(--bg-surface-active);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-muted);
   font-family: 'JetBrains Mono', monospace;
+}
+
+.analyze-console-badge--passed {
+  color: var(--status-success);
+  border-color: var(--status-success);
+}
+
+.analyze-console-badge--failed {
+  color: var(--status-error);
+  border-color: var(--status-error);
 }
 
 .analyze-console-height-hint {
