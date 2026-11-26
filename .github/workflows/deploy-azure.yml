@@ -1,8 +1,8 @@
-# Deploy AlgoViz to Azure App Service (Linux container) on every push to main.
+# Build the unified frontend/backend image and deploy it to Azure Container Apps.
 #
 # Repository variables (Settings > Secrets and variables > Actions > Variables):
 #   AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID
-#   AZURE_RESOURCE_GROUP, AZURE_WEBAPP_NAME, AZURE_CONTAINER_REGISTRY
+#   AZURE_CONTAINER_REGISTRY (login server, e.g. myregistry.azurecr.io)
 # Repository secrets:
 #   APP_ALGOVIZ_JWT_SECRET, APP_SPRING_DATASOURCE_URL,
 #   APP_SPRING_DATASOURCE_USERNAME, APP_SPRING_DATASOURCE_PASSWORD
@@ -28,12 +28,14 @@ concurrency:
 env:
   IMAGE_NAME: algoviz
   IMAGE_TAG: ${{ github.sha }}
+  AZURE_RESOURCE_GROUP: rg-algoviz
+  AZURE_CONTAINER_APP: algoviz-backend
 
 jobs:
   deploy:
     name: Build, smoke test and deploy
-    # Skipped until the repository is configured for Azure (AZURE_WEBAPP_NAME set).
-    if: ${{ vars.AZURE_WEBAPP_NAME != '' }}
+    # Skipped until the repository is configured for Azure.
+    if: ${{ vars.AZURE_CONTAINER_REGISTRY != '' }}
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -44,8 +46,8 @@ jobs:
           AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
           AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
           AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-          AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
-          AZURE_WEBAPP_NAME: ${{ vars.AZURE_WEBAPP_NAME }}
+          AZURE_RESOURCE_GROUP: ${{ env.AZURE_RESOURCE_GROUP }}
+          AZURE_CONTAINER_APP: ${{ env.AZURE_CONTAINER_APP }}
           AZURE_CONTAINER_REGISTRY: ${{ vars.AZURE_CONTAINER_REGISTRY }}
           APP_ALGOVIZ_JWT_SECRET: ${{ secrets.APP_ALGOVIZ_JWT_SECRET }}
           APP_SPRING_DATASOURCE_URL: ${{ secrets.APP_SPRING_DATASOURCE_URL }}
@@ -53,7 +55,7 @@ jobs:
           APP_SPRING_DATASOURCE_PASSWORD: ${{ secrets.APP_SPRING_DATASOURCE_PASSWORD }}
         run: |
           missing=0
-          for name in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID AZURE_RESOURCE_GROUP AZURE_WEBAPP_NAME AZURE_CONTAINER_REGISTRY \
+          for name in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID AZURE_RESOURCE_GROUP AZURE_CONTAINER_APP AZURE_CONTAINER_REGISTRY \
                       APP_ALGOVIZ_JWT_SECRET APP_SPRING_DATASOURCE_URL APP_SPRING_DATASOURCE_USERNAME APP_SPRING_DATASOURCE_PASSWORD; do
             if [ -z "${!name}" ]; then echo "::error::Missing configuration value ${name}"; missing=1; fi
           done
@@ -94,6 +96,9 @@ jobs:
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
+      - name: Install Container Apps CLI extension
+        run: az extension add --name containerapp --upgrade --yes
+
       - name: Push image to Azure Container Registry
         run: |
           az acr login --name "${AZURE_CONTAINER_REGISTRY%%.*}"
@@ -103,31 +108,40 @@ jobs:
         env:
           AZURE_CONTAINER_REGISTRY: ${{ vars.AZURE_CONTAINER_REGISTRY }}
 
-      - name: Deploy image to App Service
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: ${{ vars.AZURE_WEBAPP_NAME }}
-          images: ${{ vars.AZURE_CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
-
-      - name: Apply application settings and restart
+      - name: Store application secrets in Container Apps
         env:
           APP_ALGOVIZ_JWT_SECRET: ${{ secrets.APP_ALGOVIZ_JWT_SECRET }}
           APP_SPRING_DATASOURCE_URL: ${{ secrets.APP_SPRING_DATASOURCE_URL }}
           APP_SPRING_DATASOURCE_USERNAME: ${{ secrets.APP_SPRING_DATASOURCE_USERNAME }}
           APP_SPRING_DATASOURCE_PASSWORD: ${{ secrets.APP_SPRING_DATASOURCE_PASSWORD }}
-          AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
-          AZURE_WEBAPP_NAME: ${{ vars.AZURE_WEBAPP_NAME }}
         run: |
-          az webapp config appsettings set \
+          az containerapp secret set \
             --resource-group "$AZURE_RESOURCE_GROUP" \
-            --name "$AZURE_WEBAPP_NAME" \
-            --settings \
-              WEBSITES_PORT=8080 \
-              ALGOVIZ_JWT_SECRET="$APP_ALGOVIZ_JWT_SECRET" \
-              SPRING_DATASOURCE_URL="$APP_SPRING_DATASOURCE_URL" \
-              SPRING_DATASOURCE_DRIVER=org.postgresql.Driver \
-              SPRING_DATASOURCE_USERNAME="$APP_SPRING_DATASOURCE_USERNAME" \
-              SPRING_DATASOURCE_PASSWORD="$APP_SPRING_DATASOURCE_PASSWORD" \
-              ALGOVIZ_CORS_ALLOWED_ORIGINS="https://$AZURE_WEBAPP_NAME.azurewebsites.net" \
+            --name "$AZURE_CONTAINER_APP" \
+            --secrets \
+              jwt-secret="$APP_ALGOVIZ_JWT_SECRET" \
+              db-url="$APP_SPRING_DATASOURCE_URL" \
+              db-user="$APP_SPRING_DATASOURCE_USERNAME" \
+              db-password="$APP_SPRING_DATASOURCE_PASSWORD" \
             --output none
-          echo "Deployed https://$AZURE_WEBAPP_NAME.azurewebsites.net"
+
+      - name: Deploy image to Container Apps
+        env:
+          AZURE_CONTAINER_REGISTRY: ${{ vars.AZURE_CONTAINER_REGISTRY }}
+        run: |
+          fqdn="$(az containerapp show --resource-group "$AZURE_RESOURCE_GROUP" --name "$AZURE_CONTAINER_APP" --query properties.configuration.ingress.fqdn --output tsv)"
+          if [ -z "$fqdn" ]; then
+            echo "::error::Container App ingress FQDN is missing"; exit 1
+          fi
+          az containerapp update \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --name "$AZURE_CONTAINER_APP" \
+            --image "$AZURE_CONTAINER_REGISTRY/$IMAGE_NAME:$IMAGE_TAG" \
+            --set-env-vars \
+              ALGOVIZ_JWT_SECRET=secretref:jwt-secret \
+              SPRING_DATASOURCE_URL=secretref:db-url \
+              SPRING_DATASOURCE_DRIVER=org.postgresql.Driver \
+              SPRING_DATASOURCE_USERNAME=secretref:db-user \
+              SPRING_DATASOURCE_PASSWORD=secretref:db-password \
+              ALGOVIZ_CORS_ALLOWED_ORIGINS="https://$fqdn" \
+            --output none
