@@ -81,7 +81,7 @@ public class SecurityConfig {
         return http.build();
     }
 
-    @org.springframework.beans.factory.annotation.Value("${algoviz.cors.allowed-origins:http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://localhost:8080}")
+    @org.springframework.beans.factory.annotation.Value("${algoviz.cors.allowed-origins:http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://localhost:8080,chrome-extension://*}")
     private String allowedOrigins;
 
     @Bean
@@ -99,7 +99,9 @@ public class SecurityConfig {
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
+        // CORS is only needed for API calls. Vite's crossorigin module assets are
+        // same-origin requests and must not be rejected by the API origin allowlist.
+        source.registerCorsConfiguration("/api/**", configuration);
         return source;
     }
 }

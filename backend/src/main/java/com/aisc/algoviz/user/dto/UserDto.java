@@ -15,6 +15,10 @@ public class UserDto {
     private String email;
     private String fullName;
     private String avatarUrl;
+    private String roleTitle;
+    private String bio;
+    private String location;
+    private String target;
     private String role;
     private Integer points;
     private Integer solvedProblemsCount;

@@ -2,6 +2,7 @@ package com.aisc.algoviz.submission.service;
 
 import com.aisc.algoviz.submission.dto.ExecutionResultDto;
 import com.aisc.algoviz.common.exception.AppException;
+import com.aisc.algoviz.common.exception.CommonErrorCode;
 import com.aisc.algoviz.problem.exception.ProblemErrorCode;
 import com.aisc.algoviz.submission.dto.SubmissionRequest;
 import com.aisc.algoviz.submission.dto.SubmissionResponse;
@@ -15,9 +16,10 @@ import com.aisc.algoviz.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.cache.annotation.CacheEvict;
+import com.aisc.algoviz.config.CacheConfig;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,11 +36,12 @@ public class SubmissionService {
     private int pointsPerAccepted = 10;
 
     @Transactional
+    @CacheEvict(cacheNames = {CacheConfig.PROBLEMS_LIST_CACHE, CacheConfig.LEGACY_PROBLEM_DETAIL_CACHE}, allEntries = true)
     public SubmissionResponse submitCode(SubmissionRequest request) {
         User user = userService.getCurrentUser();
         Long rawId = request.getProblemId();
-        LegacyProblem problem = legacyProblemRepository.findById(rawId)
-                .or(() -> rawId != null ? legacyProblemRepository.findByLeetcodeId(rawId.intValue()) : Optional.empty())
+        LegacyProblem problem = legacyProblemRepository.findByLeetcodeId(rawId.intValue())
+                .or(() -> legacyProblemRepository.findById(rawId))
                 .orElseThrow(() -> new AppException(ProblemErrorCode.PROBLEM_NOT_FOUND));
 
         ExecutionResultDto evalResult = codeExecutionService.evaluateTestCases(
@@ -94,14 +97,31 @@ public class SubmissionService {
     @Transactional(readOnly = true)
     public List<SubmissionResponse> getUserSubmissionsForProblem(Long problemId) {
         User user = userService.getCurrentUser();
-        LegacyProblem problem = legacyProblemRepository.findById(problemId)
-                .or(() -> problemId != null ? legacyProblemRepository.findByLeetcodeId(problemId.intValue()) : Optional.empty())
+        LegacyProblem problem = legacyProblemRepository.findByLeetcodeId(problemId.intValue())
+                .or(() -> legacyProblemRepository.findById(problemId))
                 .orElse(null);
         Long targetId = (problem != null) ? problem.getId() : problemId;
         return submissionRepository.findByUserIdAndProblemIdOrderBySubmittedAtDesc(user.getId(), targetId)
                 .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    @CacheEvict(cacheNames = {CacheConfig.PROBLEMS_LIST_CACHE, CacheConfig.LEGACY_PROBLEM_DETAIL_CACHE}, allEntries = true)
+    public void deleteSubmission(Long id) {
+        User user = userService.getCurrentUser();
+        Submission submission = submissionRepository.findByIdAndUserId(id, user.getId())
+                .orElseThrow(() -> new AppException(CommonErrorCode.RESOURCE_NOT_FOUND));
+        Long problemId = submission.getProblem().getId();
+        boolean accepted = "Accepted".equals(submission.getStatus());
+        submissionRepository.delete(submission);
+        submissionRepository.flush();
+        if (accepted && !submissionRepository.existsByUserIdAndProblemIdAndStatus(user.getId(), problemId, "Accepted")) {
+            user.setSolvedProblemsCount(Math.max(0, (user.getSolvedProblemsCount() == null ? 0 : user.getSolvedProblemsCount()) - 1));
+            user.setPoints(Math.max(0, (user.getPoints() == null ? 0 : user.getPoints()) - pointsPerAccepted));
+            userRepository.save(user);
+        }
     }
 
     private SubmissionResponse mapToResponse(Submission s) {
