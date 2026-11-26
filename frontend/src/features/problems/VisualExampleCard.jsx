@@ -23,6 +23,19 @@ function parseMasterAlgoData(tc, problemId) {
     };
   }
 
+  if (![1, 704].includes(problemId)) {
+    return {
+      inputLabel: "Input",
+      inputString: inputStr,
+      inputArray: [],
+      target: null,
+      targetName: "target",
+      outputString: expectedStr,
+      outputArray: [],
+      explanation: null,
+    };
+  }
+
   let parsed = {
     inputLabel: "nums",
     inputString: "",

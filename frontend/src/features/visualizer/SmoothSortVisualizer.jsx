@@ -60,6 +60,25 @@ export default function SmoothSortVisualizer({
 
   const timerRef = useRef(null);
 
+  // Trace engine state
+  const [trace, setTrace] = useState(() => generateBubbleSortTrace(initialArray));
+  const [stepIndex, setStepIndex] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(autoPlay);
+
+  useEffect(() => {
+    const id = setTimeout(() => {
+      setCurrentArray(initialArray);
+      setTrace(generateBubbleSortTrace(initialArray));
+      setTraceIsLive(false);
+      setStepIndex(0);
+      if (autoPlay) {
+        setIsPlaying(true);
+      }
+    }, 0);
+    return () => clearTimeout(id);
+  }, [initialArray, autoPlay]);
+
+
   // Check AST server health on mount
   useEffect(() => {
     let isMounted = true;

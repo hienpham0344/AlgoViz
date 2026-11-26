@@ -891,6 +891,12 @@ function ProblemDetailsPage({ problemId = 1, isAuthenticated = false }) {
   const [submissionsLoading, setSubmissionsLoading] = useState(true);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      setSubmissionsList([]);
+      setSubmissionsLoading(false);
+      setSubmissionsError("");
+      return;
+    }
     let active = true;
     async function loadSubmissions() {
       if (!isAuthenticated) {
