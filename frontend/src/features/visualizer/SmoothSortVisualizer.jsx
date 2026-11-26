@@ -39,21 +39,24 @@ export default function SmoothSortVisualizer({
   const [stepIndex, setStepIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(autoPlay);
 
-  useEffect(() => {
-    setCurrentArray(initialArray);
-    setTrace(generateBubbleSortTrace(initialArray));
-    setTraceIsLive(false);
-    setStepIndex(0);
-    if (autoPlay) {
-      setIsPlaying(true);
-    }
-  }, [initialArray, autoPlay]);
-
   // AST backend connectivity
   const [isAstOnline, setIsAstOnline] = useState(false);
   const [traceIsLive, setTraceIsLive] = useState(false);
   const [isFetchingAst, setIsFetchingAst] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
+
+  useEffect(() => {
+    const id = setTimeout(() => {
+      setCurrentArray(initialArray);
+      setTrace(generateBubbleSortTrace(initialArray));
+      setTraceIsLive(false);
+      setStepIndex(0);
+      if (autoPlay) {
+        setIsPlaying(true);
+      }
+    }, 0);
+    return () => clearTimeout(id);
+  }, [initialArray, autoPlay]);
 
   const timerRef = useRef(null);
 
@@ -163,7 +166,8 @@ export default function SmoothSortVisualizer({
       setStatusMessage(`Đã áp dụng mảng mới: [${parsed.join(", ")}]`);
       setTimeout(() => setStatusMessage(""), 2500);
     } else {
-      alert("Vui lòng nhập từ 2 đến 15 số nguyên hợp lệ.");
+      setStatusMessage("⚠️ Vui lòng nhập từ 2 đến 15 số nguyên hợp lệ.");
+      setTimeout(() => setStatusMessage(""), 3000);
     }
   };
 

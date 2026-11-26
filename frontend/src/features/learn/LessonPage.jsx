@@ -1,12 +1,27 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { api } from "../../services/api.js";
+import { languageKey } from "../../services/submissions.js";
 import { COURSES } from "./coursesData.js";
 import { getLessonContent } from "./lessonContent.js";
 import "./LessonPage.css";
+import { useLearningProgress } from "../../services/useLearningProgress.js";
+import { withLearningProgress } from "../../services/learning.js";
+import ProgressView from "../../components/ProgressView.jsx";
+import ApiState from "../../components/ApiState.jsx";
 
-// Helper to format inline code (`...`) and bold (**...**)
+function formatMath(expression) {
+  return expression
+    .replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, "($1)/($2)")
+    .replace(/\\text\{([^{}]+)\}/g, "$1")
+    .replace(/\\(le|ge|dots|lfloor|rfloor|Theta|quad|log)\b/g, (_, symbol) => ({
+      le: "≤", ge: "≥", dots: "…", lfloor: "⌊", rfloor: "⌋", Theta: "Θ", quad: " ", log: "log",
+    })[symbol]);
+}
+
+// Format the small set of Markdown and math notation used by local lessons.
 function formatInline(text) {
   if (typeof text !== "string") return text;
-  const parts = text.split(/(`[^`]+`|\*\*[^*]+\*\*)/g);
+  const parts = text.split(/(`[^`]+`|\*\*[^*]+\*\*|\$\$[^$]+\$\$|\$[^$]+\$)/g);
   return parts.map((part, i) => {
     if (part.startsWith("`") && part.endsWith("`")) {
       return (
@@ -16,7 +31,13 @@ function formatInline(text) {
       );
     }
     if (part.startsWith("**") && part.endsWith("**")) {
-      return <strong key={i}>{part.slice(2, -2)}</strong>;
+      return <strong key={i}>{formatInline(part.slice(2, -2))}</strong>;
+    }
+    if (part.startsWith("$") && part.endsWith("$")) {
+      const display = part.startsWith("$$");
+      return <span key={i} className={`lesson-math${display ? " lesson-math--display" : ""}`}>
+        {formatMath(part.slice(display ? 2 : 1, display ? -2 : -1))}
+      </span>;
     }
     return part;
   });
@@ -25,13 +46,15 @@ function formatInline(text) {
 export default function LessonPage({
   courseId = "sorting-masterclass",
   lessonId = 1,
-  userName = "Developer",
   isAuthenticated = true,
 }) {
+  const { progress, loading: progressLoading, error: progressError, save, retry } = useLearningProgress(isAuthenticated);
+  const [savingProgress, setSavingProgress] = useState(false);
+  const [progressSaveError, setProgressSaveError] = useState("");
   // Current course metadata
   const currentCourse = useMemo(() => {
     return (
-      COURSES.find((c) => c.id === courseId) || {
+      withLearningProgress(COURSES, progress).find((c) => c.id === courseId) || {
         id: courseId,
         title: "Sorting Algorithms Masterclass",
         category: "Sorting & Searching",
@@ -41,56 +64,60 @@ export default function LessonPage({
         lessons: [],
       }
     );
-  }, [courseId]);
+  }, [courseId, progress]);
 
   // Current lesson content (theory, code, quizzes)
   const lessonData = useMemo(() => {
-    return getLessonContent(courseId, lessonId, currentCourse);
-  }, [courseId, lessonId, currentCourse]);
+    return getLessonContent(courseId, lessonId, COURSES.find((course) => course.id === courseId));
+  }, [courseId, lessonId]);
 
   // Code editor state
   const [userCode, setUserCode] = useState(
     lessonData?.codeSandbox?.starterCode || ""
   );
   const [outputLog, setOutputLog] = useState(
-    lessonData?.codeSandbox?.sampleOutput || ""
+    "Click Run to execute on the server."
   );
   const [isRunning, setIsRunning] = useState(false);
-  const [execTime, setExecTime] = useState("12ms");
+  const [execTime, setExecTime] = useState("—");
   const [hasRun, setHasRun] = useState(false);
 
   // Sync code editor state when lesson changes
   useEffect(() => {
     if (lessonData?.codeSandbox) {
-      setUserCode(lessonData.codeSandbox.starterCode);
-      setOutputLog(lessonData.codeSandbox.sampleOutput);
-      setHasRun(false);
-      setExecTime("12ms");
+      const id = setTimeout(() => {
+        setUserCode(lessonData.codeSandbox.starterCode);
+        setOutputLog("Click Run to execute on the server.");
+        setHasRun(false);
+        setExecTime("—");
+      }, 0);
+      return () => clearTimeout(id);
     }
   }, [lessonData]);
 
   // Quiz interactive state: { [quizId]: selectedOptionIndex }
   const [selectedAnswers, setSelectedAnswers] = useState({});
 
-  // Reset quiz answers when lesson changes
+  // Reset quiz answers when lesson changes and scroll to quiz if requested
   useEffect(() => {
-    setSelectedAnswers({});
+    const id = setTimeout(() => {
+      setSelectedAnswers({});
+      if (window.location.hash.includes("section=quiz") || window.location.hash.endsWith("#quiz")) {
+        document.getElementById("quiz")?.scrollIntoView({ behavior: "smooth" });
+      }
+    }, 0);
+    return () => clearTimeout(id);
   }, [courseId, lessonId]);
 
-  // Completed status tracking via localStorage
-  const storageKey = `algoviz-lesson-${courseId}-${lessonId}`;
-  const [isCompleted, setIsCompleted] = useState(() => {
-    return localStorage.getItem(storageKey) === "completed";
-  });
-
-  const toggleCompleted = () => {
-    const next = !isCompleted;
-    setIsCompleted(next);
-    if (next) {
-      localStorage.setItem(storageKey, "completed");
-    } else {
-      localStorage.removeItem(storageKey);
-    }
+  const isCompleted = progress.some((item) => item.courseId === courseId && item.lessonId === Number(lessonId));
+  const toggleCompleted = async () => {
+    if (!isAuthenticated) { window.location.hash = "#login"; return; }
+    if (savingProgress || progressLoading) return;
+    setSavingProgress(true);
+    setProgressSaveError("");
+    try { await save(courseId, Number(lessonId), !isCompleted); }
+    catch (error) { setProgressSaveError(error.message); }
+    finally { setSavingProgress(false); }
   };
 
   // Find previous and next lessons
@@ -111,168 +138,46 @@ export default function LessonPage({
     window.location.hash = "#learn";
   };
 
-  // Code Execution Engine: Executes user code in browser sandbox
-  const handleRunCode = () => {
+  // Execute the lesson source using the shared backend sandbox.
+  const handleRunCode = async () => {
+    if (isRunning) return;
     setIsRunning(true);
-    const start = performance.now();
-
-    setTimeout(() => {
-      try {
-        let logs = [];
-        // Extract array from test_array = [...] or sample = [...]
-        const arrMatch = userCode.match(
-          /(?:test_array|sample|nums|arr|data)\s*=\s*(\[[^\]]+\])/
-        );
-
-        let parsedArr = [5, 1, 4, 2, 8];
-        if (arrMatch) {
-          try {
-            parsedArr = JSON.parse(arrMatch[1].replace(/'/g, '"'));
-          } catch {
-            // fallback
-          }
-        }
-
-        logs.push(`[AlgoViz Python Sandbox v3.12]`);
-        logs.push(`Executing: ${lessonData.title}`);
-        logs.push(`----------------------------------------`);
-        logs.push(`Input Data: ${JSON.stringify(parsedArr)}`);
-
-        // Check if code contains sorting or custom prints
-        if (
-          userCode.includes("resolve_adjacent_swaps") ||
-          userCode.includes("count_inversions")
-        ) {
-          let a = [...parsedArr];
-          let invs = [];
-          for (let i = 0; i < a.length; i++) {
-            for (let j = i + 1; j < a.length; j++) {
-              if (a[i] > a[j]) invs.push(`(${a[i]}, ${a[j]})`);
-            }
-          }
-          logs.push(
-            `Total Inversions found: ${invs.length} -> [${invs.join(", ")}]`
-          );
-          logs.push(``);
-
-          let passes = 0;
-          let swaps = 0;
-          for (let i = 0; i < a.length; i++) {
-            let swapped = false;
-            passes++;
-            for (let j = 0; j < a.length - i - 1; j++) {
-              if (a[j] > a[j + 1]) {
-                logs.push(
-                  `Pass ${passes}: Swap (${a[j]}, ${a[j + 1]}) at indices [${j}, ${j + 1}]`
-                );
-                let tmp = a[j];
-                a[j] = a[j + 1];
-                a[j + 1] = tmp;
-                swaps++;
-                swapped = true;
-              }
-            }
-            if (!swapped) {
-              logs.push(
-                `Early stop triggered at pass ${passes} (zero inversions remaining)`
-              );
-              break;
-            }
-          }
-          logs.push(``);
-          logs.push(`Final Sorted Array: ${JSON.stringify(a)}`);
-          logs.push(`Total Adjacent Swaps Executed: ${swaps}`);
-          logs.push(`Invariants Verified: True (Strict Monotonic Ascending)`);
-        } else if (userCode.includes("bubble_sort")) {
-          let a = [...parsedArr];
-          let comps = 0;
-          let swaps = 0;
-          for (let i = 0; i < a.length; i++) {
-            let swapped = false;
-            logs.push(`--- Pass ${i + 1} ---`);
-            for (let j = 0; j < a.length - i - 1; j++) {
-              comps++;
-              if (a[j] > a[j + 1]) {
-                let tmp = a[j];
-                a[j] = a[j + 1];
-                a[j + 1] = tmp;
-                swaps++;
-                swapped = true;
-                logs.push(`  Swap [${j}, ${j + 1}]: ${JSON.stringify(a)}`);
-              }
-            }
-            if (!swapped) {
-              logs.push(`  Array fully sorted! Early termination triggered.`);
-              break;
-            }
-          }
-          logs.push(``);
-          logs.push(`Result: ${JSON.stringify(a)}`);
-          logs.push(`Total Comparisons: ${comps}`);
-          logs.push(`Total Swaps: ${swaps}`);
-        } else if (userCode.includes("merge_sort")) {
-          logs.push(`Recursion Tree Trace:`);
-          function traceMerge(arr, d = 0) {
-            const ind = "  ".repeat(d);
-            if (arr.length <= 1) {
-              logs.push(`${ind}Base case reached: ${JSON.stringify(arr)}`);
-              return arr;
-            }
-            const mid = Math.floor(arr.length / 2);
-            logs.push(
-              `${ind}Divide: ${JSON.stringify(arr.slice(0, mid))} | ${JSON.stringify(arr.slice(mid))}`
-            );
-            const L = traceMerge(arr.slice(0, mid), d + 1);
-            const R = traceMerge(arr.slice(mid), d + 1);
-            const res = [];
-            let i = 0,
-              j = 0;
-            while (i < L.length && j < R.length) {
-              if (L[i] <= R[j]) {
-                res.push(L[i++]);
-              } else {
-                res.push(R[j++]);
-              }
-            }
-            while (i < L.length) res.push(L[i++]);
-            while (j < R.length) res.push(R[j++]);
-            logs.push(`${ind}Merge -> ${JSON.stringify(res)}`);
-            return res;
-          }
-          const sorted = traceMerge(parsedArr);
-          logs.push(`\nSorted Result: ${JSON.stringify(sorted)}`);
-        } else {
-          // General python output emulator
-          logs.push(`Processing items step-by-step:`);
-          parsedArr.forEach((item, idx) => {
-            logs.push(`  [Step ${idx + 1}] Processed item: ${item}`);
-          });
-          logs.push(`Execution completed with exit code 0.`);
-        }
-
-        const elapsed = (performance.now() - start).toFixed(1);
-        setExecTime(`${elapsed}ms`);
-        setOutputLog(logs.join("\n"));
-        setHasRun(true);
-      } catch (err) {
-        setOutputLog(`SyntaxError / ExecutionError: ${err.message}`);
-      } finally {
-        setIsRunning(false);
-      }
-    }, 220);
+    setOutputLog("Running on the server…");
+    setExecTime("—");
+    try {
+      const result = await api.runCode(languageKey(lessonData.codeSandbox.language || "python"), userCode,
+        lessonData.codeSandbox.sampleInput || "");
+      if (!result?.status) throw new Error("The server returned no execution result.");
+      setExecTime(result.executionTimeMs == null ? "—" : `${result.executionTimeMs.toFixed(1)} ms`);
+      setOutputLog([result.status, result.errorMessage || result.output || "(No output)"].join("\n"));
+      setHasRun(true);
+    } catch (error) {
+      setOutputLog(error.message);
+      setHasRun(true);
+    } finally { setIsRunning(false); }
   };
 
   const handleResetCode = () => {
     if (lessonData?.codeSandbox) {
       setUserCode(lessonData.codeSandbox.starterCode);
-      setOutputLog(lessonData.codeSandbox.sampleOutput);
+      setOutputLog("Click Run to execute on the server.");
       setHasRun(false);
-      setExecTime("12ms");
+      setExecTime("—");
     }
   };
 
+  if (!COURSES.some((course) => course.id === courseId && course.lessons.some((lesson) => lesson.id === Number(lessonId)))) {
+    return <main className="api-state"><h1>Lesson not found</h1><a href="#learn">Back to courses</a></main>;
+  }
+
   // Line count for code gutter
   const lineCount = userCode.split("\n").length;
+
+  if (progressLoading || progressError) return (
+    <main className="algoviz-lesson-page" aria-busy={progressLoading}>
+      <ApiState loading={progressLoading} error={progressError} onRetry={retry} label="Loading lesson progress…" page />
+    </main>
+  );
 
   return (
     <div className="algoviz-lesson-page">
@@ -308,7 +213,7 @@ export default function LessonPage({
                 </span>
               ) : (
                 <span className="lesson-status-tag is-pending">
-                  In Progress
+                  {isAuthenticated ? "In Progress" : "Preview"}
                 </span>
               )}
             </div>
@@ -325,12 +230,14 @@ export default function LessonPage({
                 type="button"
                 className={`lesson-btn-check ${isCompleted ? "is-active" : ""}`}
                 onClick={toggleCompleted}
+                disabled={savingProgress || progressLoading || Boolean(progressError)}
               >
-                {isCompleted ? "✓ Completed" : "Mark as Complete"}
+                {savingProgress ? <ProgressView size="sm" label="Saving…" /> : !isAuthenticated ? "Sign in to save progress" : isCompleted ? "✓ Completed" : "Mark as Complete"}
               </button>
             </div>
           </div>
 
+          <ApiState error={progressSaveError} />
           <h1 className="lesson-main-title">
             Lesson {lessonId}: {lessonData.title}
           </h1>
@@ -457,7 +364,7 @@ export default function LessonPage({
                           <polyline points="16 18 22 12 16 6" />
                           <polyline points="8 6 2 12 8 18" />
                         </svg>
-                        Python 3.12
+                        {lessonData.codeSandbox.language || "Python 3.12"}
                       </span>
                       <span className="code-sandbox-desc">
                         {lessonData.codeSandbox.title}
@@ -494,8 +401,7 @@ export default function LessonPage({
                       >
                         {isRunning ? (
                           <>
-                            <span className="btn-spinner" />
-                            <span>Running...</span>
+                            <ProgressView size="sm" label="Running…" />
                           </>
                         ) : (
                           <>
@@ -527,13 +433,19 @@ export default function LessonPage({
                       className="code-textarea"
                       value={userCode}
                       onChange={(e) => setUserCode(e.target.value)}
+                      onKeyDown={(e) => {
+                        if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+                          e.preventDefault();
+                          handleRunCode();
+                        }
+                      }}
                       spellCheck="false"
                       aria-label="Interactive Python code editor"
                     />
                   </div>
 
                   {/* OUT PROMPT: OUTPUT SECTION */}
-                  <div className="notebook-output-container">
+                  <div className="notebook-output-container" aria-busy={isRunning}>
                     <div className="output-header-bar">
                       <div className="output-header-left">
                         <span className="out-prompt-label">[Out 1]</span>
@@ -543,9 +455,9 @@ export default function LessonPage({
                       </div>
                       <span className="output-tip">stdout stream</span>
                     </div>
-                    <pre className="output-terminal-display">
-                      <code>{outputLog}</code>
-                    </pre>
+                    {isRunning ? <ApiState loading label="Running lesson code…" /> : (
+                      <pre className="output-terminal-display"><code>{outputLog}</code></pre>
+                    )}
                   </div>
                 </div>
               </section>
@@ -652,7 +564,7 @@ export default function LessonPage({
                       </h3>
                       <p className="bridge-desc">
                         Step through pointer movements, array swaps, and state transitions
-                        frame-by-frame in our dedicated AlgoMaster Visualizer Studio.
+                        frame-by-frame in the AlgoViz Visualizer Studio.
                       </p>
                     </div>
                     <a
@@ -721,8 +633,9 @@ export default function LessonPage({
                   type="button"
                   className={`btn-complete-bottom ${isCompleted ? "is-finished" : ""}`}
                   onClick={toggleCompleted}
+                disabled={savingProgress || progressLoading || Boolean(progressError)}
                 >
-                  {isCompleted ? "✓ Completed" : "Mark Lesson Completed"}
+                  {savingProgress ? <ProgressView size="sm" label="Saving…" /> : !isAuthenticated ? "Sign in to save progress" : isCompleted ? "✓ Completed" : "Mark Lesson Completed"}
                 </button>
               </div>
 
@@ -746,7 +659,7 @@ export default function LessonPage({
                     onClick={handleBackToCurriculum}
                   >
                     <div className="nav-text-col align-right">
-                      <span className="nav-sub">Course Complete!</span>
+                      <span className="nav-sub">{currentCourse.progress === 100 ? "Course Complete!" : "End of course"}</span>
                       <span className="nav-title">View All Courses</span>
                     </div>
                     <span className="nav-arrow">✓</span>
@@ -762,16 +675,7 @@ export default function LessonPage({
               <div className="sidebar-header">
                 <span className="sidebar-tag">Course Syllabus</span>
                 <h3 className="sidebar-course-title">{currentCourse.title}</h3>
-                <div className="sidebar-progress-meta">
-                  <span>Progress</span>
-                  <strong>{currentCourse.progress}%</strong>
-                </div>
-                <div className="sidebar-progress-track">
-                  <div
-                    className="sidebar-progress-fill"
-                    style={{ width: `${currentCourse.progress}%` }}
-                  />
-                </div>
+                <ProgressView value={currentCourse.progress} label="Course progress" showLabel showValue />
               </div>
 
               <div className="sidebar-lessons-nav">
@@ -779,9 +683,7 @@ export default function LessonPage({
                 <div className="sidebar-lessons-list">
                   {allLessons.map((les, idx) => {
                     const isCurrent = les.id === Number(lessonId);
-                    const lesCompleted =
-                      localStorage.getItem(`algoviz-lesson-${courseId}-${les.id}`) ===
-                        "completed" || les.status === "completed";
+                    const lesCompleted = les.status === "completed";
 
                     return (
                       <button

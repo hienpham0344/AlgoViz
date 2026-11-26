@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { NavigationBar, CustomSelect, ProgressView } from "../../components/index.js";
+import { CustomSelect, ProgressView } from "../../components/index.js";
 import { api } from "../../services/api.js";
 import { isAccepted, profileStats } from "../../services/submissions.js";
+import { paginationItems } from "../../services/pagination.js";
+import { problemText } from "../../services/problemText.js";
+import { hasReferenceTrace } from "../../services/problemCapabilities.js";
 import ApiState from "../../components/ApiState.jsx";
 import { COURSES } from "../learn/coursesData.js";
+import { PROBLEMS as SAMPLE_PROBLEMS } from "./problemData.js";
 import "./problems.css";
 
 const TOPIC_TAGS = [
@@ -285,7 +289,8 @@ function sortProblems(problems, sort) {
 }
 
 function DifficultyBadge({ difficulty }) {
-  return <span className={`diff-badge diff-badge--${difficulty.toLowerCase()}`}>{difficulty}</span>;
+  const safeDifficulty = difficulty || "Easy";
+  return <span className={`diff-badge diff-badge--${safeDifficulty.toLowerCase()}`}>{safeDifficulty}</span>;
 }
 
 function ProblemHeroBanner({
@@ -299,16 +304,12 @@ function ProblemHeroBanner({
   medTotal = 8,
   hardSolved = 1,
   hardTotal = 4,
+  visualizerCount = 0,
   onPickRandom,
 }) {
   const [showStats, setShowStats] = useState(true);
   const percent = totalCount > 0 ? Math.round((solvedCount / totalCount) * 100) : 0;
   const displayName = userName && userName !== "Your name" ? userName : "Guest";
-
-  // Circular progress ring calculation (radius 22, circumference ~138.23)
-  const radius = 22;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (percent / 100) * circumference;
 
   const activity = profileStats(history, []);
   const weekDays = ["S", "M", "T", "W", "T", "F", "S"];
@@ -420,10 +421,10 @@ function ProblemHeroBanner({
                 <span className="banner-stat-label">Visualizer Traces</span>
               </div>
               <div className="banner-stat-value">
-                <strong>8</strong>
-                <span className="banner-stat-badge">Live Traces</span>
+                <strong>{visualizerCount}</strong>
+                <span className="banner-stat-badge">Supported</span>
               </div>
-              <span className="banner-stat-sub">Step-by-step internal states</span>
+              <span className="banner-stat-sub">Runtime traces when the server is available</span>
             </div>
 
             {/* Stat 3: Study Blueprints & Patterns */}
@@ -705,16 +706,20 @@ function Pagination({ page, pageCount, onPageChange }) {
       </button>
 
       <div className="pagination-numbers">
-        {Array.from({ length: safePageCount }, (_, i) => i + 1).map((num) => (
-          <button
-            type="button"
-            key={num}
-            className={`pagination-num ${page === num ? "is-active" : ""}`}
-            onClick={() => onPageChange(num)}
-            aria-current={page === num ? "page" : undefined}
-          >
-            {num}
-          </button>
+        {paginationItems(page, safePageCount).map((num, index) => num === "ellipsis" ? (
+          <span className="pagination-ellipsis" aria-hidden="true" key={`ellipsis-${index}`}>…</span>
+        ) : (
+          <span className={`pagination-page-item${page === num ? " is-current" : ""}`} key={num}>
+            <button
+              type="button"
+              className={`pagination-num ${page === num ? "is-active" : ""}`}
+              onClick={() => onPageChange(num)}
+              aria-label={`Page ${num} of ${safePageCount}`}
+              aria-current={page === num ? "page" : undefined}
+            >
+              {num}
+            </button>
+          </span>
         ))}
       </div>
 
@@ -746,21 +751,15 @@ function Pagination({ page, pageCount, onPageChange }) {
 function ProblemsSidebar({
   problems,
   history,
-  totalCount,
-  solvedCount,
-  easySolved,
-  easyTotal,
-  medSolved,
-  medTotal,
-  hardSolved,
-  hardTotal,
   onSolve,
   onVisualizer,
 }) {
-  const percent = totalCount > 0 ? Math.round((solvedCount / totalCount) * 100) : 0;
-  const dailyProblem = problems.length ? problems[0] : null;
+  const dailyProblem = problems.find((problem) => problem.id === 1) || problems.find((problem) => problem.hasVisualizer) || problems[0] || null;
+  const preview = problemText(dailyProblem?.shortDescription || "Practice this problem and explore its reference solutions.")
+    .replace(/\s+/g, " ");
   const activity = profileStats(history, []);
   if (!dailyProblem) return null;
+  const dailyDifficulty = dailyProblem.difficulty || "Easy";
 
   return (
     <div className="problems-sidebar">
@@ -776,8 +775,7 @@ function ProblemsSidebar({
       <div className="sidebar-card sidebar-card--daily">
         <div className="sidebar-card__header">
           <div className="daily-badge-wrap">
-            <span className="daily-pill">Daily Challenge</span>
-            <span className="xp-tag">+10 points on first solve</span>
+            <span className="daily-pill">Featured Problem</span>
           </div>
 
         </div>
@@ -787,14 +785,14 @@ function ProblemsSidebar({
             #{dailyProblem.id} {dailyProblem.title}
           </h4>
           <div className="daily-problem-meta">
-            <span className={`diff-badge diff-badge--${dailyProblem.difficulty.toLowerCase()}`}>
-              {dailyProblem.difficulty}
+            <span className={`diff-badge diff-badge--${dailyDifficulty.toLowerCase()}`}>
+              {dailyDifficulty}
             </span>
-            <span className="daily-meta-tag">{dailyProblem.topics[0]}</span>
+            <span className="daily-meta-tag">{dailyProblem.topics?.[0] || "Algorithm"}</span>
             <span className="daily-meta-rate">{dailyProblem.acceptance == null ? "No submissions yet" : `${dailyProblem.acceptance}% pass`}</span>
           </div>
           <p className="daily-problem-hint">
-            {dailyProblem.shortDescription || "Practice this problem and explore its reference solutions."}
+            {preview}
           </p>
 
           <div className="daily-card-actions">
@@ -805,7 +803,7 @@ function ProblemsSidebar({
             >
               Solve Challenge →
             </button>
-            <button
+            {dailyProblem.hasVisualizer && <button
               type="button"
               className="daily-btn-trace"
               onClick={() => onVisualizer(dailyProblem)}
@@ -815,7 +813,7 @@ function ProblemsSidebar({
                 <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
               </svg>
               Trace
-            </button>
+            </button>}
           </div>
         </div>
       </div>
@@ -824,7 +822,7 @@ function ProblemsSidebar({
       <div className="sidebar-card sidebar-card--visualizers">
         <div className="sidebar-card__header">
           <span className="sidebar-card__title">Interactive Visualizers</span>
-          <span className="sidebar-card__badge-cyan">8 Ready</span>
+          <span className="sidebar-card__badge-cyan">{problems.filter((problem) => problem.hasVisualizer).length} listed</span>
         </div>
         <p className="sidebar-card__caption">
           Inspect algorithmic internal states, memory pointers, and recursion trees step-by-step.
@@ -912,6 +910,7 @@ function ProblemsPage({ userName = "Your name", isAuthenticated = false, onOpenP
   const [history, setHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  const [sampleNotice, setSampleNotice] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
   const searchInputRef = useRef(null);
 
@@ -920,28 +919,45 @@ function ProblemsPage({ userName = "Your name", isAuthenticated = false, onOpenP
     async function loadProblems() {
       setIsLoading(true);
       setLoadError("");
+      setSampleNotice("");
       try {
         const [catalog, submissions] = await Promise.allSettled([
           api.getProblems(), isAuthenticated ? api.getSubmissionHistory() : Promise.resolve([]),
         ]);
         if (!active) return;
         if (catalog.status === "rejected") throw catalog.reason;
-        if (!Array.isArray(catalog.value)) throw new Error("Invalid problems response.");
+        const catalogItems = Array.isArray(catalog.value)
+          ? catalog.value
+          : Array.isArray(catalog.value?.content)
+          ? catalog.value.content
+          : null;
+        if (!catalogItems) throw new Error("Invalid problems response.");
         const records = submissions.status === "fulfilled" && Array.isArray(submissions.value) ? submissions.value : [];
         setHistory(records);
         if (submissions.status === "rejected") setLoadError("Could not load your progress. Please try again.");
         const solvedIds = new Set(records.filter((item) => isAccepted(item.status)).map((item) => item.problemId));
         const attemptedIds = new Set(records.map((item) => item.problemId));
-        setProblemsList(catalog.value.map((p) => ({
+        setProblemsList(catalogItems.map((p) => ({
           ...p, difficulty: p.difficulty || "Easy",
           acceptance: typeof p.acceptanceRate === "number" ? Math.round(p.acceptanceRate * 10) / 10 : null,
           topics: p.category ? p.category.split(/,\s*/) : ["Algorithm"],
           status: solvedIds.has(p.id) ? "Solved" : attemptedIds.has(p.id) ? "Attempted" : "To Do",
           action: solvedIds.has(p.id) ? "Review" : "Solve",
-          hasVisualizer: [1, 912, 704, 3, 42, 207, 20, 53, 206, 15, 200].includes(p.id),
+          hasVisualizer: hasReferenceTrace(p.id),
         })));
       } catch (error) {
-        if (active) { setProblemsList([]); setLoadError(error.message); }
+        if (active) {
+          if (!error.status || error.status >= 500) {
+            setProblemsList(SAMPLE_PROBLEMS.filter((problem) => [1, 3, 704, 912].includes(problem.id)).map((problem) => ({
+              ...problem, status: "To Do", progressStatus: "not-started", action: "Solve", hasVisualizer: hasReferenceTrace(problem.id),
+            })));
+            setHistory([]);
+            setSampleNotice("Live problems are unavailable. Showing sample problems; progress and submissions are not loaded.");
+          } else {
+            setProblemsList([]);
+            setLoadError(error.message);
+          }
+        }
       } finally { if (active) setIsLoading(false); }
     }
     loadProblems();
@@ -1014,10 +1030,6 @@ function ProblemsPage({ userName = "Your name", isAuthenticated = false, onOpenP
   };
 
   const handleSolve = (problem) => {
-    if (!isAuthenticated) {
-      window.location.hash = "#login";
-      return;
-    }
     if (onOpenProblem) {
       onOpenProblem(problem);
       return;
@@ -1026,18 +1038,10 @@ function ProblemsPage({ userName = "Your name", isAuthenticated = false, onOpenP
   };
 
   const handleOpenVisualizer = (problem) => {
-    if (!isAuthenticated) {
-      window.location.hash = "#login";
-      return;
-    }
     window.location.hash = `problem-details?id=${problem?.id || 1}&tab=visualizer`;
   };
 
   const handlePickRandom = () => {
-    if (!isAuthenticated) {
-      window.location.hash = "#login";
-      return;
-    }
     const candidates = filteredProblems.length > 0 ? filteredProblems : problemsList;
     if (candidates.length === 0) return;
     const selected = candidates[Math.floor(Math.random() * candidates.length)];
@@ -1072,10 +1076,12 @@ function ProblemsPage({ userName = "Your name", isAuthenticated = false, onOpenP
           medTotal={medTotal}
           hardSolved={hardSolved}
           hardTotal={hardTotal}
+          visualizerCount={problemsList.filter((problem) => problem.hasVisualizer).length}
           onPickRandom={handlePickRandom}
         />
 
         <ApiState loading={isLoading} error={loadError} onRetry={() => setReloadKey((key) => key + 1)} />
+        {sampleNotice && <p className="problems-sample-notice" role="status">{sampleNotice} <button type="button" onClick={() => setReloadKey((key) => key + 1)}>Retry live data</button></p>}
         <div className="problems-main-layout">
           <div className="problems-primary-column">
             <FilterBar
@@ -1159,14 +1165,6 @@ function ProblemsPage({ userName = "Your name", isAuthenticated = false, onOpenP
             <ProblemsSidebar
               problems={problemsList}
               history={history}
-              totalCount={totalProblemsCount}
-              solvedCount={solvedCount}
-              easySolved={easySolved}
-              easyTotal={easyTotal}
-              medSolved={medSolved}
-              medTotal={medTotal}
-              hardSolved={hardSolved}
-              hardTotal={hardTotal}
               onSolve={handleSolve}
               onVisualizer={handleOpenVisualizer}
             />

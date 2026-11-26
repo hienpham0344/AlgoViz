@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { ProgressView, NavigationBar, CustomSelect } from "../../components/index.js";
+import { ProgressView, CustomSelect } from "../../components/index.js";
 import UserCodeVisualizer from "../problems/UserCodeVisualizer.jsx";
 import { fetchExecutionTrace } from "../../services/astApi.js";
 import { api } from "../../services/api.js";
@@ -112,39 +112,6 @@ int main() {
 `;
 
 const DEFAULT_ARRAY = [5, 2, 8, 1, 9, 3];
-
-const FOOTER_COLUMNS = [
-  {
-    title: "Curriculum",
-    links: [
-      "Dynamic Programming",
-      "Trees & Graph Algorithms",
-      "Binary Search & Pointers",
-      "Bit Manipulation",
-      "System Design Foundations",
-    ],
-  },
-  {
-    title: "Platform",
-    links: [
-      "Problem Directory",
-      "Algorithm Visualizer",
-      "Weekly Coding Battles",
-      "Company Tagged Lists",
-      "Leaderboard",
-    ],
-  },
-  {
-    title: "Community",
-    links: [
-      "Discussion Forums",
-      "Interview Experiences",
-      "Discord Community",
-      "Editorial Solutions",
-      "FAQ & Help Center",
-    ],
-  },
-];
 
 const CODE_TOKEN_PATTERN = /(\/\/.*$|#.*$|\b(?:public|class|static|void|for|if|int|return|def|function|const|let|range|len|include|vector|utility|std|namespace)\b|\b(?:Main|bubbleSort|bubble_sort|arr|length|size|temp|swap)\b|\b\d+\b)/g;
 const CODE_KEYWORDS = new Set([
@@ -340,19 +307,26 @@ function CodeEditor({ code, onChange, isFullscreen, activeLineIndex, onRunShortc
   );
 }
 
-function RuntimeStats({ executionState }) {
+function RuntimeStats({ executionState, executionResult }) {
   const statusLabels = {
     ready: "Ready",
     running: "Executing...",
     passed: "Trace Active",
+    failed: "Execution Failed",
   };
+  const ramLabel = executionResult?.memoryUsageMb != null
+    ? `${Number(executionResult.memoryUsageMb).toFixed(1)} MB`
+    : "—";
+  const execLabel = executionResult?.executionTimeMs != null
+    ? `${Number(executionResult.executionTimeMs).toFixed(1)} ms`
+    : "—";
 
   return (
     <div className="analyze-runtime-pill" aria-live="polite">
       <span className="analyze-runtime-dot" aria-hidden="true" />
-      <span>RAM: —</span>
+      <span>RAM: {ramLabel}</span>
       <b>•</b>
-      <span>Exec: —</span>
+      <span>Exec: {execLabel}</span>
       <b>•</b>
       <span className={`analyze-runtime-state analyze-runtime-state--${executionState}`}>
         {statusLabels[executionState] || "Ready"}
@@ -396,6 +370,7 @@ function EditorPanel({
   language,
   code,
   executionState,
+  executionResult,
   isFullscreen,
   activeLineIndex,
   onLanguageChange,
@@ -428,7 +403,7 @@ function EditorPanel({
         onRunShortcut={onRun}
       />
       <footer className="analyze-editor-footer">
-        <RuntimeStats executionState={executionState} />
+        <RuntimeStats executionState={executionState} executionResult={executionResult} />
         <EditorActions
           executionState={executionState}
           onRun={onRun}
@@ -439,7 +414,7 @@ function EditorPanel({
   );
 }
 
-function ExecutionConsole({ logs, isOpen, onToggle, onClear }) {
+function ExecutionConsole({ logs, isOpen, onToggle, onClear, executionState, executionResult }) {
   const [consoleHeight, setConsoleHeight] = useState(() => {
     try {
       const saved = localStorage.getItem("algoviz-analyze-console-height");
@@ -485,7 +460,9 @@ function ExecutionConsole({ logs, isOpen, onToggle, onClear }) {
       const finalHeight = Math.max(minHeight, Math.min(maxHeight, Math.round(startHeight + finalDelta)));
       try {
         localStorage.setItem("algoviz-analyze-console-height", String(finalHeight));
-      } catch {}
+      } catch {
+        /* ignore storage restrictions */
+      }
     };
 
     window.addEventListener("pointermove", onPointerMove);
@@ -499,14 +476,14 @@ function ExecutionConsole({ logs, isOpen, onToggle, onClear }) {
       if (!isOpen) onToggle();
       setConsoleHeight((h) => {
         const next = Math.min(maxHeight, h + 24);
-        try { localStorage.setItem("algoviz-analyze-console-height", String(next)); } catch {}
+        try { localStorage.setItem("algoviz-analyze-console-height", String(next)); } catch { /* ignore */ }
         return next;
       });
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
       setConsoleHeight((h) => {
         const next = Math.max(minHeight, h - 24);
-        try { localStorage.setItem("algoviz-analyze-console-height", String(next)); } catch {}
+        try { localStorage.setItem("algoviz-analyze-console-height", String(next)); } catch { /* ignore */ }
         return next;
       });
     } else if (e.key === "Home") {
@@ -523,7 +500,9 @@ function ExecutionConsole({ logs, isOpen, onToggle, onClear }) {
     setConsoleHeight(nextHeight);
     try {
       localStorage.setItem("algoviz-analyze-console-height", String(nextHeight));
-    } catch {}
+    } catch {
+      /* ignore storage restrictions */
+    }
   };
 
   return (
@@ -554,7 +533,9 @@ function ExecutionConsole({ logs, isOpen, onToggle, onClear }) {
             <line x1="12" y1="19" x2="20" y2="19" />
           </svg>
           <strong>Console Output &amp; Telemetry</strong>
-          <span className="analyze-console-badge">SUCCESS (0.18ms)</span>
+          <span className={`analyze-console-badge analyze-console-badge--${executionState}`}>
+            {executionState === "running" ? "RUNNING" : executionState === "failed" ? "FAILED" : executionState === "passed" ? `${executionResult?.status || "COMPLETE"}${executionResult?.executionTimeMs == null ? "" : ` (${executionResult.executionTimeMs}ms)`}` : "READY"}
+          </span>
           {isOpen && (
             <span className="analyze-console-height-hint" title="Độ cao console hiện tại">
               {consoleHeight}px
@@ -661,6 +642,8 @@ function ExecutionVisualizerStudio({
 
       <ExecutionConsole
         logs={consoleLogs}
+        executionState={executionState}
+        executionResult={executionResult}
         isOpen={isConsoleOpen}
         onToggle={onToggleConsole}
         onClear={onClearConsole}
@@ -669,51 +652,7 @@ function ExecutionVisualizerStudio({
   );
 }
 
-function AnalyzeFooter() {
-  return (
-    <footer className="analyze-footer">
-      <div className="analyze-footer-grid">
-        <div className="analyze-footer-brand">
-          <a className="analyze-footer-brand-link" href="#top">
-            <span className="analyze-footer-brand-mark">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-              </svg>
-            </span>
-            <span>Algo<span>Master</span></span>
-          </a>
-          <div className="analyze-footer-socials" aria-label="Community links">
-            <a href="#community" aria-label="Code community" />
-            <a href="#community" aria-label="Chat community" />
-            <a href="#community" aria-label="Network community" />
-          </div>
-        </div>
-        {FOOTER_COLUMNS.map((column) => (
-          <div className="analyze-footer-column" key={column.title}>
-            <h2>{column.title}</h2>
-            <nav aria-label={`${column.title} links`}>
-              {column.links.map((link) => (
-                <a href={`#${link.toLowerCase().replaceAll(" ", "-")}`} key={link}>
-                  {link}
-                </a>
-              ))}
-            </nav>
-          </div>
-        ))}
-      </div>
-      <div className="analyze-footer-legal">
-        <p>© 2025 AlgoMaster Inc. Engineered for algorithmic mastery.</p>
-        <nav aria-label="Legal links">
-          <a href="#privacy">Privacy Policy</a>
-          <a href="#terms">Terms of Service</a>
-          <a href="#conduct">Code of Conduct</a>
-        </nav>
-      </div>
-    </footer>
-  );
-}
-
-function AnalyzePage({ userName = "Your name", isAuthenticated }) {
+function AnalyzePage({ userName: _userName = "Your name", isAuthenticated: _isAuthenticated }) {
   const [language, setLanguage] = useState("Java 21");
   const [code, setCode] = useState(CODE_SNIPPETS["Java 21"]);
   const [executionState, setExecutionState] = useState("ready");
@@ -724,8 +663,7 @@ function AnalyzePage({ userName = "Your name", isAuthenticated }) {
   const [announcement, setAnnouncement] = useState("");
   const [isConsoleOpen, setIsConsoleOpen] = useState(true);
   const [consoleLogs, setConsoleLogs] = useState([
-    { tag: "System", text: "Compiler workspace initialized (Java 21 standard sandbox).", type: "system" },
-    { tag: "Visualizer", text: "Java source and testcase run through the embedded AST/JDI engine. Other languages provide server output without a runtime trace.", type: "info" },
+    { tag: "System", text: "Ready to run. Java can produce an AST/JDI runtime trace when the server is available.", type: "info" },
   ]);
 
   const announce = (message) => setAnnouncement(message);
@@ -736,16 +674,15 @@ function AnalyzePage({ userName = "Your name", isAuthenticated }) {
     if (executionState === "running") return;
     setExecutionState("running");
     setExecutionResult(null);
+    setActiveStep(null);
     setIsConsoleOpen(true);
     announce("Executing code on the server…");
-    setConsoleLogs((previous) => [...previous,
-      { tag: "Compiler", text: `Running ${language}…`, type: "system" },
-    ]);
+    setConsoleLogs([{ tag: "Compiler", text: `Running ${language}…`, type: "system" }]);
     try {
       const trace = languageKey(language) === "java" ? await fetchExecutionTrace(code, { customInput: input }) : null;
       const result = trace || await api.runCode(languageKey(language), code, input);
-      setExecutionResult({ ...result, trace });
       if (!result?.status) throw new Error("The server returned no execution result.");
+      setExecutionResult({ ...result, trace });
       const failed = /error|exceeded|unsupported|failed|limit/i.test(result.status) || Boolean(result.errorMessage);
       setExecutionState(failed ? "failed" : "passed");
       setConsoleLogs((previous) => [...previous, {
@@ -765,15 +702,13 @@ function AnalyzePage({ userName = "Your name", isAuthenticated }) {
     if (executionState === "running") return;
     setLanguage(nextLanguage);
     setExecutionResult(null);
+    setActiveStep(null);
     if (CODE_SNIPPETS[nextLanguage]) {
       setCode(CODE_SNIPPETS[nextLanguage]);
     }
     setExecutionState("ready");
     announce(`${nextLanguage} editor selected.`);
-    setConsoleLogs((prev) => [
-      ...prev,
-      { tag: "Language", text: `Switched target environment to ${nextLanguage}.`, type: "info" },
-    ]);
+    setConsoleLogs([{ tag: "Language", text: `${nextLanguage} selected. Run code to see output.`, type: "info" }]);
   };
 
   const handleCopy = async () => {
@@ -792,8 +727,10 @@ function AnalyzePage({ userName = "Your name", isAuthenticated }) {
   const handleReset = () => {
     if (executionState === "running") return;
     setExecutionResult(null);
+    setActiveStep(null);
     setCode(CODE_SNIPPETS[language] || CODE_SNIPPETS["Java 21"]);
     setExecutionState("ready");
+    setConsoleLogs([{ tag: "System", text: "Starter code restored. Run code to see output.", type: "info" }]);
     announce(`Code reset to ${language} starter solution.`);
   };
 
@@ -816,6 +753,7 @@ function AnalyzePage({ userName = "Your name", isAuthenticated }) {
             language={language}
             code={code}
             executionState={executionState}
+            executionResult={executionResult}
             isFullscreen={isFullscreen}
             activeLineIndex={activeLineIndex}
             onLanguageChange={handleLanguageChange}
@@ -823,7 +761,9 @@ function AnalyzePage({ userName = "Your name", isAuthenticated }) {
               if (executionState === "running") return;
               setCode(nextCode);
               setExecutionResult(null);
+              setActiveStep(null);
               setExecutionState("ready");
+              setConsoleLogs([{ tag: "System", text: "Code changed. Run code to see current output.", type: "info" }]);
             }}
             onCopy={handleCopy}
             onReset={handleReset}
@@ -836,7 +776,7 @@ function AnalyzePage({ userName = "Your name", isAuthenticated }) {
             code={code}
             language={language}
             input={input}
-            onInputChange={(value) => { setInput(value); setExecutionResult(null); setExecutionState("ready"); }}
+            onInputChange={(value) => { setInput(value); setExecutionResult(null); setActiveStep(null); setExecutionState("ready"); setConsoleLogs([{ tag: "System", text: "Testcase changed. Run code to see current output.", type: "info" }]); }}
             executionResult={executionResult}
             onRun={handleRun}
             onStepChange={setActiveStep}

@@ -51,7 +51,6 @@ function SolutionVisualizerExecution({ problem, solution, onAnnounce, onStepChan
 
   // AST tool backend status
   const [isAstOnline, setIsAstOnline] = useState(false);
-  const [traceIsLive, setTraceIsLive] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
 
   // Determine initial trace based on specific problem solution
@@ -59,13 +58,13 @@ function SolutionVisualizerExecution({ problem, solution, onAnnounce, onStepChan
     return buildSimulatedTraceForSolution(problem?.title, source) || generateTwoSumTrace();
   }, [problem?.title, source]);
 
-  const [trace, setTrace] = useState(initialTrace);
+  const [liveTraceState, setLiveTraceState] = useState(null);
+  const traceIsLive = liveTraceState?.source === source && Array.isArray(liveTraceState?.steps) && liveTraceState.steps.length > 0;
+  const trace = traceIsLive ? liveTraceState.steps : initialTrace;
 
   // Check AST server health on mount & try real execution if available
   useEffect(() => {
     let isMounted = true;
-    setTrace(initialTrace);
-    setTraceIsLive(false);
     checkAstToolHealth().then((online) => {
       if (isMounted) setIsAstOnline(online);
     });
@@ -83,10 +82,9 @@ function SolutionVisualizerExecution({ problem, solution, onAnnounce, onStepChan
           if (Array.isArray(res?.steps) && res.steps.length > 0) {
             const richAdapted = adaptAstStepsToRichVisualizer(res.steps, source);
             if (richAdapted.length > 0) {
-              setTrace(richAdapted);
+              setLiveTraceState({ source, steps: richAdapted });
             }
             setIsAstOnline(true);
-            setTraceIsLive(true);
             setStepIndex(0);
             setStatusMessage("✅ Đã kết nối & đồng bộ trace trực quan từ AST-tool JDI!");
             setTimeout(() => setStatusMessage(""), 3500);

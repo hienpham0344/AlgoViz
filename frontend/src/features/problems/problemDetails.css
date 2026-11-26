@@ -509,6 +509,20 @@
 
 .lc-statement-text p {
   margin: 0 0 12px;
+  white-space: pre-line;
+}
+
+.problem-illustrations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0 0 22px;
+}
+
+.problem-illustrations img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
 }
 
 .inline-code {
@@ -1093,6 +1107,7 @@
   color: #334155;
   line-height: 1.5;
   margin: 0 0 10px;
+  white-space: pre-line;
 }
 
 .sol-code-block pre {
@@ -1936,4 +1951,20 @@ body.is-resizing-runner-dock * {
     gap: 0.5rem;
   }
   .runner-height-presets { display: none; }
+}
+.problem-sample-notice {
+  margin: 12px 16px;
+  padding: 10px 14px;
+  border: 1px solid var(--border-muted);
+  border-radius: 8px;
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+}
+
+.problem-sample-notice button {
+  margin-left: 8px;
+  border: 0;
+  background: none;
+  color: var(--accent-primary-hover);
+  text-decoration: underline;
 }

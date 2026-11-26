@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import "./UserCodeVisualizer.css";
 import ApiState from "../../components/ApiState.jsx";
+import AlgorithmHints from "../visualizer/AlgorithmHints.jsx";
 import { runtimeFrames, traceMatchesEditor } from "../../services/runtimeTrace.js";
 import { languageKey } from "../../services/submissions.js";
 
@@ -24,8 +25,8 @@ export default function UserCodeVisualizer({
 
   // Reset stepIndex when trace changes
   useEffect(() => {
-    setStepIndex(0);
-    setIsPlaying(false);
+    const id = setTimeout(() => { setStepIndex(0); setIsPlaying(false); }, 0);
+    return () => clearTimeout(id);
   }, [trace]);
 
   // Playback timer
@@ -111,7 +112,7 @@ export default function UserCodeVisualizer({
             <span>Runtime Trace</span>
           </div>
           <span className="user-vis-io-tag" title="Testcase input">
-            Input: {testCase?.input ? testCase.input.replace(/\n/g, " • ") : "nums = [2, 7, 11, 15], target = 9"}
+            Input: {testCase?.input ? testCase.input.replace(/\n/g, " • ") : "No sample input"}
           </span>
         </div>
 
@@ -124,6 +125,7 @@ export default function UserCodeVisualizer({
       </div>
 
       <ApiState error={captured.partial ? `Partial trace: ${(captured.warnings || []).join(" ")}` : captured.status !== "Success" ? captured.errorMessage || captured.status : ""} />
+      <AlgorithmHints hints={captured?.algorithmHints} />
       {/* 2. Visualizer Canvas Stage */}
       <div className="user-vis-canvas">
         <div className="user-vis-stage-row">

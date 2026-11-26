@@ -4,10 +4,24 @@ import "./VisualExampleCard.css";
 /**
  * Intelligent helper to parse testcase input and output into structured MasterAlgo data
  */
-function parseMasterAlgoData(tc, problemId, index) {
-  const inputStr = tc.input || "";
-  const expectedStr = tc.expected || tc.expectedOutput || "";
+function parseMasterAlgoData(tc, problemId) {
+  const inputStr = tc?.input || "";
+  const expectedStr = tc?.expected || tc?.expectedOutput || "";
   const lines = inputStr.trim().split("\n");
+  const numericProblemId = Number(problemId);
+
+  if (![1, 704].includes(numericProblemId)) {
+    return {
+      inputLabel: "Input",
+      inputString: inputStr,
+      inputArray: [],
+      target: null,
+      targetName: "target",
+      outputString: expectedStr,
+      outputArray: [],
+      explanation: null,
+    };
+  }
 
   let parsed = {
     inputLabel: "nums",
@@ -21,7 +35,7 @@ function parseMasterAlgoData(tc, problemId, index) {
   };
 
   // 1. Two Sum specific parsing (Problem ID 1)
-  if (problemId === 1) {
+  if (numericProblemId === 1) {
     const targetVal = lines[0] ? lines[0].trim() : "9";
     const numsLine = lines[1] || "2 7 11 15";
     const nums = numsLine.split(/\s+/).map((n) => Number(n.trim())).filter((n) => !isNaN(n));
@@ -54,7 +68,7 @@ function parseMasterAlgoData(tc, problemId, index) {
   }
 
   // 2. Binary Search specific parsing (Problem ID 704)
-  if (problemId === 704) {
+  if (numericProblemId === 704) {
     const targetVal = lines[0] ? lines[0].trim() : "9";
     const numsLine = lines[1] || "-1 0 3 5 9 12";
     const nums = numsLine.split(/\s+/).map((n) => Number(n.trim())).filter((n) => !isNaN(n));
@@ -76,50 +90,7 @@ function parseMasterAlgoData(tc, problemId, index) {
     return parsed;
   }
 
-  // 3. Generic detection: search for array format or space-separated integers
-  let detectedArr = [];
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
-      try {
-        const arr = JSON.parse(trimmed);
-        if (Array.isArray(arr)) {
-          detectedArr = arr;
-          break;
-        }
-      } catch {}
-    } else if (trimmed.split(/\s+/).length > 1) {
-      const parts = trimmed.split(/\s+/).map(Number);
-      if (parts.every((p) => !isNaN(p))) {
-        detectedArr = parts;
-        break;
-      }
-    }
-  }
 
-  if (detectedArr.length > 0) {
-    parsed.inputArray = detectedArr;
-    parsed.inputString = `nums = [${detectedArr.join(", ")}]`;
-  } else {
-    parsed.inputString = inputStr;
-  }
-
-  // Output detection
-  try {
-    const outParsed = JSON.parse(expectedStr);
-    if (Array.isArray(outParsed)) {
-      parsed.outputArray = outParsed;
-      parsed.outputString = `[${outParsed.join(", ")}]`;
-    }
-  } catch {
-    parsed.outputString = expectedStr;
-    const num = Number(expectedStr.trim());
-    if (!isNaN(num)) {
-      parsed.outputArray = [num];
-    }
-  }
-
-  return parsed;
 }
 
 export function VisualExampleCard({ tc, index, problemId }) {
@@ -128,16 +99,16 @@ export function VisualExampleCard({ tc, index, problemId }) {
   const [copiedInput, setCopiedInput] = useState(false);
   const [copiedOutput, setCopiedOutput] = useState(false);
 
-  const data = parseMasterAlgoData(tc, problemId, index);
+  const data = parseMasterAlgoData(tc, problemId);
 
   const handleCopyInput = () => {
-    navigator.clipboard.writeText(data.inputString);
+    navigator.clipboard?.writeText(data.inputString)?.catch(() => {});
     setCopiedInput(true);
     setTimeout(() => setCopiedInput(false), 1500);
   };
 
   const handleCopyOutput = () => {
-    navigator.clipboard.writeText(data.outputString);
+    navigator.clipboard?.writeText(data.outputString)?.catch(() => {});
     setCopiedOutput(true);
     setTimeout(() => setCopiedOutput(false), 1500);
   };

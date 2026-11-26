@@ -1127,3 +1127,50 @@
     transition: none !important;
   }
 }
+
+/* Dark theme overrides */
+[data-theme="dark"] .kaggle-landing,
+[data-theme="dark"] .kaggle-cta-section,
+[data-theme="dark"] .kaggle-footer {
+  background-color: var(--bg-app, #0f1117);
+  color: var(--text-primary, #f0f3f8);
+  border-color: var(--border-subtle, #242938);
+}
+
+[data-theme="dark"] .kaggle-header {
+  background-color: rgba(21, 24, 34, 0.96);
+  border-bottom-color: var(--border-subtle, #242938);
+}
+
+[data-theme="dark"] .kaggle-pillars-section {
+  background-color: #131620;
+  border-color: var(--border-subtle, #242938);
+}
+
+[data-theme="dark"] .kaggle-pillar-card,
+[data-theme="dark"] .kaggle-floating-card,
+[data-theme="dark"] .kaggle-search-btn,
+[data-theme="dark"] .kaggle-btn-outline {
+  background-color: var(--bg-surface, #181b24);
+  border-color: var(--border-muted, #2f3548);
+  color: var(--text-primary, #f0f3f8);
+}
+
+[data-theme="dark"] .kaggle-brand,
+[data-theme="dark"] .kaggle-nav-link,
+[data-theme="dark"] .kaggle-login-btn,
+[data-theme="dark"] .kaggle-kicker-item,
+[data-theme="dark"] .kaggle-hero-title,
+[data-theme="dark"] .kaggle-card-title,
+[data-theme="dark"] .kaggle-pillar-title,
+[data-theme="dark"] .kaggle-cta-heading,
+[data-theme="dark"] .kaggle-footer-logo {
+  color: var(--text-primary, #f0f3f8);
+}
+
+[data-theme="dark"] .kaggle-hero-subtitle,
+[data-theme="dark"] .kaggle-pillar-desc,
+[data-theme="dark"] .kaggle-footer-links a {
+  color: var(--text-secondary, #9da7bb);
+}
+

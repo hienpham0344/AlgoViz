@@ -1,5 +1,6 @@
 function BadgeDifficulty({ state = "Easy", className = "" }) {
-  const normalized = state.charAt(0).toUpperCase() + state.slice(1).toLowerCase();
+  const raw = String(state || "Easy").trim() || "Easy";
+  const normalized = raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
   
   return (
     <span

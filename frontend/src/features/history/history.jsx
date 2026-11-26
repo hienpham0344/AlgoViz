@@ -1,11 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { NavigationBar, CustomSelect } from "../../components/index.js";
+import { CustomSelect } from "../../components/index.js";
 import { api } from "../../services/api.js";
+import { paginationItems } from "../../services/pagination.js";
+import { mapSubmission } from "../../services/submissions.js";
+import ApiState from "../../components/ApiState.jsx";
 import "./history.css";
 
 const HISTORY_LANG_OPTIONS = [
   { value: "All", label: "All Languages" },
   { value: "C++", label: "C++" },
+  { value: "JavaScript", label: "JavaScript" },
   { value: "Java", label: "Java" },
   { value: "Python", label: "Python" },
 ];
@@ -16,130 +20,9 @@ const HISTORY_COMPLETION_OPTIONS = [
   { value: "incomplete", label: "Incomplete", dotColor: "#b06000" },
 ];
 
-const DEFAULT_HISTORY = [
-  {
-    id: "hist-1",
-    algorithm: "Bubble Sort Visualizer",
-    problemId: 912,
-    topic: "Sorting Algorithms",
-    complexity: "O(n²)",
-    language: "C++",
-    date: "Aug 20, 2025",
-    completed: true,
-  },
-  {
-    id: "hist-2",
-    algorithm: "Binary Search Recursive",
-    problemId: 704,
-    topic: "Searching Arrays",
-    complexity: "O(log n)",
-    language: "Java",
-    date: "Aug 19, 2025",
-    completed: true,
-  },
-  {
-    id: "hist-3",
-    algorithm: "Quick Sort (Lomuto Partition)",
-    problemId: 912,
-    topic: "Divide & Conquer",
-    complexity: "O(n log n)",
-    language: "Python",
-    date: "Aug 18, 2025",
-    completed: true,
-  },
-  {
-    id: "hist-4",
-    algorithm: "Merge Sort Recursive",
-    problemId: 912,
-    topic: "Divide & Conquer",
-    complexity: "O(n log n)",
-    language: "C++",
-    date: "Aug 16, 2025",
-    completed: false,
-  },
-  {
-    id: "hist-5",
-    algorithm: "Two Sum Hash Map",
-    problemId: 1,
-    topic: "Hash Tables",
-    complexity: "O(n)",
-    language: "Python",
-    date: "Aug 15, 2025",
-    completed: true,
-  },
-  {
-    id: "hist-6",
-    algorithm: "3Sum Two Pointers",
-    problemId: 15,
-    topic: "Two Pointers",
-    complexity: "O(n²)",
-    language: "Python",
-    date: "Aug 14, 2025",
-    completed: true,
-  },
-  {
-    id: "hist-7",
-    algorithm: "Longest Substring Sliding Window",
-    problemId: 3,
-    topic: "Sliding Window",
-    complexity: "O(n)",
-    language: "Java",
-    date: "Aug 12, 2025",
-    completed: true,
-  },
-  {
-    id: "hist-8",
-    algorithm: "Valid Parentheses Stack",
-    problemId: 20,
-    topic: "Stack",
-    complexity: "O(n)",
-    language: "C++",
-    date: "Aug 10, 2025",
-    completed: true,
-  },
-  {
-    id: "hist-9",
-    algorithm: "LRU Cache Doubly Linked List",
-    problemId: 146,
-    topic: "Design",
-    complexity: "O(1)",
-    language: "Python",
-    date: "Aug 08, 2025",
-    completed: true,
-  },
-  {
-    id: "hist-10",
-    algorithm: "Climbing Stairs DP",
-    problemId: 70,
-    topic: "Dynamic Programming",
-    complexity: "O(n)",
-    language: "Python",
-    date: "Aug 06, 2025",
-    completed: false,
-  },
-  {
-    id: "hist-11",
-    algorithm: "Kth Largest Element (Min-Heap)",
-    problemId: 215,
-    topic: "Heap",
-    complexity: "O(n log k)",
-    language: "Java",
-    date: "Aug 04, 2025",
-    completed: true,
-  },
-  {
-    id: "hist-12",
-    algorithm: "Invert Binary Tree BFS",
-    problemId: 226,
-    topic: "Trees",
-    complexity: "O(n)",
-    language: "C++",
-    date: "Aug 01, 2025",
-    completed: true,
-  },
-];
 
-function HistoryHero({ onNewAnalysis, onExport }) {
+
+function HistoryHero({ onOpenStudio, onExport }) {
   return (
     <section className="history-hero">
       <div className="history-shell history-hero-content">
@@ -147,10 +30,10 @@ function HistoryHero({ onNewAnalysis, onExport }) {
           <nav className="history-breadcrumb" aria-label="Breadcrumb">
             <a href="#problems">AlgoViz</a>
             <span aria-hidden="true">/</span>
-            <strong>Execution History</strong>
+            <strong>Submission History</strong>
           </nav>
-          <h1>Execution History</h1>
-          <p>Review past algorithm runs, runtime complexity benchmarks, and visual execution traces.</p>
+          <h1>Submission History</h1>
+          <p>Review your judged solutions, verdicts, runtime, and language.</p>
         </div>
         <div className="history-hero-actions">
           <button
@@ -168,13 +51,13 @@ function HistoryHero({ onNewAnalysis, onExport }) {
           <button
             className="history-btn-primary"
             type="button"
-            onClick={onNewAnalysis}
+            onClick={onOpenStudio}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
-            <span>New Analysis</span>
+            <span>Open Code Studio</span>
           </button>
         </div>
       </div>
@@ -182,15 +65,7 @@ function HistoryHero({ onNewAnalysis, onExport }) {
   );
 }
 
-function HistoryStats({
-  totalAnalyses = 12,
-  successRate = 92,
-  topAlgo = "Bubble Sort Visualizer",
-  topAlgoRuns = 2,
-  topTopic = "Sorting Algorithms",
-  topLang = "Python",
-  topLangPercent = 42,
-}) {
+function HistoryStats({ totalSubmissions, successRate, topAlgo, topAlgoRuns, topLang, topLangPercent }) {
   return (
     <section className="history-stats history-shell" aria-label="History overview">
       <div className="history-stat-card">
@@ -202,13 +77,13 @@ function HistoryStats({
               <line x1="16" y1="6" x2="16" y2="18" />
             </svg>
           </span>
-          <span className="history-stat-label">Total Analyses</span>
+          <span className="history-stat-label">Total Submissions</span>
         </div>
         <div className="history-stat-val">
-          <strong>{totalAnalyses}</strong>
-          <span className="history-stat-pill history-stat-pill--emerald">Active Session</span>
+          <strong>{totalSubmissions}</strong>
+          <span className="history-stat-pill history-stat-pill--emerald">Recorded</span>
         </div>
-        <span className="history-stat-sub">Recorded algorithmic runs</span>
+        <span className="history-stat-sub">Judged code submissions</span>
       </div>
 
       <div className="history-stat-card">
@@ -219,13 +94,13 @@ function HistoryStats({
               <polyline points="22 4 12 14.01 9 11.01" />
             </svg>
           </span>
-          <span className="history-stat-label">Success Rate</span>
+          <span className="history-stat-label">Acceptance Rate</span>
         </div>
         <div className="history-stat-val">
           <strong>{successRate}%</strong>
           <span className="history-stat-pill history-stat-pill--cyan">Passing</span>
         </div>
-        <span className="history-stat-sub">Completed assertion suites</span>
+        <span className="history-stat-sub">Accepted submissions</span>
       </div>
 
       <div className="history-stat-card">
@@ -235,13 +110,13 @@ function HistoryStats({
               <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
             </svg>
           </span>
-          <span className="history-stat-label">Top Algorithm</span>
+          <span className="history-stat-label">Most Submitted Problem</span>
         </div>
         <div className="history-stat-val">
           <strong style={{ fontSize: "16px" }} title={topAlgo}>{topAlgo}</strong>
-          <span className="history-stat-pill history-stat-pill--indigo">{topAlgoRuns} {topAlgoRuns === 1 ? "run" : "runs"}</span>
+          <span className="history-stat-pill history-stat-pill--indigo">{topAlgoRuns} {topAlgoRuns === 1 ? "submission" : "submissions"}</span>
         </div>
-        <span className="history-stat-sub">{topTopic || "Most analyzed algorithm"}</span>
+        <span className="history-stat-sub">Most frequently submitted</span>
       </div>
 
       <div className="history-stat-card">
@@ -256,9 +131,9 @@ function HistoryStats({
         </div>
         <div className="history-stat-val">
           <strong>{topLang}</strong>
-          <span className="history-stat-pill history-stat-pill--amber">{topLangPercent}% of runs</span>
+          <span className="history-stat-pill history-stat-pill--amber">{topLangPercent}% of submissions</span>
         </div>
-        <span className="history-stat-sub">Most practiced runtime environment</span>
+        <span className="history-stat-sub">Most used language</span>
       </div>
     </section>
   );
@@ -287,7 +162,7 @@ function HistoryToolbar({
         <input
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
-          placeholder="Search by algorithm, topic, or language..."
+          placeholder="Search by problem or language..."
           aria-label="Search history"
         />
         {query && (
@@ -354,6 +229,7 @@ function HistoryToolbar({
 function HistoryTable({
   rows,
   totalCount,
+  hasHistory,
   page = 1,
   pageSize = 5,
   pageCount = 1,
@@ -364,10 +240,10 @@ function HistoryTable({
   onSelectAll,
   isAllSelected,
   onDelete,
-  onInspect,
+  onViewProblem,
 }) {
   return (
-    <section className="history-table-card history-shell" aria-label="Analysis history table">
+    <section className="history-table-card history-shell" aria-label="Submission history table">
       <div className="history-table-wrapper">
         <table className="history-table">
           <thead>
@@ -380,8 +256,8 @@ function HistoryTable({
                   aria-label="Select all rows"
                 />
               </th>
-              <th>Algorithm</th>
-              <th>Complexity</th>
+              <th>Problem</th>
+              <th>Runtime</th>
               <th>Language</th>
               <th>Date</th>
               <th>Status</th>
@@ -392,8 +268,8 @@ function HistoryTable({
             {rows.length === 0 ? (
               <tr>
                 <td colSpan={7} className="history-empty-td">
-                  <p>No matching analyses found</p>
-                  <small>Try clearing your search query or selecting a different filter.</small>
+                  <p>{hasHistory ? "No matching submissions found" : "No submissions yet"}</p>
+                  <small>{hasHistory ? "Try clearing your search query or selecting a different filter." : "Open a problem and submit a solution to build your history."}</small>
                 </td>
               </tr>
             ) : (
@@ -414,7 +290,7 @@ function HistoryTable({
                   <td>
                     <div className="algo-cell">
                       <strong className="algo-title">{row.algorithm}</strong>
-                      <span className="algo-topic">{row.topic}</span>
+                      {row.topic && <span className="algo-topic">{row.topic}</span>}
                     </div>
                   </td>
                   <td>
@@ -428,7 +304,7 @@ function HistoryTable({
                   <td className="algo-date">{row.date}</td>
                   <td>
                     <span className={`algo-status algo-status--${row.completed ? "done" : "incomplete"}`}>
-                      {row.completed ? "✓ Done" : "● Incomplete"}
+                      {row.rawStatus}
                     </span>
                   </td>
                   <td style={{ textAlign: "right" }} onClick={(e) => e.stopPropagation()}>
@@ -436,13 +312,13 @@ function HistoryTable({
                       <button
                         type="button"
                         className="algo-btn-trace"
-                        title="Open interactive trace in Visualizer"
-                        onClick={() => onInspect(row)}
+                        title="View this problem and its submissions"
+                        onClick={() => onViewProblem(row)}
                       >
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
                         </svg>
-                        <span>Trace</span>
+                        <span>View</span>
                       </button>
                       <button
                         type="button"
@@ -469,7 +345,7 @@ function HistoryTable({
         <div className="history-footer-left">
           <span>
             Showing {totalCount > 0 ? (page - 1) * pageSize + 1 : 0}–
-            {Math.min(page * pageSize, totalCount)} of {totalCount} analyses
+            {Math.min(page * pageSize, totalCount)} of {totalCount} submissions
           </span>
           <div className="history-page-size-selector">
             <label htmlFor="history-page-size">Per page:</label>
@@ -497,7 +373,9 @@ function HistoryTable({
           >
             ‹ Prev
           </button>
-          {Array.from({ length: pageCount }, (_, i) => i + 1).map((pNum) => (
+          {paginationItems(page, pageCount).map((pNum, index) => pNum === "ellipsis" ? (
+            <span key={`ellipsis-${index}`} aria-hidden="true">…</span>
+          ) : (
             <button
               key={pNum}
               type="button"
@@ -528,7 +406,7 @@ function HistoryTable({
 function HistoryFooter() {
   return (
     <footer className="history-simple-footer history-shell">
-      <span>© 2025 AlgoViz. All rights reserved.</span>
+      <span>© {new Date().getFullYear()} AlgoViz. All rights reserved.</span>
       <div className="history-footer-links">
         <a href="#problems">Problems</a>
         <a href="#visualize">Visualize</a>
@@ -538,68 +416,35 @@ function HistoryFooter() {
   );
 }
 
-function HistoryPage({ userName = "Developer", isAuthenticated = false }) {
+function HistoryPage() {
   const [query, setQuery] = useState("");
   const [language, setLanguage] = useState("All");
   const [completion, setCompletion] = useState("All");
   const [newestFirst, setNewestFirst] = useState(true);
   const [selected, setSelected] = useState(new Set());
   const [announcement, setAnnouncement] = useState("");
-  const [historyList, setHistoryList] = useState(DEFAULT_HISTORY);
+  const [historyList, setHistoryList] = useState([]);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
+    let active = true;
     async function loadHistory() {
+      setIsLoading(true);
+      setLoadError("");
       try {
-        const historyData = await api.getSubmissionHistory();
-        if (Array.isArray(historyData) && historyData.length > 0) {
-          const formatLanguage = (lang) => {
-            const l = (lang || "").toLowerCase();
-            if (l.includes("py")) return "Python";
-            if (l.includes("js") || l.includes("javascript")) return "JavaScript";
-            if (l.includes("cpp") || l.includes("c++")) return "C++";
-            if (l.includes("java")) return "Java";
-            return lang || "Python";
-          };
-
-          const formatDate = (isoStr) => {
-            if (!isoStr) return "Just now";
-            try {
-              return new Date(isoStr).toLocaleDateString("en-US", {
-                month: "short",
-                day: "2-digit",
-                year: "numeric",
-              });
-            } catch {
-              return "Recent";
-            }
-          };
-
-          const mapped = historyData.map((item, idx) => ({
-            id: item.id || `sub-${idx}`,
-            algorithm: item.problemTitle || `Problem #${item.problemId || 1}`,
-            problemId: item.problemId || 1,
-            topic: item.topic || "Algorithm & Logic",
-            complexity: item.executionTimeMs != null ? `${item.executionTimeMs.toFixed(1)}ms` : "O(n)",
-            language: formatLanguage(item.language),
-            date: formatDate(item.submittedAt),
-            completed: item.status === "Accepted" || item.status === "ACCEPTED",
-            rawStatus: item.status,
-          }));
-          setHistoryList(mapped);
-        }
-      } catch (err) {
-        console.warn("Using default history", err);
-      }
+        const data = await api.getSubmissionHistory();
+        if (!Array.isArray(data)) throw new Error("Invalid history response.");
+        if (active) setHistoryList(data.map(mapSubmission));
+      } catch (error) { if (active) setLoadError(error.message); }
+      finally { if (active) setIsLoading(false); }
     }
     loadHistory();
-  }, []);
-
-  // Reset to page 1 whenever search, language, completion, or order changes
-  useEffect(() => {
-    setPage(1);
-  }, [query, language, completion, newestFirst]);
+    return () => { active = false; };
+  }, [reloadKey]);
 
   const rows = useMemo(() => {
     const filtered = historyList.filter(
@@ -617,18 +462,13 @@ function HistoryPage({ userName = "Developer", isAuthenticated = false }) {
   const totalCount = rows.length;
   const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
 
-  // Auto-clamp page if it exceeds pageCount (e.g. after deleting items)
-  useEffect(() => {
-    if (page > pageCount) {
-      setPage(pageCount);
-    }
-  }, [page, pageCount]);
+  const currentPage = Math.min(page, pageCount);
 
   // Current page's sliced slice
   const pagedRows = useMemo(() => {
-    const start = (page - 1) * pageSize;
+    const start = (currentPage - 1) * pageSize;
     return rows.slice(start, start + pageSize);
-  }, [rows, page, pageSize]);
+  }, [rows, currentPage, pageSize]);
 
   const isAllSelected =
     pagedRows.length > 0 && pagedRows.every((r) => selected.has(r.id));
@@ -657,22 +497,29 @@ function HistoryPage({ userName = "Developer", isAuthenticated = false }) {
     }
   };
 
-  const removeRow = (id) => {
+  const removeRow = async (id) => {
+    try { await api.deleteSubmission(id); }
+    catch (error) { setLoadError(error.message); return; }
     setHistoryList((prev) => prev.filter((item) => item.id !== id));
     setSelected((current) => new Set([...current].filter((item) => item !== id)));
-    setAnnouncement("Analysis removed from the selected history.");
+    setAnnouncement("Submission removed from history.");
   };
 
-  const handleDeleteSelected = () => {
-    if (selected.size === 0) return;
-    setHistoryList((prev) => prev.filter((item) => !selected.has(item.id)));
-    setSelected(new Set());
-    setAnnouncement("Selected analyses deleted.");
+  const handleDeleteSelected = async () => {
+    if (!selected.size) return;
+    const ids = [...selected];
+    const results = await Promise.allSettled(ids.map((id) => api.deleteSubmission(id)));
+    const deleted = new Set(ids.filter((_, index) => results[index].status === "fulfilled"));
+    setHistoryList((prev) => prev.filter((item) => !deleted.has(item.id)));
+    setSelected((prev) => new Set([...prev].filter((id) => !deleted.has(id))));
+    const failed = results.find((result) => result.status === "rejected");
+    if (failed) setLoadError(failed.reason.message);
+    setAnnouncement(`${deleted.size} submissions deleted.`);
   };
 
   const clearSelected = () => {
     setSelected(new Set());
-    setAnnouncement("Selected analyses cleared.");
+    setAnnouncement("Selection cleared.");
   };
 
   const handleExport = () => {
@@ -691,8 +538,8 @@ function HistoryPage({ userName = "Developer", isAuthenticated = false }) {
     setAnnouncement("History exported as JSON.");
   };
 
-  const handleInspectTrace = (row) => {
-    window.location.hash = `problem-details?id=${row.problemId || 1}&tab=visualizer`;
+  const handleViewProblem = (row) => {
+    window.location.hash = `#problem-details?id=${row.problemId}&tab=submissions`;
   };
 
   // Dynamic calculations for Hero stats
@@ -700,11 +547,10 @@ function HistoryPage({ userName = "Developer", isAuthenticated = false }) {
     if (!historyList || historyList.length === 0) {
       return {
         total: 0,
-        successRate: 100,
+        successRate: 0,
         topAlgo: "None",
         topAlgoRuns: 0,
-        topTopic: "None",
-        topLang: "Python",
+        topLang: "None",
         topLangPercent: 0,
       };
     }
@@ -714,11 +560,9 @@ function HistoryPage({ userName = "Developer", isAuthenticated = false }) {
     const successRate = Math.round((completedCount / total) * 100);
 
     const algoCounts = {};
-    const algoTopics = {};
     const langCounts = {};
     historyList.forEach((h) => {
       algoCounts[h.algorithm] = (algoCounts[h.algorithm] || 0) + 1;
-      algoTopics[h.algorithm] = h.topic;
       langCounts[h.language] = (langCounts[h.language] || 0) + 1;
     });
 
@@ -746,40 +590,45 @@ function HistoryPage({ userName = "Developer", isAuthenticated = false }) {
       successRate,
       topAlgo,
       topAlgoRuns: maxAlgoCount,
-      topTopic: algoTopics[topAlgo] || "Sorting Algorithms",
       topLang,
       topLangPercent,
     };
   }, [historyList]);
 
+  if (isLoading || (loadError && historyList.length === 0)) return (
+    <main className="history-page" aria-busy={isLoading}>
+      <ApiState loading={isLoading} error={loadError} onRetry={() => setReloadKey((key) => key + 1)} label="Loading submission history…" page />
+    </main>
+  );
+
   return (
     <main className="history-page" id="top">
       <HistoryHero
-        onNewAnalysis={() => {
+        onOpenStudio={() => {
           window.location.hash = "visualize";
         }}
         onExport={handleExport}
       />
 
+      <ApiState loading={isLoading} error={loadError} onRetry={() => setReloadKey((key) => key + 1)} />
       <HistoryStats
-        totalAnalyses={stats.total}
+        totalSubmissions={stats.total}
         successRate={stats.successRate}
         topAlgo={stats.topAlgo}
         topAlgoRuns={stats.topAlgoRuns}
-        topTopic={stats.topTopic}
         topLang={stats.topLang}
         topLangPercent={stats.topLangPercent}
       />
 
       <HistoryToolbar
         query={query}
-        onQueryChange={setQuery}
+        onQueryChange={(value) => { setQuery(value); setPage(1); }}
         language={language}
-        onLanguageChange={setLanguage}
+        onLanguageChange={(value) => { setLanguage(value); setPage(1); }}
         completion={completion}
-        onCompletionChange={setCompletion}
+        onCompletionChange={(value) => { setCompletion(value); setPage(1); }}
         newestFirst={newestFirst}
-        onSortChange={() => setNewestFirst((current) => !current)}
+        onSortChange={() => { setNewestFirst((current) => !current); setPage(1); }}
         selectedCount={selected.size}
         onDeleteSelected={handleDeleteSelected}
         onClearSelected={clearSelected}
@@ -788,7 +637,8 @@ function HistoryPage({ userName = "Developer", isAuthenticated = false }) {
       <HistoryTable
         rows={pagedRows}
         totalCount={totalCount}
-        page={page}
+        hasHistory={historyList.length > 0}
+        page={currentPage}
         pageSize={pageSize}
         pageCount={pageCount}
         onPageChange={(newPage) => setPage(newPage)}
@@ -801,7 +651,7 @@ function HistoryPage({ userName = "Developer", isAuthenticated = false }) {
         onSelectAll={handleSelectAll}
         isAllSelected={isAllSelected}
         onDelete={removeRow}
-        onInspect={handleInspectTrace}
+        onViewProblem={handleViewProblem}
       />
 
       <p className="sr-only" aria-live="polite">

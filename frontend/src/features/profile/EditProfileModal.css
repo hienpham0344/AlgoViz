@@ -580,3 +580,18 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Match the app theme in both light and dark mode. */
+.profile-modal-card { background: var(--bg-surface-raised); border-color: var(--border-muted); }
+.profile-modal-title-group h2,
+.profile-form-field label,
+.profile-sec-title { color: var(--text-primary); }
+.profile-modal-sub,
+.profile-sec-desc { color: var(--text-secondary); }
+.profile-modal-header,
+.profile-modal-footer,
+.profile-modal-tabs { border-color: var(--border-subtle); }
+.profile-form-field input,
+.profile-form-field textarea { background: var(--bg-app); color: var(--text-primary); border-color: var(--border-muted); }
+.profile-modal-tab-btn { color: var(--text-secondary); }
+.profile-modal-tab-btn.is-active { color: var(--accent-primary-hover); }
