@@ -1200,3 +1200,69 @@
   text-align: center;
   white-space: normal;
 }
+
+/* Dark theme overrides */
+[data-theme="dark"] .algoviz-lesson-page {
+  background-color: var(--bg-app, #0f1117);
+  color: var(--text-primary, #f0f3f8);
+}
+
+[data-theme="dark"] .lesson-top-bar,
+[data-theme="dark"] .notebook-cell,
+[data-theme="dark"] .sidebar-header,
+[data-theme="dark"] .sidebar-lessons-nav,
+[data-theme="dark"] .sidebar-footer-card,
+[data-theme="dark"] .nav-lesson-btn {
+  background: var(--bg-surface, #181b24);
+  border-color: var(--border-muted, #2f3548);
+}
+
+[data-theme="dark"] .notebook-cell-gutter,
+[data-theme="dark"] .code-gutter-numbers,
+[data-theme="dark"] .markdown-code-block,
+[data-theme="dark"] .markdown-table th,
+[data-theme="dark"] .lesson-btn-secondary,
+[data-theme="dark"] .lesson-btn-check:not(.is-active),
+[data-theme="dark"] .btn-complete-bottom:not(.is-finished),
+[data-theme="dark"] .quiz-option-btn:not(.is-correct-target):not(.is-wrong-selection),
+[data-theme="dark"] .sidebar-lesson-item:hover {
+  background: var(--bg-surface-raised, #1f2330);
+  border-color: var(--border-subtle, #242938);
+  color: var(--text-primary, #f0f3f8);
+}
+
+[data-theme="dark"] .code-editor-surface,
+[data-theme="dark"] .code-textarea {
+  background: #10121a;
+  border-color: var(--border-muted, #2f3548);
+  color: var(--text-primary, #f0f3f8);
+}
+
+[data-theme="dark"] .lesson-main-title,
+[data-theme="dark"] .lesson-crumb-current,
+[data-theme="dark"] .markdown-cell-heading,
+[data-theme="dark"] .markdown-prose strong,
+[data-theme="dark"] .quiz-cell-title,
+[data-theme="dark"] .quiz-question-text,
+[data-theme="dark"] .summary-heading,
+[data-theme="dark"] .nav-title,
+[data-theme="dark"] .sidebar-course-title,
+[data-theme="dark"] .sidebar-item-name,
+[data-theme="dark"] .sidebar-footer-heading {
+  color: var(--text-primary, #f0f3f8);
+}
+
+[data-theme="dark"] .lesson-overview-lead,
+[data-theme="dark"] .markdown-prose,
+[data-theme="dark"] .markdown-table td,
+[data-theme="dark"] .summary-item,
+[data-theme="dark"] .quiz-cell-subtitle,
+[data-theme="dark"] .sidebar-footer-copy {
+  color: var(--text-secondary, #9da7bb);
+}
+
+[data-theme="dark"] .markdown-callout {
+  background: rgba(56, 189, 248, 0.08);
+  color: var(--text-primary, #f0f3f8);
+}
+

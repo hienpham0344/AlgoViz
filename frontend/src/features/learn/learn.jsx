@@ -184,7 +184,7 @@ def rob(nums: list[int]) -> int:
             res[idx] = nums[i]
         stack.append(i)
     return res`,
-      java: `public int nextGreaterElements(int[] nums) {
+      java: `public int[] nextGreaterElements(int[] nums) {
     int n = nums.length;
     int[] res = new int[n];
     Arrays.fill(res, -1);
@@ -1041,12 +1041,17 @@ function LearnPage({ userName = "Your name", isAuthenticated }) {
       course.lessons?.[course.lessons.length - 1];
     const targetId = quizLesson?.id || 1;
     setAnnouncement(`Opening assessment for ${course?.title || "course"}`);
-    window.location.hash = `#lesson?courseId=${course.id}&lessonId=${targetId}#quiz`;
+    window.location.hash = `#lesson?courseId=${course.id}&lessonId=${targetId}&section=quiz`;
   };
 
   const handleSolveProblemFromGuide = (prob) => {
-    window.location.hash = `problem-details?id=${prob?.id || 1}`;
+    window.location.hash = `#problem-details?id=${prob?.id || 1}`;
   };
+
+  const activeCourseModal = useMemo(() => {
+    if (!selectedCourseModal) return null;
+    return courses.find((c) => c.id === selectedCourseModal.id) || selectedCourseModal;
+  }, [courses, selectedCourseModal]);
 
   if (loading || error) return (
     <main className="learn-page" aria-busy={loading}>
@@ -1111,42 +1116,52 @@ function LearnPage({ userName = "Your name", isAuthenticated }) {
 
             <div className="your-courses-list" role="tabpanel">
               {userCoursesTab === "in-progress" ? (
-                inProgressCourses.map((course) => (
-                  <article key={course.id} className="your-course-row">
-                    <div className="your-course-row-left" onClick={() => handleOpenCurriculum(course)}>
-                      <CourseSquircleIcon name={course.icon} bg={course.iconBg} color={course.iconColor} />
-                      <div className="your-course-info">
-                        <h3>{course.title}</h3>
-                        <div className="your-course-subtext">
-                          <span>
-                            Lesson {course.completedLessons} of {course.totalLessons} completed • {course.progress}%
-                          </span>
-                          <div className="your-course-mini-bar">
-                            <ProgressView
-                              variant="linear"
-                              value={course.progress}
-                              max={100}
-                              label={`${course.title} completion`}
-                              className="progress-view-bar--thin"
-                            />
+                inProgressCourses.length === 0 ? (
+                  <div className="catalog-empty-state">
+                    <p>No courses in progress yet. Start any course below and complete a lesson to track your progress here.</p>
+                  </div>
+                ) : (
+                  inProgressCourses.map((course) => (
+                    <article key={course.id} className="your-course-row">
+                      <div className="your-course-row-left" onClick={() => handleOpenCurriculum(course)}>
+                        <CourseSquircleIcon name={course.icon} bg={course.iconBg} color={course.iconColor} />
+                        <div className="your-course-info">
+                          <h3>{course.title}</h3>
+                          <div className="your-course-subtext">
+                            <span>
+                              Lesson {course.completedLessons} of {course.totalLessons} completed • {course.progress}%
+                            </span>
+                            <div className="your-course-mini-bar">
+                              <ProgressView
+                                variant="linear"
+                                value={course.progress}
+                                max={100}
+                                label={`${course.title} completion`}
+                                className="progress-view-bar--thin"
+                              />
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="your-course-actions">
-                      <button
-                        type="button"
-                        className="your-course-btn-continue"
-                        onClick={() => handleOpenCurriculum(course)}
-                      >
-                        <span>Continue Course</span>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <polyline points="9 18 15 12 9 6" />
-                        </svg>
-                      </button>
-                    </div>
-                  </article>
-                ))
+                      <div className="your-course-actions">
+                        <button
+                          type="button"
+                          className="your-course-btn-continue"
+                          onClick={() => handleOpenCurriculum(course)}
+                        >
+                          <span>Continue Course</span>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polyline points="9 18 15 12 9 6" />
+                          </svg>
+                        </button>
+                      </div>
+                    </article>
+                  ))
+                )
+              ) : completedCourses.length === 0 ? (
+                <div className="catalog-empty-state">
+                  <p>No completed courses yet. Finish all lessons in a course to unlock your verified certificate.</p>
+                </div>
               ) : (
                 completedCourses.map((course) => (
                   <article key={course.id} className="your-course-row">
@@ -1389,9 +1404,9 @@ function LearnPage({ userName = "Your name", isAuthenticated }) {
       </div>
 
       {/* Curriculum Modal */}
-      {selectedCourseModal && (
+      {activeCourseModal && (
         <CourseCurriculumModal
-          course={selectedCourseModal}
+          course={activeCourseModal}
           onClose={() => setSelectedCourseModal(null)}
           onLaunchLesson={handleLaunchLesson}
           onOpenQuiz={handleOpenQuiz}

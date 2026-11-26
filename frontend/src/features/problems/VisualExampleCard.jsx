@@ -5,9 +5,23 @@ import "./VisualExampleCard.css";
  * Intelligent helper to parse testcase input and output into structured MasterAlgo data
  */
 function parseMasterAlgoData(tc, problemId) {
-  const inputStr = tc.input || "";
-  const expectedStr = tc.expected || tc.expectedOutput || "";
+  const inputStr = tc?.input || "";
+  const expectedStr = tc?.expected || tc?.expectedOutput || "";
   const lines = inputStr.trim().split("\n");
+  const numericProblemId = Number(problemId);
+
+  if (![1, 704].includes(numericProblemId)) {
+    return {
+      inputLabel: "Input",
+      inputString: inputStr,
+      inputArray: [],
+      target: null,
+      targetName: "target",
+      outputString: expectedStr,
+      outputArray: [],
+      explanation: null,
+    };
+  }
 
   if (![1, 704].includes(problemId)) {
     return {
@@ -34,7 +48,7 @@ function parseMasterAlgoData(tc, problemId) {
   };
 
   // 1. Two Sum specific parsing (Problem ID 1)
-  if (problemId === 1) {
+  if (numericProblemId === 1) {
     const targetVal = lines[0] ? lines[0].trim() : "9";
     const numsLine = lines[1] || "2 7 11 15";
     const nums = numsLine.split(/\s+/).map((n) => Number(n.trim())).filter((n) => !isNaN(n));
@@ -67,7 +81,7 @@ function parseMasterAlgoData(tc, problemId) {
   }
 
   // 2. Binary Search specific parsing (Problem ID 704)
-  if (problemId === 704) {
+  if (numericProblemId === 704) {
     const targetVal = lines[0] ? lines[0].trim() : "9";
     const numsLine = lines[1] || "-1 0 3 5 9 12";
     const nums = numsLine.split(/\s+/).map((n) => Number(n.trim())).filter((n) => !isNaN(n));
@@ -101,13 +115,13 @@ export function VisualExampleCard({ tc, index, problemId }) {
   const data = parseMasterAlgoData(tc, problemId);
 
   const handleCopyInput = () => {
-    navigator.clipboard.writeText(data.inputString);
+    navigator.clipboard?.writeText(data.inputString)?.catch(() => {});
     setCopiedInput(true);
     setTimeout(() => setCopiedInput(false), 1500);
   };
 
   const handleCopyOutput = () => {
-    navigator.clipboard.writeText(data.outputString);
+    navigator.clipboard?.writeText(data.outputString)?.catch(() => {});
     setCopiedOutput(true);
     setTimeout(() => setCopiedOutput(false), 1500);
   };

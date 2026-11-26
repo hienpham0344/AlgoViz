@@ -46,7 +46,6 @@ function formatInline(text) {
 export default function LessonPage({
   courseId = "sorting-masterclass",
   lessonId = 1,
-  userName = "Developer",
   isAuthenticated = true,
 }) {
   const { progress, loading: progressLoading, error: progressError, save, retry } = useLearningProgress(isAuthenticated);
@@ -99,9 +98,14 @@ export default function LessonPage({
   // Quiz interactive state: { [quizId]: selectedOptionIndex }
   const [selectedAnswers, setSelectedAnswers] = useState({});
 
-  // Reset quiz answers when lesson changes
+  // Reset quiz answers when lesson changes and scroll to quiz if requested
   useEffect(() => {
-    const id = setTimeout(() => setSelectedAnswers({}), 0);
+    const id = setTimeout(() => {
+      setSelectedAnswers({});
+      if (window.location.hash.includes("section=quiz") || window.location.hash.endsWith("#quiz")) {
+        document.getElementById("quiz")?.scrollIntoView({ behavior: "smooth" });
+      }
+    }, 0);
     return () => clearTimeout(id);
   }, [courseId, lessonId]);
 
@@ -360,7 +364,7 @@ export default function LessonPage({
                           <polyline points="16 18 22 12 16 6" />
                           <polyline points="8 6 2 12 8 18" />
                         </svg>
-                        Python 3.12
+                        {lessonData.codeSandbox.language || "Python 3.12"}
                       </span>
                       <span className="code-sandbox-desc">
                         {lessonData.codeSandbox.title}
@@ -429,6 +433,12 @@ export default function LessonPage({
                       className="code-textarea"
                       value={userCode}
                       onChange={(e) => setUserCode(e.target.value)}
+                      onKeyDown={(e) => {
+                        if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+                          e.preventDefault();
+                          handleRunCode();
+                        }
+                      }}
                       spellCheck="false"
                       aria-label="Interactive Python code editor"
                     />

@@ -13,15 +13,19 @@ export default function SubmissionCelebrationModal({
 
   useEffect(() => {
     if (!isOpen) {
-      const timer = setTimeout(() => setShowContent(false), 0);
-      return () => clearTimeout(timer);
+      return undefined;
     }
 
     const timer = setTimeout(() => setShowContent(true), 50);
 
     // Canvas Confetti Animation
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas) {
+      return () => {
+        clearTimeout(timer);
+        setShowContent(false);
+      };
+    }
     const ctx = canvas.getContext("2d");
     let animId;
 
@@ -33,8 +37,9 @@ export default function SubmissionCelebrationModal({
     window.addEventListener("resize", resize);
 
     const theme = getComputedStyle(document.documentElement);
+    const fallbackColors = ["#10b981", "#0ea5e9", "#f59e0b", "#8b5cf6"];
     const colors = ["--status-success", "--accent-primary", "--status-warning", "--accent-purple"]
-      .map((token) => theme.getPropertyValue(token).trim());
+      .map((token, idx) => theme.getPropertyValue(token).trim() || fallbackColors[idx]);
 
     const particleCount = 80;
     const particles = [];
@@ -107,6 +112,7 @@ export default function SubmissionCelebrationModal({
 
     return () => {
       clearTimeout(timer);
+      setShowContent(false);
       cancelAnimationFrame(animId);
       window.removeEventListener("resize", resize);
     };

@@ -80,10 +80,11 @@ function App() {
     window.addEventListener("hashchange", handleLocationChange);
     window.addEventListener("popstate", handleLocationChange);
     window.addEventListener("algoviz:logout", handleLogout);
-    const handleProfileUpdate = () => setUserName(localStorage.getItem(USER_NAME_STORAGE_KEY) || "Your name");
+    const handleProfileUpdate = () =>
+      setUserName(getToken() ? localStorage.getItem(USER_NAME_STORAGE_KEY) || "Developer" : "Guest");
     const handleStorage = (event) => {
       if (event.key === "algoviz-token" || event.key === AUTH_STORAGE_KEY || event.key === null) {
-        setIsAuthenticated(Boolean(getToken()));
+        setIsAuthenticated(localStorage.getItem(AUTH_STORAGE_KEY) === "true" && Boolean(getToken()));
         handleProfileUpdate();
       }
     };

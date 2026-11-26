@@ -6,7 +6,7 @@
 
 ## 1. The Complete End-to-End SDLC Lifecycle
 
-Every software initiative managed in this workspace follows a deterministic 6-stage lifecycle:
+For new features spanning multiple components, use this 6-stage lifecycle as a checklist. For small edits and bug fixes, use only the relevant stages. Deploy or release only when requested:
 
 ```mermaid
 flowchart LR
@@ -19,7 +19,9 @@ flowchart LR
 
 ---
 
-## 2. The 22 Subagents Roster (`agents.toml`)
+## 2. Agents-kit Role Profiles (`.agents/agents.toml`)
+
+These 22 profiles guide the Agents-kit CLI. Codex custom agents are configured separately under `.codex/agents/`.
 
 1. **`system_coordinator`**: High-level orchestrator, SRS author, ticket creator.
 2. **`database_architect`**: ERD modeler, DDL designer, zero-downtime migration planner.
@@ -46,16 +48,18 @@ flowchart LR
 
 ---
 
-## 3. 21 Curated Skill Domains (285 Skills Total)
+## 3. Skill Catalog (287 in Agents-kit; 34 active here)
+
+The active project skills are in `.agents/skills/`. The other 269 links remain available in `.agents/skills-disabled/`.
 Includes Planning & YC Product Workflows, Clean Architecture, TDD, Design-Taste, Security Threat, Full Stacks, Ops Guardrails, Documents & Media, AI/LLM, Cloud & Serverless (Neon, Cloudflare, Supabase), Testing & Concurrency (k6, Browserbase), Mobile, Streaming Data, SRE, Data/ML Analytics (Hugging Face, DuckDB, Polars), 3D Web & Desktop (Remotion, Three.js), Offensive Red Team, Low-Level Systems, Enterprise AWS/GCP/Azure, Developer Productivity (Google Workspace, Git internals), and Advanced Frontend Mastery (Angular Signals, React 19, Resend).
 
 ---
 
 ## 4. Central References & Cookbooks Hub (`references/`)
 Provides authoritative technical cheat sheets accessible via `agents-kit reference <topic>`:
-- `references/frontend/modern-css-cheat-sheet.md` (Subgrid, Container Queries, clamp(), dvh/svh/lvh, @layer)
-- `references/frontend/react-19-and-nextjs15-reference.md` (use() hook, useActionState, useOptimistic, slots)
-- `references/frontend/tanstack-query-v5-cookbook.md` (Query key factory, optimistic mutations, SSR hydration)
-- `references/frontend/wcag-accessibility-audit-checklist.md` (WCAG 2.2 AA audit checklist & ARIA 1.2)
-- `references/frontend/design-tokens-and-color-palettes.md` (Oklch color scales, 8pt spacing, shadows)
-- `references/frontend/state-management-matrix.md` (Zustand, Jotai, React Context, Signals decision tree)
+- `docs/references/frontend/modern-css-cheat-sheet.md` (Subgrid, Container Queries, clamp(), dvh/svh/lvh, @layer)
+- `docs/references/frontend/react-19-and-nextjs15-reference.md` (use() hook, useActionState, useOptimistic, slots)
+- `docs/references/frontend/tanstack-query-v5-cookbook.md` (Query key factory, optimistic mutations, SSR hydration)
+- `docs/references/frontend/wcag-accessibility-audit-checklist.md` (WCAG 2.2 AA audit checklist & ARIA 1.2)
+- `docs/references/frontend/design-tokens-and-color-palettes.md` (Oklch color scales, 8pt spacing, shadows)
+- `docs/references/frontend/state-management-matrix.md` (Zustand, Jotai, React Context, Signals decision tree)

@@ -180,15 +180,24 @@ export default function ProfilePage() {
   }, []);
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    setError("");
     Promise.all([api.getProfile(), api.getSubmissionHistory(), api.getProblems()]).then(([user, history, catalog]) => {
-      if (!user?.id || !Array.isArray(history) || !Array.isArray(catalog)) throw new Error("Invalid profile response.");
-      if (active) { setProfile({ ...user, displayName: user.fullName || user.username }); setSubmissions(history); setProblems(catalog); }
+      const problemList = Array.isArray(catalog) ? catalog : Array.isArray(catalog?.content) ? catalog.content : null;
+      if (!user?.id || !Array.isArray(history) || !problemList) throw new Error("Invalid profile response.");
+      if (active) {
+        setProfile({ ...user, displayName: user.fullName || user.username });
+        setSubmissions(history);
+        setProblems(problemList);
+        setError("");
+      }
     }).catch((cause) => { if (active) setError(cause.message); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [reloadKey]);
+  const handleRetry = useCallback(() => {
+    setLoading(true);
+    setError("");
+    setReloadKey((key) => key + 1);
+  }, []);
   useEffect(() => {
     const openSecurity = () => { setModalTab("security"); setIsEditModalOpen(true); };
     const checkHash = () => {
@@ -207,10 +216,10 @@ export default function ProfilePage() {
   const stats = profileStats(submissions, problems);
   return <main className="profile-page" id="top"><div className="profile-main profile-shell">
     <div className="profile-breadcrumb"><a href="#problems">Home</a><span>/</span><strong>Profile</strong></div>
-    <ApiState loading={loading} error={error} onRetry={() => setReloadKey((key) => key + 1)} label="Loading profile…" page />
+    <ApiState loading={loading} error={error} onRetry={handleRetry} label="Loading profile…" page />
     {!loading && !error && <>
       <ProfileHeader profile={profile} onEdit={() => { setModalTab("profile"); setIsEditModalOpen(true); }} />
-      <Statistics stats={stats} points={profile.points} /><Activity stats={stats} /><LearningProgress stats={stats} /><AnalysisHistory submissions={submissions} />
+      <Statistics stats={stats} points={profile?.points} /><Activity stats={stats} /><LearningProgress stats={stats} /><AnalysisHistory submissions={submissions} />
       <EditProfileModal key={isEditModalOpen ? modalTab : "closed"} isOpen={isEditModalOpen} onClose={closeModal}
         initialTab={modalTab} profileData={profile} onSave={saveProfile} />
     </>}

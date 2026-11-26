@@ -81,7 +81,7 @@ public class SecurityConfig {
         return http.build();
     }
 
-    @org.springframework.beans.factory.annotation.Value("${algoviz.cors.allowed-origins:http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://localhost:8080}")
+    @org.springframework.beans.factory.annotation.Value("${algoviz.cors.allowed-origins:http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://localhost:8080,chrome-extension://*}")
     private String allowedOrigins;
 
     @Bean

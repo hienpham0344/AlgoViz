@@ -404,6 +404,12 @@
   border: 1px solid #34a853;
 }
 
+.analyze-runtime-state--failed {
+  background: #fce8e6;
+  color: #c5221f;
+  border: 1px solid #ea4335;
+}
+
 .analyze-editor-actions {
   display: flex;
   align-items: center;
@@ -577,6 +583,12 @@
   background: #e6f4ea;
   border-color: #ceead6;
   color: #137333;
+}
+
+.analyze-vis-status-pill--failed {
+  background: #fce8e6;
+  border-color: #fad2cf;
+  color: #c5221f;
 }
 
 .analyze-vis-status-dot {
@@ -809,6 +821,10 @@ body.is-resizing-vertical {
 
 .analyze-console-line--success {
   color: #81c995;
+}
+
+.analyze-console-line--error {
+  color: #f28b82;
 }
 
 /* -------------------------------------------------------------

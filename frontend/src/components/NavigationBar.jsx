@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api, getToken } from "../services/api.js";
 import ThemeToggle from "./ThemeToggle.jsx";
 import "./components.css";
@@ -17,6 +17,7 @@ function NavigationBar({
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
+  const userMenuRef = useRef(null);
 
   const isAuthenticated =
     propAuth !== undefined
@@ -32,8 +33,22 @@ function NavigationBar({
       setIsAccountMenuOpen(false);
     };
 
+    const handleClickOutside = (event) => {
+      if (
+        isAccountMenuOpen &&
+        userMenuRef.current &&
+        !userMenuRef.current.contains(event.target)
+      ) {
+        setIsAccountMenuOpen(false);
+      }
+    };
+
     window.addEventListener("keydown", handleEscape);
-    return () => window.removeEventListener("keydown", handleEscape);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      window.removeEventListener("keydown", handleEscape);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, [isAccountMenuOpen, isMenuOpen]);
 
   const closeMenu = () => {
@@ -41,7 +56,8 @@ function NavigationBar({
     setIsAccountMenuOpen(false);
   };
 
-  const initial = (userName && userName !== "Your name" ? userName.charAt(0) : "U").toUpperCase();
+  const trimmedName = String(userName || "").trim();
+  const initial = (trimmedName && trimmedName !== "Your name" ? trimmedName.charAt(0) : "U").toUpperCase();
 
   return (
     <>
@@ -86,7 +102,7 @@ function NavigationBar({
           <>
 
 
-            <div className={`av-user ${isAccountMenuOpen ? "is-account-menu-open" : ""}`}>
+            <div ref={userMenuRef} className={`av-user ${isAccountMenuOpen ? "is-account-menu-open" : ""}`}>
               <button
                 className="av-user-avatar-button"
                 type="button"

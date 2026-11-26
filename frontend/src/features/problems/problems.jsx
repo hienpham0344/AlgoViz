@@ -289,7 +289,8 @@ function sortProblems(problems, sort) {
 }
 
 function DifficultyBadge({ difficulty }) {
-  return <span className={`diff-badge diff-badge--${difficulty.toLowerCase()}`}>{difficulty}</span>;
+  const safeDifficulty = difficulty || "Easy";
+  return <span className={`diff-badge diff-badge--${safeDifficulty.toLowerCase()}`}>{safeDifficulty}</span>;
 }
 
 function ProblemHeroBanner({
@@ -309,11 +310,6 @@ function ProblemHeroBanner({
   const [showStats, setShowStats] = useState(true);
   const percent = totalCount > 0 ? Math.round((solvedCount / totalCount) * 100) : 0;
   const displayName = userName && userName !== "Your name" ? userName : "Guest";
-
-  // Circular progress ring calculation (radius 22, circumference ~138.23)
-  const radius = 22;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (percent / 100) * circumference;
 
   const activity = profileStats(history, []);
   const weekDays = ["S", "M", "T", "W", "T", "F", "S"];
@@ -755,23 +751,15 @@ function Pagination({ page, pageCount, onPageChange }) {
 function ProblemsSidebar({
   problems,
   history,
-  totalCount,
-  solvedCount,
-  easySolved,
-  easyTotal,
-  medSolved,
-  medTotal,
-  hardSolved,
-  hardTotal,
   onSolve,
   onVisualizer,
 }) {
-  const percent = totalCount > 0 ? Math.round((solvedCount / totalCount) * 100) : 0;
   const dailyProblem = problems.find((problem) => problem.id === 1) || problems.find((problem) => problem.hasVisualizer) || problems[0] || null;
   const preview = problemText(dailyProblem?.shortDescription || "Practice this problem and explore its reference solutions.")
     .replace(/\s+/g, " ");
   const activity = profileStats(history, []);
   if (!dailyProblem) return null;
+  const dailyDifficulty = dailyProblem.difficulty || "Easy";
 
   return (
     <div className="problems-sidebar">
@@ -797,10 +785,10 @@ function ProblemsSidebar({
             #{dailyProblem.id} {dailyProblem.title}
           </h4>
           <div className="daily-problem-meta">
-            <span className={`diff-badge diff-badge--${dailyProblem.difficulty.toLowerCase()}`}>
-              {dailyProblem.difficulty}
+            <span className={`diff-badge diff-badge--${dailyDifficulty.toLowerCase()}`}>
+              {dailyDifficulty}
             </span>
-            <span className="daily-meta-tag">{dailyProblem.topics[0]}</span>
+            <span className="daily-meta-tag">{dailyProblem.topics?.[0] || "Algorithm"}</span>
             <span className="daily-meta-rate">{dailyProblem.acceptance == null ? "No submissions yet" : `${dailyProblem.acceptance}% pass`}</span>
           </div>
           <p className="daily-problem-hint">
@@ -938,13 +926,18 @@ function ProblemsPage({ userName = "Your name", isAuthenticated = false, onOpenP
         ]);
         if (!active) return;
         if (catalog.status === "rejected") throw catalog.reason;
-        if (!Array.isArray(catalog.value)) throw new Error("Invalid problems response.");
+        const catalogItems = Array.isArray(catalog.value)
+          ? catalog.value
+          : Array.isArray(catalog.value?.content)
+          ? catalog.value.content
+          : null;
+        if (!catalogItems) throw new Error("Invalid problems response.");
         const records = submissions.status === "fulfilled" && Array.isArray(submissions.value) ? submissions.value : [];
         setHistory(records);
         if (submissions.status === "rejected") setLoadError("Could not load your progress. Please try again.");
         const solvedIds = new Set(records.filter((item) => isAccepted(item.status)).map((item) => item.problemId));
         const attemptedIds = new Set(records.map((item) => item.problemId));
-        setProblemsList(catalog.value.map((p) => ({
+        setProblemsList(catalogItems.map((p) => ({
           ...p, difficulty: p.difficulty || "Easy",
           acceptance: typeof p.acceptanceRate === "number" ? Math.round(p.acceptanceRate * 10) / 10 : null,
           topics: p.category ? p.category.split(/,\s*/) : ["Algorithm"],
@@ -1172,14 +1165,6 @@ function ProblemsPage({ userName = "Your name", isAuthenticated = false, onOpenP
             <ProblemsSidebar
               problems={problemsList}
               history={history}
-              totalCount={totalProblemsCount}
-              solvedCount={solvedCount}
-              easySolved={easySolved}
-              easyTotal={easyTotal}
-              medSolved={medSolved}
-              medTotal={medTotal}
-              hardSolved={hardSolved}
-              hardTotal={hardTotal}
               onSolve={handleSolve}
               onVisualizer={handleOpenVisualizer}
             />

@@ -506,6 +506,11 @@
   color: #047857;
 }
 
+.algo-lang--javascript {
+  background: #fefce8;
+  color: #a16207;
+}
+
 .algo-date {
   font-size: 12px;
   color: #64748b;
@@ -742,3 +747,74 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Dark theme overrides */
+[data-theme="dark"] .history-page {
+  background-color: var(--bg-app, #0f1117);
+  color: var(--text-primary, #f0f3f8);
+}
+
+[data-theme="dark"] .history-hero h1,
+[data-theme="dark"] .history-breadcrumb strong,
+[data-theme="dark"] .history-stat-val strong,
+[data-theme="dark"] .algo-title,
+[data-theme="dark"] .history-empty-td p {
+  color: var(--text-primary, #f0f3f8);
+}
+
+[data-theme="dark"] .history-hero p,
+[data-theme="dark"] .history-breadcrumb,
+[data-theme="dark"] .history-breadcrumb a,
+[data-theme="dark"] .history-stat-label,
+[data-theme="dark"] .history-stat-sub,
+[data-theme="dark"] .algo-topic,
+[data-theme="dark"] .algo-date,
+[data-theme="dark"] .history-table-footer,
+[data-theme="dark"] .history-page-size-selector {
+  color: var(--text-secondary, #9da7bb);
+}
+
+[data-theme="dark"] .history-stat-card,
+[data-theme="dark"] .history-table-card {
+  background: var(--bg-surface, #181b24);
+  border-color: var(--border-muted, #2f3548);
+}
+
+[data-theme="dark"] .history-toolbar-search,
+[data-theme="dark"] .history-sort-btn,
+[data-theme="dark"] .history-btn-secondary,
+[data-theme="dark"] .history-page-size-selector select,
+[data-theme="dark"] .history-pagination button:not(.is-current) {
+  background: var(--bg-surface-raised, #1f2330);
+  border-color: var(--border-muted, #2f3548);
+  color: var(--text-primary, #f0f3f8);
+}
+
+[data-theme="dark"] .history-toolbar-search input {
+  color: var(--text-primary, #f0f3f8);
+}
+
+[data-theme="dark"] .history-table th,
+[data-theme="dark"] .history-table-footer {
+  background: var(--bg-surface-raised, #1f2330);
+  border-color: var(--border-subtle, #242938);
+  color: var(--text-secondary, #9da7bb);
+}
+
+[data-theme="dark"] .history-table td {
+  border-bottom-color: var(--border-subtle, #242938);
+  color: var(--text-primary, #f0f3f8);
+}
+
+[data-theme="dark"] .history-table tbody tr:hover {
+  background: var(--bg-surface-raised, #1f2330);
+}
+
+[data-theme="dark"] .history-table tbody tr.is-row-selected {
+  background: rgba(56, 189, 248, 0.12);
+}
+
+[data-theme="dark"] .history-simple-footer {
+  border-top-color: var(--border-subtle, #242938);
+}
+

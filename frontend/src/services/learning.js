@@ -1,7 +1,9 @@
-export function withLearningProgress(courses, progress) {
-  const completed = new Set(progress.map((item) => `${item.courseId}:${item.lessonId}`));
-  return courses.map((course) => {
-    const lessons = course.lessons.map((lesson) => ({ ...lesson,
+export function withLearningProgress(courses = [], progress = []) {
+  const safeProgress = Array.isArray(progress) ? progress : [];
+  const completed = new Set(safeProgress.map((item) => `${item?.courseId}:${item?.lessonId}`));
+  return (Array.isArray(courses) ? courses : []).map((course) => {
+    const rawLessons = Array.isArray(course?.lessons) ? course.lessons : [];
+    const lessons = rawLessons.map((lesson) => ({ ...lesson,
       status: completed.has(`${course.id}:${lesson.id}`) ? "completed" : "not-started",
     }));
     const completedLessons = lessons.filter((lesson) => lesson.status === "completed").length;

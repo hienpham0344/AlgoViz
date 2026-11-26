@@ -416,7 +416,7 @@ function HistoryFooter() {
   );
 }
 
-function HistoryPage({ userName = "Developer", isAuthenticated = false }) {
+function HistoryPage() {
   const [query, setQuery] = useState("");
   const [language, setLanguage] = useState("All");
   const [completion, setCompletion] = useState("All");
@@ -539,7 +539,7 @@ function HistoryPage({ userName = "Developer", isAuthenticated = false }) {
   };
 
   const handleViewProblem = (row) => {
-    window.location.hash = `problem-details?id=${row.problemId}&tab=submissions`;
+    window.location.hash = `#problem-details?id=${row.problemId}&tab=submissions`;
   };
 
   // Dynamic calculations for Hero stats

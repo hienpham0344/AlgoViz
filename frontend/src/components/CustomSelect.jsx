@@ -12,13 +12,14 @@ export default function CustomSelect({
   align = "left",
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [computedDirection, setComputedDirection] = useState(
-    direction === "up" ? "up" : "down"
-  );
+  const [autoDirection, setAutoDirection] = useState("down");
   const containerRef = useRef(null);
 
+  const computedDirection =
+    direction === "auto" ? autoDirection : direction === "up" ? "up" : "down";
+
   // Normalize options array
-  const normalizedOptions = options.map((opt) => {
+  const normalizedOptions = (Array.isArray(options) ? options : []).map((opt) => {
     if (typeof opt === "object" && opt !== null) {
       return opt;
     }
@@ -30,26 +31,14 @@ export default function CustomSelect({
     label: value || placeholder,
   };
 
-  useEffect(() => {
-    if (isOpen) {
-      if (direction === "auto") {
-        if (containerRef.current) {
-          const rect = containerRef.current.getBoundingClientRect();
-          const spaceBelow = window.innerHeight - rect.bottom;
-          const spaceAbove = rect.top;
-          if (spaceBelow < 220 && spaceAbove > spaceBelow) {
-            setComputedDirection("up");
-          } else {
-            setComputedDirection("down");
-          }
-        }
-      } else {
-        // defer to avoid cascade render
-        const id = requestAnimationFrame(() => setComputedDirection(direction));
-        return () => cancelAnimationFrame(id);
-      }
+  const measureAutoDirection = () => {
+    if (direction === "auto" && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      setAutoDirection(spaceBelow < 220 && spaceAbove > spaceBelow ? "up" : "down");
     }
-  }, [isOpen, direction]);
+  };
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -87,7 +76,10 @@ export default function CustomSelect({
       <button
         type="button"
         className="custom-select-trigger"
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={() => {
+          if (!isOpen) measureAutoDirection();
+          setIsOpen((prev) => !prev);
+        }}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-label={ariaLabel || selectedOption.label}

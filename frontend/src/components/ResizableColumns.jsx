@@ -23,7 +23,14 @@ export default function ResizableColumns({
 
   const measure = () => {
     const container = containerRef.current;
-    if (!container || !handleRef.current?.getClientRects().length) return null;
+    if (
+      !container ||
+      !container.firstElementChild ||
+      !container.lastElementChild ||
+      !handleRef.current?.getClientRects().length
+    ) {
+      return null;
+    }
     const primary = container.firstElementChild.getBoundingClientRect();
     const secondary = container.lastElementChild.getBoundingClientRect();
     const width = primary.width + secondary.width;
@@ -55,23 +62,34 @@ export default function ResizableColumns({
   }, []);
 
   useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !container.firstElementChild || !container.lastElementChild) {
+      return undefined;
+    }
     const observer = new ResizeObserver(() => {
-      const container = containerRef.current;
+      const currentContainer = containerRef.current;
       const handle = handleRef.current;
-      if (!container || !handle?.getClientRects().length) return;
-      const width = container.firstElementChild.getBoundingClientRect().width
-        + container.lastElementChild.getBoundingClientRect().width;
+      if (
+        !currentContainer ||
+        !currentContainer.firstElementChild ||
+        !currentContainer.lastElementChild ||
+        !handle?.getClientRects().length
+      ) {
+        return;
+      }
+      const width = currentContainer.firstElementChild.getBoundingClientRect().width
+        + currentContainer.lastElementChild.getBoundingClientRect().width;
       if (width <= 0) return;
       const scale = Math.min(1, width / (minPrimaryWidth + minSecondaryWidth));
       const min = (minPrimaryWidth * scale / width) * 100;
       const max = 100 - (minSecondaryWidth * scale / width) * 100;
-      const share = (container.firstElementChild.getBoundingClientRect().width / width) * 100;
+      const share = (currentContainer.firstElementChild.getBoundingClientRect().width / width) * 100;
       setRange({ min, max, share });
       setPrimaryShare((current) => current == null ? current : Math.min(max, Math.max(min, current)));
     });
-    observer.observe(containerRef.current);
-    observer.observe(containerRef.current.firstElementChild);
-    observer.observe(containerRef.current.lastElementChild);
+    observer.observe(container);
+    observer.observe(container.firstElementChild);
+    observer.observe(container.lastElementChild);
     return () => observer.disconnect();
   }, [minPrimaryWidth, minSecondaryWidth]);
 

@@ -8,18 +8,10 @@
     <script>
       (function() {
         try {
-          var saved = localStorage.getItem("algoviz-theme");
-          if (saved === "dark") {
-            localStorage.setItem("algoviz-theme", "light");
-            saved = "light";
-          }
-          var theme = saved || "light";
-          document.documentElement.setAttribute("data-theme", theme);
+          localStorage.removeItem("algoviz-theme");
+          document.documentElement.setAttribute("data-theme", "light");
           document.documentElement.classList.remove("dark");
-          if (theme === "dark") {
-            document.documentElement.classList.add("dark");
-          }
-          document.documentElement.style.colorScheme = theme;
+          document.documentElement.style.colorScheme = "light";
         } catch (e) {}
       })();
     </script>

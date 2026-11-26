@@ -29,8 +29,9 @@ function StatusIcon({ status }) {
 }
 
 function BadgeState({ status = "Completed", className = "" }) {
-  const label = stateLabels[status] || status;
-  const statusSlug = status.toLowerCase().replace(/\s+/g, "-");
+  const safeStatus = String(status || "Completed").trim() || "Completed";
+  const label = stateLabels[safeStatus] || safeStatus;
+  const statusSlug = safeStatus.toLowerCase().replace(/\s+/g, "-");
 
   return (
     <span className={`av-badge-state av-state-${statusSlug} ${className}`.trim()}>

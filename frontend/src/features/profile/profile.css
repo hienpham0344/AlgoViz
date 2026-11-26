@@ -926,7 +926,7 @@
 
 .profile-history-list article {
   display: grid;
-  grid-template-columns: 48px 1fr 90px 100px;
+  grid-template-columns: auto 1fr auto auto;
   align-items: center;
   gap: 16px;
   padding: 12px 0;
@@ -934,17 +934,20 @@
 }
 
 .profile-language {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
+  min-width: 48px;
+  width: auto;
   height: 28px;
+  padding: 0 8px;
   border-radius: 4px;
   background: #f1f3f4;
   color: #202124;
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .profile-language--java {
@@ -1168,3 +1171,66 @@
     justify-self: start;
   }
 }
+
+/* Dark theme overrides */
+[data-theme="dark"] .profile-page {
+  background-color: var(--bg-app, #0f1117);
+  color: var(--text-primary, #f0f3f8);
+}
+
+[data-theme="dark"] .profile-card,
+[data-theme="dark"] .profile-metric,
+[data-theme="dark"] .profile-heatmap-box {
+  background-color: var(--bg-surface, #181b24);
+  border-color: var(--border-muted, #2f3548);
+  color: var(--text-primary, #f0f3f8);
+}
+
+[data-theme="dark"] .profile-portrait-wrap,
+[data-theme="dark"] .profile-badges span,
+[data-theme="dark"] .activity-kpi-item,
+[data-theme="dark"] .profile-progress-stats > div,
+[data-theme="dark"] .profile-topics > div,
+[data-theme="dark"] .profile-language {
+  background-color: var(--bg-surface-raised, #1f2330);
+  border-color: var(--border-subtle, #242938);
+  color: var(--text-primary, #f0f3f8);
+}
+
+[data-theme="dark"] .profile-name-line h1,
+[data-theme="dark"] .profile-section-heading h2,
+[data-theme="dark"] .profile-panel-heading h2,
+[data-theme="dark"] .profile-panel-heading > b,
+[data-theme="dark"] .profile-metric-top strong,
+[data-theme="dark"] .profile-activity-header h2,
+[data-theme="dark"] .activity-kpi-text strong,
+[data-theme="dark"] .profile-progress-stats strong,
+[data-theme="dark"] .profile-topics span,
+[data-theme="dark"] .profile-breadcrumb strong,
+[data-theme="dark"] .profile-history-list h3 {
+  color: var(--text-primary, #f0f3f8);
+}
+
+[data-theme="dark"] .profile-details p,
+[data-theme="dark"] .profile-email,
+[data-theme="dark"] .profile-breadcrumb,
+[data-theme="dark"] .profile-breadcrumb a,
+[data-theme="dark"] .profile-metric-top span,
+[data-theme="dark"] .profile-metric-bottom small,
+[data-theme="dark"] .activity-kpi-text span,
+[data-theme="dark"] .profile-heat-footer,
+[data-theme="dark"] .profile-history-list p {
+  color: var(--text-secondary, #9da7bb);
+}
+
+[data-theme="dark"] .profile-metric-bottom,
+[data-theme="dark"] .profile-heat-footer,
+[data-theme="dark"] .profile-history-list,
+[data-theme="dark"] .profile-history-list article {
+  border-color: var(--border-subtle, #242938);
+}
+
+[data-theme="dark"] .heat-level-0 {
+  background: #242938 !important;
+}
+

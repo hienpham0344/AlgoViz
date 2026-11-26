@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import "./UserCodeVisualizer.css";
 import ApiState from "../../components/ApiState.jsx";
+import AlgorithmHints from "../visualizer/AlgorithmHints.jsx";
 import { runtimeFrames, traceMatchesEditor } from "../../services/runtimeTrace.js";
 import { languageKey } from "../../services/submissions.js";
 
@@ -124,6 +125,7 @@ export default function UserCodeVisualizer({
       </div>
 
       <ApiState error={captured.partial ? `Partial trace: ${(captured.warnings || []).join(" ")}` : captured.status !== "Success" ? captured.errorMessage || captured.status : ""} />
+      <AlgorithmHints hints={captured?.algorithmHints} />
       {/* 2. Visualizer Canvas Stage */}
       <div className="user-vis-canvas">
         <div className="user-vis-stage-row">

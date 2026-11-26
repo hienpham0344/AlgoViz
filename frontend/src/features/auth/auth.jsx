@@ -6,8 +6,10 @@ import "./auth.css";
 function AuthPage({ mode = "login", onAuthenticated }) {
   const isRegistering = mode === "register";
   const [form, setForm] = useState({ username: "", name: "", email: "", password: "" });
-  const [error, setError] = useState("");
+  const [errorState, setErrorState] = useState({ mode, message: "" });
   const [loading, setLoading] = useState(false);
+  const error = errorState.mode === mode ? errorState.message : "";
+  const setError = (message) => setErrorState({ mode, message });
 
   const updateField = (event) => {
     const { name, value } = event.target;
@@ -140,12 +142,12 @@ function AuthPage({ mode = "login", onAuthenticated }) {
               <input
                 id="auth-email"
                 name="email"
-                type="text"
+                type={isRegistering ? "email" : "text"}
                 className="auth-input"
-                placeholder="name@example.com or username"
+                placeholder={isRegistering ? "name@example.com" : "name@example.com or username"}
                 value={form.email}
                 onChange={updateField}
-                autoComplete="username"
+                autoComplete={isRegistering ? "email" : "username"}
                 required
               />
             </div>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AlgoViz Side Panel &amp; Code Bridge</title>
+  <link rel="stylesheet" href="sidepanel.css" />
+</head>
+<body>
+  <header class="sp-header">
+    <div class="sp-brand">
+      <span id="health-dot" class="sp-health-dot" data-status="checking" title="Checking AST-tool/JDI engine..."></span>
+      <div>
+        <h1 class="sp-title">AlgoViz Bridge</h1>
+        <p id="health-label" class="sp-subtitle">AST-tool / JDI Companion</p>
+      </div>
+    </div>
+    <div class="sp-header-actions">
+      <button id="btn-theme" class="sp-icon-btn" type="button" title="Toggle Dark/Light Theme" aria-label="Toggle Theme">◐</button>
+      <button id="btn-toggle-settings" class="sp-icon-btn" type="button" title="Backend &amp; Server Settings" aria-label="Settings">⚙</button>
+      <button id="btn-open-studio" class="sp-btn sp-btn-ghost" type="button" title="Open AlgoViz Visualizer Studio">Studio ↗</button>
+    </div>
+  </header>
+
+  <section id="settings-drawer" class="sp-settings-drawer" hidden>
+    <label class="sp-field-label" for="input-api-url">AlgoViz Server URL</label>
+    <div class="sp-settings-row">
+      <input id="input-api-url" class="sp-input" type="url" placeholder="http://localhost:8080" spellcheck="false" />
+      <button id="btn-save-url" class="sp-btn sp-btn-primary" type="button">Save &amp; Ping</button>
+    </div>
+    <p id="settings-status" class="sp-helper-text">Connects to local Docker/Spring Boot (port 8080) or Azure Container Apps.</p>
+  </section>
+
+  <section class="sp-bridge-bar">
+    <button id="btn-grab-code" class="sp-btn sp-btn-primary" type="button" title="Extract code from active Wecode UIT or LeetCode editor">
+      📥 Grab Editor
+    </button>
+    <select id="select-preset" class="sp-select" aria-label="Load Seeded Algorithm or Problem">
+      <option value="">⚡ Presets (UIT / LeetCode)...</option>
+      <option value="bubble-sort">Bubble Sort (Java AST Trace)</option>
+      <option value="binary-search">#704 Binary Search (Java Trace)</option>
+      <option value="two-sum">#1 Two Sum (Java Trace)</option>
+      <option value="valid-anagram">#242 Valid Anagram (Java Trace)</option>
+    </select>
+    <button id="btn-open-problem" class="sp-btn sp-btn-ghost" type="button" title="Open Problem Workspace in AlgoViz">
+      Problem ↗
+    </button>
+  </section>
+
+  <section class="sp-editor-card">
+    <div class="sp-editor-toolbar">
+      <div class="sp-source-meta">
+        <span id="source-badge" class="sp-badge">Ready</span>
+        <input id="input-problem-id" class="sp-input-mini" type="text" placeholder="ID / Slug (e.g. 1)" title="Problem ID or LeetCode ID for deep-linking" />
+      </div>
+      <select id="select-lang" class="sp-select sp-select-lang" aria-label="Programming Language">
+        <option value="java">Java 21 (AST + JDI Trace)</option>
+        <option value="python">Python 3 (Runner)</option>
+        <option value="cpp">C++17 (Runner)</option>
+        <option value="javascript">JavaScript (Runner)</option>
+      </select>
+    </div>
+
+    <textarea
+      id="code-input"
+      class="sp-code-textarea"
+      rows="10"
+      spellcheck="false"
+      placeholder="Paste code or click 'Grab Editor' on Wecode UIT / LeetCode..."
+    ></textarea>
+
+    <div class="sp-input-row">
+      <input
+        id="custom-input"
+        class="sp-input"
+        type="text"
+        spellcheck="false"
+        placeholder="Optional custom stdin / input (e.g. target or array)..."
+      />
+    </div>
+
+    <div class="sp-action-bar">
+      <button id="btn-trace" class="sp-btn sp-btn-accent" type="button">
+        ▶ Trace Java (JDI)
+      </button>
+      <button id="btn-run" class="sp-btn sp-btn-secondary" type="button">
+        ⚡ Run Code
+      </button>
+      <button id="btn-analyze" class="sp-btn sp-btn-secondary" type="button">
+        🧠 Complexity
+      </button>
+    </div>
+  </section>
+
+  <section id="status-banner" class="sp-status-banner" hidden></section>
+
+  <section id="hints-panel" class="sp-card" hidden>
+    <div class="sp-card-header">
+      <h2 class="sp-card-title">AST Recognized Algorithm Patterns</h2>
+      <span id="catalog-version" class="sp-badge">intermediate-v1</span>
+    </div>
+    <div id="hints-list" class="sp-hints-list"></div>
+  </section>
+
+  <section id="trace-player" class="sp-card" hidden>
+    <div class="sp-card-header">
+      <h2 class="sp-card-title">Live Runtime Trace</h2>
+      <span id="step-counter" class="sp-step-pill">Step 0 / 0</span>
+    </div>
+
+    <div class="sp-player-controls">
+      <button id="btn-first" class="sp-ctrl-btn" type="button" title="First Step" aria-label="First Step">⏮</button>
+      <button id="btn-prev" class="sp-ctrl-btn" type="button" title="Previous Step" aria-label="Previous Step">◀</button>
+      <button id="btn-play" class="sp-ctrl-btn sp-ctrl-play" type="button" title="Auto-Play / Pause" aria-label="Play or Pause">▶ Play</button>
+      <button id="btn-next" class="sp-ctrl-btn" type="button" title="Next Step" aria-label="Next Step">▶</button>
+      <button id="btn-last" class="sp-ctrl-btn" type="button" title="Last Step" aria-label="Last Step">⏭</button>
+    </div>
+
+    <input id="step-scrubber" class="sp-scrubber" type="range" min="0" max="0" value="0" aria-label="Trace Step Scrubber" />
+
+    <div id="line-banner" class="sp-line-banner"></div>
+
+    <div id="array-stage" class="sp-array-stage">
+      <div class="sp-stage-header">
+        <span id="array-title" class="sp-stage-label">Array State</span>
+        <span id="visual-status-badge" class="sp-badge">OBSERVED</span>
+      </div>
+      <div id="array-bars" class="sp-array-bars"></div>
+      <div id="scalars-row" class="sp-scalars-row"></div>
+    </div>
+
+    <div class="sp-vars-section">
+      <h3 class="sp-section-subtitle">Local Variables &amp; Stack Frame</h3>
+      <div id="vars-table" class="sp-vars-table"></div>
+    </div>
+  </section>
+
+  <section id="runner-panel" class="sp-card" hidden>
+    <div class="sp-card-header">
+      <h2 class="sp-card-title">Multi-Language Execution Output</h2>
+      <span id="runner-status-badge" class="sp-badge">Accepted</span>
+    </div>
+    <div id="runner-metrics" class="sp-metrics-row"></div>
+    <pre id="runner-output" class="sp-pre-output"></pre>
+  </section>
+
+  <section id="analysis-panel" class="sp-card" hidden>
+    <div class="sp-card-header">
+      <h2 class="sp-card-title">Complexity &amp; Static Analysis</h2>
+      <div class="sp-complexity-pills">
+        <span id="pill-time" class="sp-badge sp-badge-accent">Time: -</span>
+        <span id="pill-space" class="sp-badge">Space: -</span>
+      </div>
+    </div>
+    <p id="analysis-summary" class="sp-analysis-summary"></p>
+    <div id="analysis-lists" class="sp-analysis-lists"></div>
+  </section>
+
+  <script type="module" src="sidepanel.js"></script>
+</body>
+</html>

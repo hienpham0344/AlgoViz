@@ -14,3 +14,6 @@ scratch*
 
 # Local environment (Docker Compose)
 .env
+
+# Generated frontend bundle copied into backend static resources
+backend/src/main/resources/static/

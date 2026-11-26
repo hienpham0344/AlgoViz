@@ -2010,3 +2010,91 @@
     padding: 14px 20px;
   }
 }
+
+/* Dark theme overrides */
+[data-theme="dark"] .learn-page {
+  background-color: var(--bg-app, #0f1117);
+  color: var(--text-primary, #f0f3f8);
+}
+
+[data-theme="dark"] .learn-header h1,
+[data-theme="dark"] .learn-breadcrumb strong,
+[data-theme="dark"] .your-courses-header h2,
+[data-theme="dark"] .your-courses-user-icon,
+[data-theme="dark"] .your-course-info h3,
+[data-theme="dark"] .catalog-title-group h2,
+[data-theme="dark"] .catalog-icon,
+[data-theme="dark"] .kaggle-card-title,
+[data-theme="dark"] .kaggle-list-info h3,
+[data-theme="dark"] .learn-guides-title-row h2,
+[data-theme="dark"] .learn-guide-title,
+[data-theme="dark"] .curriculum-header-left h2,
+[data-theme="dark"] .curriculum-lessons-heading,
+[data-theme="dark"] .lesson-info h4,
+[data-theme="dark"] .guide-modal-title,
+[data-theme="dark"] .guide-step-title,
+[data-theme="dark"] .learn-footer-brand {
+  color: var(--text-primary, #f0f3f8);
+}
+
+[data-theme="dark"] .learn-breadcrumb,
+[data-theme="dark"] .learn-breadcrumb a,
+[data-theme="dark"] .your-course-subtext,
+[data-theme="dark"] .your-course-completed-text,
+[data-theme="dark"] .kaggle-card-description,
+[data-theme="dark"] .kaggle-chip-lessons,
+[data-theme="dark"] .kaggle-list-info p,
+[data-theme="dark"] .learn-guides-subtitle,
+[data-theme="dark"] .learn-guide-subtitle-text,
+[data-theme="dark"] .learn-guide-meta,
+[data-theme="dark"] .curriculum-description,
+[data-theme="dark"] .lesson-info p,
+[data-theme="dark"] .guide-modal-sub,
+[data-theme="dark"] .guide-step-desc {
+  color: var(--text-secondary, #9da7bb);
+}
+
+[data-theme="dark"] .your-course-row,
+[data-theme="dark"] .kaggle-course-card,
+[data-theme="dark"] .kaggle-course-list-row,
+[data-theme="dark"] .learn-guide-card,
+[data-theme="dark"] .curriculum-modal-card,
+[data-theme="dark"] .curriculum-modal-header,
+[data-theme="dark"] .curriculum-lesson-item,
+[data-theme="dark"] .guide-modal,
+[data-theme="dark"] .guide-modal-header,
+[data-theme="dark"] .catalog-empty-state {
+  background: var(--bg-surface, #181b24);
+  border-color: var(--border-muted, #2f3548);
+}
+
+[data-theme="dark"] .catalog-category-pill:not(.is-active),
+[data-theme="dark"] .catalog-search-box,
+[data-theme="dark"] .catalog-view-switcher,
+[data-theme="dark"] .learn-guide-pill:not(.is-active),
+[data-theme="dark"] .learn-guide-takeaway,
+[data-theme="dark"] .learn-guide-prob-chip,
+[data-theme="dark"] .curriculum-progress-summary,
+[data-theme="dark"] .curriculum-modal-footer,
+[data-theme="dark"] .guide-overview-box,
+[data-theme="dark"] .guide-step-item,
+[data-theme="dark"] .guide-code-header,
+[data-theme="dark"] .guide-modal-footer,
+[data-theme="dark"] .guide-modal-prob-btn,
+[data-theme="dark"] .learn-footer {
+  background: var(--bg-surface-raised, #1f2330);
+  border-color: var(--border-subtle, #242938);
+  color: var(--text-primary, #f0f3f8);
+}
+
+[data-theme="dark"] .catalog-search-box input {
+  color: var(--text-primary, #f0f3f8);
+}
+
+[data-theme="dark"] .kaggle-card-footer,
+[data-theme="dark"] .learn-guide-footer,
+[data-theme="dark"] .your-courses-header,
+[data-theme="dark"] .learn-guides-section {
+  border-color: var(--border-subtle, #242938);
+}
+

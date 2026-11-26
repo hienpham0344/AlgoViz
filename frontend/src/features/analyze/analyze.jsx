@@ -113,39 +113,6 @@ int main() {
 
 const DEFAULT_ARRAY = [5, 2, 8, 1, 9, 3];
 
-const FOOTER_COLUMNS = [
-  {
-    title: "Curriculum",
-    links: [
-      "Dynamic Programming",
-      "Trees & Graph Algorithms",
-      "Binary Search & Pointers",
-      "Bit Manipulation",
-      "System Design Foundations",
-    ],
-  },
-  {
-    title: "Platform",
-    links: [
-      "Problem Directory",
-      "Algorithm Visualizer",
-      "Weekly Coding Battles",
-      "Company Tagged Lists",
-      "Leaderboard",
-    ],
-  },
-  {
-    title: "Community",
-    links: [
-      "Discussion Forums",
-      "Interview Experiences",
-      "Discord Community",
-      "Editorial Solutions",
-      "FAQ & Help Center",
-    ],
-  },
-];
-
 const CODE_TOKEN_PATTERN = /(\/\/.*$|#.*$|\b(?:public|class|static|void|for|if|int|return|def|function|const|let|range|len|include|vector|utility|std|namespace)\b|\b(?:Main|bubbleSort|bubble_sort|arr|length|size|temp|swap)\b|\b\d+\b)/g;
 const CODE_KEYWORDS = new Set([
   "public",
@@ -340,19 +307,26 @@ function CodeEditor({ code, onChange, isFullscreen, activeLineIndex, onRunShortc
   );
 }
 
-function RuntimeStats({ executionState }) {
+function RuntimeStats({ executionState, executionResult }) {
   const statusLabels = {
     ready: "Ready",
     running: "Executing...",
     passed: "Trace Active",
+    failed: "Execution Failed",
   };
+  const ramLabel = executionResult?.memoryUsageMb != null
+    ? `${Number(executionResult.memoryUsageMb).toFixed(1)} MB`
+    : "—";
+  const execLabel = executionResult?.executionTimeMs != null
+    ? `${Number(executionResult.executionTimeMs).toFixed(1)} ms`
+    : "—";
 
   return (
     <div className="analyze-runtime-pill" aria-live="polite">
       <span className="analyze-runtime-dot" aria-hidden="true" />
-      <span>RAM: —</span>
+      <span>RAM: {ramLabel}</span>
       <b>•</b>
-      <span>Exec: —</span>
+      <span>Exec: {execLabel}</span>
       <b>•</b>
       <span className={`analyze-runtime-state analyze-runtime-state--${executionState}`}>
         {statusLabels[executionState] || "Ready"}
@@ -396,6 +370,7 @@ function EditorPanel({
   language,
   code,
   executionState,
+  executionResult,
   isFullscreen,
   activeLineIndex,
   onLanguageChange,
@@ -428,7 +403,7 @@ function EditorPanel({
         onRunShortcut={onRun}
       />
       <footer className="analyze-editor-footer">
-        <RuntimeStats executionState={executionState} />
+        <RuntimeStats executionState={executionState} executionResult={executionResult} />
         <EditorActions
           executionState={executionState}
           onRun={onRun}
@@ -485,7 +460,9 @@ function ExecutionConsole({ logs, isOpen, onToggle, onClear, executionState, exe
       const finalHeight = Math.max(minHeight, Math.min(maxHeight, Math.round(startHeight + finalDelta)));
       try {
         localStorage.setItem("algoviz-analyze-console-height", String(finalHeight));
-      } catch {}
+      } catch {
+        /* ignore storage restrictions */
+      }
     };
 
     window.addEventListener("pointermove", onPointerMove);
@@ -499,14 +476,14 @@ function ExecutionConsole({ logs, isOpen, onToggle, onClear, executionState, exe
       if (!isOpen) onToggle();
       setConsoleHeight((h) => {
         const next = Math.min(maxHeight, h + 24);
-        try { localStorage.setItem("algoviz-analyze-console-height", String(next)); } catch {}
+        try { localStorage.setItem("algoviz-analyze-console-height", String(next)); } catch { /* ignore */ }
         return next;
       });
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
       setConsoleHeight((h) => {
         const next = Math.max(minHeight, h - 24);
-        try { localStorage.setItem("algoviz-analyze-console-height", String(next)); } catch {}
+        try { localStorage.setItem("algoviz-analyze-console-height", String(next)); } catch { /* ignore */ }
         return next;
       });
     } else if (e.key === "Home") {
@@ -523,7 +500,9 @@ function ExecutionConsole({ logs, isOpen, onToggle, onClear, executionState, exe
     setConsoleHeight(nextHeight);
     try {
       localStorage.setItem("algoviz-analyze-console-height", String(nextHeight));
-    } catch {}
+    } catch {
+      /* ignore storage restrictions */
+    }
   };
 
   return (
@@ -673,56 +652,7 @@ function ExecutionVisualizerStudio({
   );
 }
 
-// eslint-disable-next-line no-unused-vars -- Footer is kept for a future layout.
-function _AnalyzeFooter() { // unused
-  return null;
-}
-// eslint-disable-next-line no-unused-vars -- Footer is kept for a future layout.
-function __AnalyzeFooterRemoved() {
-  return (
-    <footer className="analyze-footer">
-      <div className="analyze-footer-grid">
-        <div className="analyze-footer-brand">
-          <a className="analyze-footer-brand-link" href="#top">
-            <span className="analyze-footer-brand-mark">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-              </svg>
-            </span>
-            <span>Algo<span>Master</span></span>
-          </a>
-          <div className="analyze-footer-socials" aria-label="Community links">
-            <a href="#community" aria-label="Code community" />
-            <a href="#community" aria-label="Chat community" />
-            <a href="#community" aria-label="Network community" />
-          </div>
-        </div>
-        {FOOTER_COLUMNS.map((column) => (
-          <div className="analyze-footer-column" key={column.title}>
-            <h2>{column.title}</h2>
-            <nav aria-label={`${column.title} links`}>
-              {column.links.map((link) => (
-                <a href={`#${link.toLowerCase().replaceAll(" ", "-")}`} key={link}>
-                  {link}
-                </a>
-              ))}
-            </nav>
-          </div>
-        ))}
-      </div>
-      <div className="analyze-footer-legal">
-        <p>© 2025 AlgoMaster Inc. Engineered for algorithmic mastery.</p>
-        <nav aria-label="Legal links">
-          <a href="#privacy">Privacy Policy</a>
-          <a href="#terms">Terms of Service</a>
-          <a href="#conduct">Code of Conduct</a>
-        </nav>
-      </div>
-    </footer>
-  );
-}
-
-function AnalyzePage() {
+function AnalyzePage({ userName: _userName = "Your name", isAuthenticated: _isAuthenticated }) {
   const [language, setLanguage] = useState("Java 21");
   const [code, setCode] = useState(CODE_SNIPPETS["Java 21"]);
   const [executionState, setExecutionState] = useState("ready");
@@ -823,6 +753,7 @@ function AnalyzePage() {
             language={language}
             code={code}
             executionState={executionState}
+            executionResult={executionResult}
             isFullscreen={isFullscreen}
             activeLineIndex={activeLineIndex}
             onLanguageChange={handleLanguageChange}

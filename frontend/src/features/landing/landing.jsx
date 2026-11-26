@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import ThemeToggle from "../../components/ThemeToggle.jsx";
 import { api } from "../../services/api.js";
 import "./landing.css";
 
@@ -314,6 +315,7 @@ export default function LandingPage({ isAuthenticated = false, userName = "Devel
           </div>
 
           <div className="kaggle-header-right">
+            <ThemeToggle className="av-theme-toggle--compact" />
             <button
               className="kaggle-search-btn"
               aria-label="Browse algorithms and problems"
@@ -351,7 +353,7 @@ export default function LandingPage({ isAuthenticated = false, userName = "Devel
                   className="kaggle-login-btn"
                   onClick={() => {
                     window.location.hash = "#landing";
-                    api.logout();
+                    api.logout().catch(() => {});
                   }}
                   style={{ cursor: "pointer", border: "1px solid #dadce0" }}
                 >

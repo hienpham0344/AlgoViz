@@ -73,7 +73,7 @@ algoviz:
     expiration-ms: ${ALGOVIZ_JWT_EXPIRATION_MS:900000} # 15 minutes
     refresh-expiration-ms: ${ALGOVIZ_JWT_REFRESH_EXPIRATION_MS:604800000} # 7 days
   cors:
-    allowed-origins: ${ALGOVIZ_CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://localhost:8080}
+    allowed-origins: ${ALGOVIZ_CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://localhost:8080,chrome-extension://*}
   import:
     enabled: ${ALGOVIZ_IMPORT_ENABLED:false}
     source: ${ALGOVIZ_IMPORT_SOURCE:mock}

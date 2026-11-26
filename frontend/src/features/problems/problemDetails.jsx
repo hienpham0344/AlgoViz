@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import AlgoMasterVisualizer from "../visualizer/AlgoMasterVisualizer.jsx";
+import SmoothSortVisualizer from "../visualizer/SmoothSortVisualizer.jsx";
 import UserCodeVisualizer from "./UserCodeVisualizer.jsx";
 import SubmissionCelebrationModal from "./SubmissionCelebrationModal.jsx";
 import VisualExampleCard from "./VisualExampleCard.jsx";
@@ -699,6 +700,18 @@ function renderInlineMarkdown(text) {
   });
 }
 
+function pickStarterCode(serverCode, fallbackCode) {
+  const trimmed = typeof serverCode === "string" ? serverCode.trim() : "";
+  if (
+    !trimmed ||
+    /Write (?:your )?(?:code|solution) here/i.test(trimmed) ||
+    /int\s+main\s*\(\s*\)\s*\{\s*return\s+0;\s*\}/i.test(trimmed)
+  ) {
+    return fallbackCode || serverCode || "";
+  }
+  return serverCode;
+}
+
 function ProblemDetailsPage({ problemId = 1, isAuthenticated = false }) {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -726,7 +739,9 @@ function ProblemDetailsPage({ problemId = 1, isAuthenticated = false }) {
         const val = Number(saved);
         if (!isNaN(val) && val >= 8 && val <= 88) return val;
       }
-    } catch {}
+    } catch {
+      /* ignore storage errors */
+    }
     return 38; // balanced default height (38%)
   });
   const [isDraggingRunner, setIsDraggingRunner] = useState(false);
@@ -740,7 +755,9 @@ function ProblemDetailsPage({ problemId = 1, isAuthenticated = false }) {
     setRunnerPercent(clamped);
     try {
       localStorage.setItem(RUNNER_STORAGE_KEY, String(clamped));
-    } catch {}
+    } catch {
+      /* ignore storage errors */
+    }
   };
 
   const handleRunnerResizeStart = (e) => {
@@ -775,7 +792,9 @@ function ProblemDetailsPage({ problemId = 1, isAuthenticated = false }) {
     document.body.classList.remove("is-resizing-runner-dock");
     try {
       e.currentTarget.releasePointerCapture(e.pointerId);
-    } catch {}
+    } catch {
+      /* ignore pointer capture release errors */
+    }
   };
 
   const handleRunnerDoubleClick = () => {
@@ -879,13 +898,31 @@ function ProblemDetailsPage({ problemId = 1, isAuthenticated = false }) {
       return;
     }
     let active = true;
-    setSubmissionsLoading(true);
-    setSubmissionsError("");
-    api.getProblemSubmissions(problemId).then((data) => {
-      if (!Array.isArray(data)) throw new Error("Invalid submissions response.");
-      if (active) { setSubmissionsList(data.map(mapSubmission)); setSubmissionsError(""); }
-    }).catch((error) => { if (active) setSubmissionsError(error.message); })
-      .finally(() => { if (active) setSubmissionsLoading(false); });
+    async function loadSubmissions() {
+      if (!isAuthenticated) {
+        await Promise.resolve();
+        if (!active) return;
+        setSubmissionsList([]);
+        setSubmissionsLoading(false);
+        setSubmissionsError("");
+        return;
+      }
+      setSubmissionsLoading(true);
+      setSubmissionsError("");
+      try {
+        const data = await api.getProblemSubmissions(problemId);
+        if (!Array.isArray(data)) throw new Error("Invalid submissions response.");
+        if (active) {
+          setSubmissionsList(data.map(mapSubmission));
+          setSubmissionsError("");
+        }
+      } catch (error) {
+        if (active) setSubmissionsError(error.message);
+      } finally {
+        if (active) setSubmissionsLoading(false);
+      }
+    }
+    loadSubmissions();
     return () => { active = false; };
   }, [problemId, reloadKey, isAuthenticated]);
 
@@ -906,21 +943,28 @@ function ProblemDetailsPage({ problemId = 1, isAuthenticated = false }) {
           } else if (typeof data.constraints === "string" && data.constraints.trim()) {
             normalizedConstraints = data.constraints
               .split(/\r?\n/)
-              .map((s) => s.replace(/^[•\-\*]\s*/, "").trim())
+              .map((s) => s.replace(/^[•\-*]\s*/, "").trim())
               .filter(Boolean);
           }
 
-          const merged = { ...fallback, ...data, constraints: normalizedConstraints,
+          const merged = {
+            ...fallback,
+            ...data,
+            constraints: normalizedConstraints,
             difficulty: data.difficulty || fallback.difficulty,
-            sampleTestCases: Array.isArray(data.sampleTestCases) ? data.sampleTestCases : fallback.sampleTestCases,
-            solutions: Array.isArray(data.solutions) ? data.solutions : fallback.solutions,
+            starterCodePython: pickStarterCode(data.starterCodePython, fallback.starterCodePython),
+            starterCodeJs: pickStarterCode(data.starterCodeJs, fallback.starterCodeJs),
+            starterCodeCpp: pickStarterCode(data.starterCodeCpp, fallback.starterCodeCpp),
+            starterCodeJava: pickStarterCode(data.starterCodeJava, fallback.starterCodeJava),
+            sampleTestCases: Array.isArray(data.sampleTestCases) && data.sampleTestCases.length > 0 ? data.sampleTestCases : fallback.sampleTestCases,
+            solutions: Array.isArray(data.solutions) && data.solutions.length > 0 ? data.solutions : fallback.solutions,
           };
           setCurrentProblem(merged);
           setCodeByLanguage({
-            "Python 3": merged.starterCodePython || fallback.starterCodePython || "",
-            "C++": merged.starterCodeCpp || fallback.starterCodeCpp || "",
-            JavaScript: merged.starterCodeJs || fallback.starterCodeJs || "",
-            Java: merged.starterCodeJava || fallback.starterCodeJava || "",
+            "Python 3": merged.starterCodePython,
+            "C++": merged.starterCodeCpp,
+            JavaScript: merged.starterCodeJs,
+            Java: merged.starterCodeJava,
             ...guestDraftRef.current?.codeByLanguage,
           });
           if (guestDraftRef.current) {
@@ -930,8 +974,15 @@ function ProblemDetailsPage({ problemId = 1, isAuthenticated = false }) {
         }
       } catch (error) {
         if (!cancelled) {
-          if ((!error.status || error.status >= 500) && DEFAULT_PROBLEMS[problemId]) {
+          if ((!error.status || error.status >= 500 || error.status === 404) && DEFAULT_PROBLEMS[problemId]) {
             setCurrentProblem(fallback);
+            setCodeByLanguage({
+              "Python 3": fallback.starterCodePython || "",
+              "C++": fallback.starterCodeCpp || "",
+              JavaScript: fallback.starterCodeJs || "",
+              Java: fallback.starterCodeJava || "",
+              ...guestDraftRef.current?.codeByLanguage,
+            });
             setSampleNotice("Live problem data is unavailable. This is a sample problem; code execution and submissions require the server.");
           } else {
             setLoadError(error.message);
@@ -961,10 +1012,10 @@ function ProblemDetailsPage({ problemId = 1, isAuthenticated = false }) {
 
   const fallback = DEFAULT_PROBLEMS[problemId] || buildGenericProblem(problemId);
   const code = codeByLanguage[language] || {
-    "Python 3": currentProblem?.starterCodePython || fallback.starterCodePython || "",
-    JavaScript: currentProblem?.starterCodeJs || fallback.starterCodeJs || "",
-    "C++": currentProblem?.starterCodeCpp || fallback.starterCodeCpp || "",
-    Java: currentProblem?.starterCodeJava || fallback.starterCodeJava || "",
+    "Python 3": pickStarterCode(currentProblem?.starterCodePython, fallback.starterCodePython),
+    JavaScript: pickStarterCode(currentProblem?.starterCodeJs, fallback.starterCodeJs),
+    "C++": pickStarterCode(currentProblem?.starterCodeCpp, fallback.starterCodeCpp),
+    Java: pickStarterCode(currentProblem?.starterCodeJava, fallback.starterCodeJava),
   }[language] || "";
 
   const handleCodeChange = (nextCode) => {
@@ -980,10 +1031,10 @@ function ProblemDetailsPage({ problemId = 1, isAuthenticated = false }) {
 
   const handleResetCode = () => {
     const starter = {
-      "Python 3": currentProblem?.starterCodePython || fallback.starterCodePython || "",
-      JavaScript: currentProblem?.starterCodeJs || fallback.starterCodeJs || "",
-      "C++": currentProblem?.starterCodeCpp || fallback.starterCodeCpp || "",
-      Java: currentProblem?.starterCodeJava || fallback.starterCodeJava || "",
+      "Python 3": pickStarterCode(currentProblem?.starterCodePython, fallback.starterCodePython),
+      JavaScript: pickStarterCode(currentProblem?.starterCodeJs, fallback.starterCodeJs),
+      "C++": pickStarterCode(currentProblem?.starterCodeCpp, fallback.starterCodeCpp),
+      Java: pickStarterCode(currentProblem?.starterCodeJava, fallback.starterCodeJava),
     }[language] || "";
 
     setCodeByLanguage((c) => ({ ...c, [language]: starter }));
@@ -1014,13 +1065,15 @@ function ProblemDetailsPage({ problemId = 1, isAuthenticated = false }) {
     showToast(`Loaded ${targetLang} solution into editor!`);
   };
 
+  const safeCaseIndex = testCasesList.length > 0 ? Math.min(activeCaseIndex, testCasesList.length - 1) : 0;
+
   const handleRunCode = async () => {
     if (pendingAction) return;
     setPendingAction("run");
     setExecutionState("running");
     setExecutionResult(null);
     if (runnerTab !== "visualize") setRunnerTab("console");
-    const currentCase = testCasesList[activeCaseIndex];
+    const currentCase = testCasesList[safeCaseIndex];
     try {
       const trace = languageKey(language) === "java"
         ? await fetchExecutionTrace(code, { customInput: currentCase?.input || "" }) : null;
@@ -1043,7 +1096,7 @@ function ProblemDetailsPage({ problemId = 1, isAuthenticated = false }) {
         showToast("Could not preserve your code. Copy it before signing in.");
         return;
       }
-      window.location.hash = `#login?next=${encodeURIComponent(`problem-details?id=${problemId}`)}`;
+      window.location.assign(`#login?next=${encodeURIComponent(`problem-details?id=${problemId}`)}`);
       return;
     }
     setPendingAction("submit");
@@ -1058,7 +1111,7 @@ function ProblemDetailsPage({ problemId = 1, isAuthenticated = false }) {
       setExecutionResult({
         status: result.status,
         actual: result.errorMessage || `${result.passedTestCases ?? 0} / ${result.totalTestCases ?? 0} test cases passed.`,
-        expected: testCasesList[activeCaseIndex]?.expected || "",
+        expected: testCasesList[safeCaseIndex]?.expected || "",
         runtimeMs: result.executionTimeMs, memoryMb: result.memoryUsageMb,
       });
       setSubmissionsList((previous) => [mapSubmission(result), ...previous.filter((item) => item.id !== result.id)]);
@@ -1542,6 +1595,23 @@ function ProblemDetailsPage({ problemId = 1, isAuthenticated = false }) {
                   </div>
                 )}
 
+                {(Number(currentProblem.id) === 912 || Number(currentProblem.leetcodeId) === 912) && (
+                  <div className="solution-embedded-visualizer">
+                    <div className="embedded-vis-header">
+                      <div className="embedded-vis-header-left">
+                        <span className="embedded-vis-icon">⚡</span>
+                        <div>
+                          <h3 className="embedded-vis-title">Sorting Algorithm Visualizer</h3>
+                          <span className="embedded-vis-subtitle">Interactive array sorting trace with live AST/JDI sync</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="embedded-vis-body">
+                      <SmoothSortVisualizer onStepChange={(step) => setAnnouncement(step?.annotation || "")} />
+                    </div>
+                  </div>
+                )}
+
                 {/* Reference Solutions Library Section */}
                 <div className="solutions-header" style={{ marginTop: "32px" }}>
                   <div className="editorial-eyebrow">Available references</div>
@@ -1888,7 +1958,7 @@ function ProblemDetailsPage({ problemId = 1, isAuthenticated = false }) {
                           <button
                             type="button"
                             key={idx}
-                            className={`case-chip ${activeCaseIndex === idx ? "is-active" : ""}`}
+                            className={`case-chip ${safeCaseIndex === idx ? "is-active" : ""}`}
                             onClick={() => setActiveCaseIndex(idx)}
                           >
                             Case {idx + 1}
@@ -1899,11 +1969,11 @@ function ProblemDetailsPage({ problemId = 1, isAuthenticated = false }) {
                       {testCasesList.length > 0 && <div className="case-io-details">
                         <div className="case-field">
                           <label>Input:</label>
-                          <pre>{testCasesList[activeCaseIndex]?.input}</pre>
+                          <pre>{testCasesList[safeCaseIndex]?.input}</pre>
                         </div>
                         <div className="case-field">
                           <label>Expected Output:</label>
-                          <pre>{testCasesList[activeCaseIndex]?.expected}</pre>
+                          <pre>{testCasesList[safeCaseIndex]?.expected}</pre>
                         </div>
                       </div>}
                     </div>
@@ -1946,7 +2016,7 @@ function ProblemDetailsPage({ problemId = 1, isAuthenticated = false }) {
                       code={code}
                       language={language}
                       problem={currentProblem}
-                      testCase={testCasesList[activeCaseIndex]}
+                      testCase={testCasesList[safeCaseIndex]}
                       executionResult={executionResult}
                       onRunCode={handleRunCode}
                       loading={Boolean(pendingAction)}

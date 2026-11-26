@@ -369,7 +369,12 @@ export default function AlgoMasterVisualizer({
     return [{ id: "standard", label: "Optimal Approach", badge: "O(n)" }];
   }, [problemId]);
 
-  const [activeApproach, setActiveApproach] = useState(() => approachOptions[0]?.id || "hash-map");
+  const [selectedApproachId, setSelectedApproachId] = useState(() => approachOptions[0]?.id || "hash-map");
+  const activeApproach = useMemo(() => {
+    return approachOptions.some((a) => a.id === selectedApproachId)
+      ? selectedApproachId
+      : (approachOptions[0]?.id || "hash-map");
+  }, [approachOptions, selectedApproachId]);
 
   // Presets
   const presets = useMemo(() => {
@@ -435,9 +440,17 @@ export default function AlgoMasterVisualizer({
     }
     return [];
   }, [problemId, activeApproach, currentPreset]);
-  const trace = useMemo(() => isJava
-    ? runtime?.key === traceKey && runtime.data ? adaptAstStepsToRichVisualizer(runtime.data.steps, activeCodeSnippet) : []
-    : simulatedTrace, [isJava, runtime, traceKey, activeCodeSnippet, simulatedTrace]);
+  const isJavaLoading = isJava && Boolean(activeCodeSnippet) && runtime?.key !== traceKey;
+  const javaError = isJava && runtime?.key === traceKey ? runtime?.error : "";
+  const liveJavaSteps = useMemo(() => {
+    if (!isJava || runtime?.key !== traceKey || !Array.isArray(runtime?.data?.steps)) return [];
+    return adaptAstStepsToRichVisualizer(runtime.data.steps, activeCodeSnippet);
+  }, [isJava, runtime, traceKey, activeCodeSnippet]);
+  const hasLiveJavaTrace = liveJavaSteps.length > 0;
+  const trace = useMemo(
+    () => (hasLiveJavaTrace ? liveJavaSteps : simulatedTrace),
+    [hasLiveJavaTrace, liveJavaSteps, simulatedTrace],
+  );
 
   // Reset step index when approach or preset changes
   useEffect(() => {
@@ -473,8 +486,8 @@ export default function AlgoMasterVisualizer({
 
   // Active line calculation
   const activeLine = useMemo(() => {
-    return isJava ? currentStep.activeLine : getSynchronizedLineNumber(currentStep, activeApproach, language);
-  }, [currentStep, activeApproach, language, isJava]);
+    return hasLiveJavaTrace ? currentStep.activeLine : getSynchronizedLineNumber(currentStep, activeApproach, language);
+  }, [currentStep, activeApproach, language, hasLiveJavaTrace]);
 
   // Announce step
   useEffect(() => {
@@ -546,13 +559,6 @@ export default function AlgoMasterVisualizer({
   const activeIndices = currentStep.activeIndices || [];
   const hashMapData = currentStep.hashMapData || [];
 
-  if (isJava && !activeCodeSnippet) return <ApiState error="No Java reference source is available for this problem." />;
-  if (isJava && (runtime?.key !== traceKey || runtime.loading || runtime.error)) return (
-    <ApiState loading={runtime?.key !== traceKey || runtime.loading} error={runtime?.error}
-      onRetry={() => setRetryKey(key => key + 1)} label="Generating Java reference trace…" page />
-  );
-  if (!trace.length) return <ApiState error="No observable trace is available for this reference source." />;
-
   return (
     <div
       ref={containerRef}
@@ -560,13 +566,20 @@ export default function AlgoMasterVisualizer({
       tabIndex={0}
       aria-label="AlgoViz Visualizer"
     >
-      {isJava && runtime.data.partial && <ApiState error={`Partial trace: ${runtime.data.warnings.join(" ")}`} />}
+      {hasLiveJavaTrace && runtime?.data?.partial && (
+        <ApiState error={`Partial trace: ${(runtime.data.warnings || []).join(" ")}`} />
+      )}
+      {isJava && javaError && (
+        <ApiState error={javaError} onRetry={() => setRetryKey((key) => key + 1)} />
+      )}
       {/* 1. TOP HEADER & APPROACH TABS (AlgoMaster style) */}
       <div className="algomaster-header">
         <div className="algomaster-header__title-row">
           <div className="algomaster-badge">
             <span className="algomaster-badge__icon">⚡</span>
-            <span className="algomaster-badge__text">{isJava ? "Java Runtime Trace" : "Reference Illustration"}</span>
+            <span className="algomaster-badge__text">
+              {hasLiveJavaTrace ? "Java Runtime Trace" : "Reference Illustration"}
+            </span>
           </div>
 
           <div className="algomaster-header__actions">
@@ -605,7 +618,7 @@ export default function AlgoMasterVisualizer({
                 type="button"
                 key={app.id}
                 className={`algomaster-approach-pill ${activeApproach === app.id ? "is-active" : ""}`}
-                onClick={() => setActiveApproach(app.id)}
+                onClick={() => setSelectedApproachId(app.id)}
               >
                 <span>{app.label}</span>
                 <span className="approach-complexity">{app.badge}</span>
@@ -634,6 +647,9 @@ export default function AlgoMasterVisualizer({
 
       {/* 2. VISUAL CANVAS */}
       <div className="algomaster-canvas">
+        {isJavaLoading && (
+          <ApiState loading label="Generating Java reference trace…" />
+        )}
         {/* Array Visualization */}
         <div className="algomaster-array-stage">
           <div className="algomaster-array-track">
@@ -705,7 +721,7 @@ export default function AlgoMasterVisualizer({
           )}
         </div>
 
-        {isJava && <AlgorithmHints hints={runtime.data.algorithmHints} />}
+        {hasLiveJavaTrace && <AlgorithmHints hints={runtime?.data?.algorithmHints} />}
 
         {/* 3. STEP EXPLANATION BANNER (Emerald Green Box like AlgoMaster) */}
         <div className="algomaster-step-banner">

@@ -24,8 +24,8 @@ export default function EditProfileModal({ isOpen, onClose, initialTab = "profil
     dialogRef.current?.querySelector("button")?.focus();
     const handleKey = (event) => {
       if (event.key === "Escape" && !busy) onClose();
-      if (event.key !== "Tab") return;
-      const items = [...dialogRef.current.querySelectorAll("button:not(:disabled), input, textarea")]
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      const items = [...dialogRef.current.querySelectorAll("button:not(:disabled), input:not(:disabled), textarea:not(:disabled)")]
         .filter((element) => element.getClientRects().length);
       const first = items[0];
       const last = items.at(-1);
@@ -45,10 +45,11 @@ export default function EditProfileModal({ isOpen, onClose, initialTab = "profil
     event.preventDefault();
     if (busy) return;
     if (!form.displayName.trim()) { setFeedback({ error: true, text: "Vui lòng nhập tên hiển thị." }); return; }
+    if (!form.email.trim()) { setFeedback({ error: true, text: "Vui lòng nhập email." }); return; }
     setBusy(true);
     setFeedback(null);
     try {
-      await onSave({ ...form, displayName: form.displayName.trim() });
+      await onSave({ ...form, displayName: form.displayName.trim(), email: form.email.trim() });
       setFeedback({ text: "Đã lưu hồ sơ." });
     } catch (error) { setFeedback({ error: true, text: error.message }); }
     finally { setBusy(false); }
